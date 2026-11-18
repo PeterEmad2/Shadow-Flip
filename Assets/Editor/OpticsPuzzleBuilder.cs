@@ -13,6 +13,7 @@ namespace ShadowFlip.EditorTools
     {
         private const string CelDir = "Assets/Images/CelShaded/";
         private const string SfxDir = "Assets/Sounds/SFX/";
+        private const string MainMenuPath = "Assets/Scenes/MainMenu.unity";
         private const string TutorialPath = "Assets/Scenes/OpticsPuzzle_Tutorial.unity";
         private const string Level1Path = "Assets/Scenes/OpticsPuzzle.unity";
         private const string Level2Path = "Assets/Scenes/OpticsPuzzle_Level2.unity";
@@ -34,7 +35,7 @@ namespace ShadowFlip.EditorTools
             public Sprite PortalMirrorA, PortalMirrorB, CombinerCrystal, LanternSanctuary, EchoPedestal;
         }
 
-        [MenuItem("Shadow Flip/Create All Levels (Tutorial + Levels 1-4)")]
+        [MenuItem("Shadow Flip/Create All Levels (Main Menu + Tutorial + Levels 1-4)")]
         public static void CreateAllLevels()
         {
             if (IsInPlayModeGuard()) return;
@@ -44,8 +45,70 @@ namespace ShadowFlip.EditorTools
             CreateOpticsPuzzleLevel2();
             CreateOpticsPuzzleLevel3();
             CreateOpticsPuzzleLevel4();
+            CreateMainMenuScene();
             RegisterScenesInBuildSettings();
-            Debug.Log("Created Tutorial and Levels 1-4 with all Cel-Shaded optics, Umbra mechanics & SFX, and registered all 5 in Build Settings.");
+            Debug.Log("Created Main Menu, Tutorial, and Levels 1-4 and registered all 6 in Build Settings.");
+        }
+
+        [MenuItem("Shadow Flip/Create Main Menu Scene")]
+        public static void CreateMainMenuScene()
+        {
+            if (IsInPlayModeGuard()) return;
+            CelAssets assets = LoadCelAssets();
+            var scene = EditorSceneManager.NewScene(NewSceneSetup.EmptyScene, NewSceneMode.Single);
+
+            GameObject camGo = new GameObject("Main Camera");
+            Camera cam = camGo.AddComponent<Camera>();
+            camGo.AddComponent<AudioListener>();
+            cam.orthographic = true;
+            cam.orthographicSize = 7f;
+            cam.backgroundColor = new Color(0.06f, 0.05f, 0.11f, 1f);
+            cam.clearFlags = CameraClearFlags.SolidColor;
+            camGo.tag = "MainCamera";
+            camGo.transform.position = new Vector3(0f, 0f, -10f);
+
+            GameObject globalLightGo = new GameObject("Global Light 2D");
+            Light2D globalLight = globalLightGo.AddComponent<Light2D>();
+            globalLight.lightType = Light2D.LightType.Global;
+            globalLight.intensity = 1.0f;
+
+            GameObject floorGo = new GameObject("DungeonFloor");
+            floorGo.transform.position = Vector3.zero;
+            SpriteRenderer floorSr = floorGo.AddComponent<SpriteRenderer>();
+            floorSr.sprite = assets.FloorLight;
+            floorSr.drawMode = SpriteDrawMode.Tiled;
+            floorSr.size = new Vector2(22f, 13f);
+            floorSr.sortingOrder = -20;
+
+            CreateArenaWalls(assets);
+
+            // Decorative cel-shaded optical diorama behind the Main Menu UI
+            CreateEmitter("Menu_Emitter_White", new Vector3(-8.2f, 0f, 0f), LightColor.White, WorldAffinity.Both, Vector2.right, assets);
+            CreatePrism("Menu_Prism", new Vector3(0f, 0f, 0f), 0f, OpticalPrism.PrismMode.DisperseRGB, 90f, true, false, 90f, assets);
+            CreateIsometricMirror("Menu_Mirror_Blue", new Vector3(0f, 4.2f, 0f), 225f, 90f, WorldAffinity.Both, assets, canRotate: false);
+            CreateIsometricMirror("Menu_Mirror_Red", new Vector3(0f, -4.2f, 0f), 135f, 90f, WorldAffinity.Both, assets, canRotate: false);
+            CreateSensor("Menu_Sensor_Blue", new Vector3(7.5f, 4.2f, 0f), LightColor.Blue, WorldAffinity.Both, assets);
+            CreateSensor("Menu_Sensor_Green", new Vector3(7.5f, 0f, 0f), LightColor.Green, WorldAffinity.Both, assets);
+            CreateSensor("Menu_Sensor_Red", new Vector3(7.5f, -4.2f, 0f), LightColor.Red, WorldAffinity.Both, assets);
+
+            GameObject logicGo = new GameObject("Logic");
+            logic gameLogic = logicGo.AddComponent<logic>();
+            gameLogic.globalLight = globalLight;
+            gameLogic.isDarkActive = false;
+
+            PuzzleAudioManager audioMgr = logicGo.AddComponent<PuzzleAudioManager>();
+            audioMgr.buttonClickClip = LoadAudio(SfxDir + "button_click.wav");
+            audioMgr.bgmLightClip = LoadAudio(SfxDir + "bgm_light_realm.wav");
+            audioMgr.bgmShadowClip = LoadAudio(SfxDir + "bgm_shadow_realm.wav");
+
+            logicGo.AddComponent<PuzzleVFXManager>();
+            PuzzleHUD hud = logicGo.AddComponent<PuzzleHUD>();
+            hud.gameLogic = gameLogic;
+
+            EditorSceneManager.SaveScene(scene, MainMenuPath);
+            RegisterScenesInBuildSettings();
+            AssetDatabase.Refresh();
+            Debug.Log("Created Main Menu scene at " + MainMenuPath);
         }
 
         [MenuItem("Shadow Flip/Create Tutorial Level")]
@@ -1010,7 +1073,7 @@ namespace ShadowFlip.EditorTools
 
         private static void RegisterScenesInBuildSettings()
         {
-            string[] managed = { TutorialPath, Level1Path, Level2Path, Level3Path, Level4Path };
+            string[] managed = { MainMenuPath, TutorialPath, Level1Path, Level2Path, Level3Path, Level4Path };
             var scenes = new List<EditorBuildSettingsScene>();
             foreach (string path in managed) AddSceneIfMissing(scenes, path);
             foreach (var existing in EditorBuildSettings.scenes)
