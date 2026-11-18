@@ -19,6 +19,8 @@ namespace ShadowFlip.EditorTools
         private const string Level2Path = "Assets/Scenes/OpticsPuzzle_Level2.unity";
         private const string Level3Path = "Assets/Scenes/OpticsPuzzle_Level3.unity";
         private const string Level4Path = "Assets/Scenes/OpticsPuzzle_Level4.unity";
+        private const string Level5Path = "Assets/Scenes/OpticsPuzzle_Level5.unity";
+        private const string Level6Path = "Assets/Scenes/OpticsPuzzle_Level6.unity";
 
         private enum WallTileStyle { Long, Medium, Pillar, Ruined }
 
@@ -33,9 +35,10 @@ namespace ShadowFlip.EditorTools
             public Sprite FloorLight, FloorShadow, PrismCrystal;
             public Sprite UmbraMonster1, UmbraMonster2, MonsterPetrified;
             public Sprite PortalMirrorA, PortalMirrorB, CombinerCrystal, LanternSanctuary, EchoPedestal;
+            public Sprite RelayCrystal, LaserBarrier, PhasePad;
         }
 
-        [MenuItem("Shadow Flip/Create All Levels (Main Menu + Tutorial + Levels 1-4)")]
+        [MenuItem("Shadow Flip/Create All Levels (Main Menu + Tutorial + Levels 1-6)")]
         public static void CreateAllLevels()
         {
             if (IsInPlayModeGuard()) return;
@@ -45,9 +48,11 @@ namespace ShadowFlip.EditorTools
             CreateOpticsPuzzleLevel2();
             CreateOpticsPuzzleLevel3();
             CreateOpticsPuzzleLevel4();
+            CreateOpticsPuzzleLevel5();
+            CreateOpticsPuzzleLevel6();
             CreateMainMenuScene();
             RegisterScenesInBuildSettings();
-            Debug.Log("Created Main Menu, Tutorial, and Levels 1-4 and registered all 6 in Build Settings.");
+            Debug.Log("Created Main Menu, Tutorial, and Levels 1-6 and registered all 8 in Build Settings.");
         }
 
         [MenuItem("Shadow Flip/Create Main Menu Scene")]
@@ -435,12 +440,144 @@ namespace ShadowFlip.EditorTools
             PuzzleDoor finalDoor = CreateDoor("PuzzleDoor_Final", new Vector3(6.5f, 0.0f, 0f), new Vector2(1.1f, 2.8f), assets,
                 new[] { arenaSensor }, new[] { echoButton, statueButton }, null, requireAll: true, stayOpen: false);
 
-            CreateExit("LevelExit", new Vector3(8.6f, 0.0f, 0f), assets, new[] { finalDoor }, "");
+            CreateExit("LevelExit", new Vector3(8.6f, 0.0f, 0f), assets, new[] { finalDoor }, "OpticsPuzzle_Level5");
 
             EditorSceneManager.SaveScene(scene, Level4Path);
             RegisterScenesInBuildSettings();
             AssetDatabase.Refresh();
             Debug.Log("Created Optics Puzzle Level 4 at " + Level4Path);
+        }
+
+        [MenuItem("Shadow Flip/Create Level 5 (The Flip-Clock Matrix)")]
+        public static void CreateOpticsPuzzleLevel5()
+        {
+            if (IsInPlayModeGuard()) return;
+            CelAssets assets = LoadCelAssets();
+            var scene = EditorSceneManager.NewScene(NewSceneSetup.EmptyScene, NewSceneMode.Single);
+
+            SetupCoreScene(
+                assets,
+                out logic gameLogic,
+                out PlayerMovement playerMovement,
+                out PuzzleHUD hud,
+                out _,
+                new Color(0.06f, 0.07f, 0.13f, 1f),
+                new Color(1f, 0.96f, 0.86f, 1f), 1.05f,
+                new Color(0.32f, 0.25f, 0.64f, 1f), 0.50f,
+                new Vector3(-8.0f, -3.5f, 0f));
+
+            hud.parFlips = 3;
+            hud.lessonTitle = "Level 5: The Flip-Clock Matrix";
+            hud.levelHint = "Flip [F] to aim the Turret into the 4-Way Relay Crystal, align Mirror_E1 [E], then cross the dissolved Forcefield onto the Phase Teleport Pad!";
+
+            CreateArenaWalls(assets);
+
+            // Rotating Turret Emitter (starts UP; flipping [F] rotates -90 deg -> RIGHT into Relay_4Way)
+            LightBeamEmitter turret = CreateEmitter("Turret_Emitter", new Vector3(-3.5f, 0.5f, 0f), LightColor.White, WorldAffinity.Both, Vector2.up, assets);
+            RotatingTurretEmitter turretRot = turret.gameObject.AddComponent<RotatingTurretEmitter>();
+            turretRot.rotateOnWorldFlip = true;
+            turretRot.stepDegrees = -90f;
+
+            // 4-Way Relay Crystal at (0.5, 0.5)
+            CreateBeamRelay("Relay_4Way", new Vector3(0.5f, 0.5f, 0f), BeamRelayCrystal.RelayMode.CrossRepeater4Way, Vector2.right, false, assets);
+
+            // Up -> Sensor_Top, Right -> Mirror_E1 -> Sensor_Right
+            LightSensor topSensor = CreateSensor("Sensor_Top", new Vector3(0.5f, 4.2f, 0f), LightColor.White, WorldAffinity.Both, assets);
+            CreateIsometricMirror("Mirror_E1", new Vector3(3.8f, 0.5f, 0f), 135f, 90f, WorldAffinity.Both, assets);
+            LightSensor rightSensor = CreateSensor("Sensor_Right", new Vector3(3.8f, 4.2f, 0f), LightColor.White, WorldAffinity.ShadowOnly, assets);
+
+            // Down -> Sealed Alcove guarded by ShadowBarrierGate at (0.5, -1.8)
+            CreateWall("Alcove_Left", new Vector3(-1.0f, -3.8f, 0f), new Vector2(0.9f, 4.4f), assets, WorldAffinity.Both, WallTileStyle.Pillar);
+            CreateWall("Alcove_Right", new Vector3(2.0f, -3.8f, 0f), new Vector2(0.9f, 4.4f), assets, WorldAffinity.Both, WallTileStyle.Pillar);
+            CreateShadowBarrierGate("Forcefield_Gate", new Vector3(0.5f, -1.8f, 0f), new Vector2(2.1f, 0.9f), assets);
+
+            // Teleport Pads: Alcove -> Upper-Right Vault Button -> Exit Hallway
+            PhaseShiftTile padOut = CreatePhaseShiftTile("PhasePad_Vault", new Vector3(8.5f, 4.0f, 0f), null, false, assets);
+            CreatePhaseShiftTile("PhasePad_In", new Vector3(0.5f, -4.3f, 0f), padOut, false, assets);
+
+            PhaseShiftTile padReturnTarget = CreatePhaseShiftTile("PhasePad_ReturnTarget", new Vector3(4.5f, -3.8f, 0f), null, false, assets);
+            CreatePhaseShiftTile("PhasePad_Return", new Vector3(7.5f, 4.0f, 0f), padReturnTarget, false, assets);
+
+            PressurePlate vaultButton = CreatePressurePlate("Button_Vault", new Vector3(8.5f, 2.5f, 0f), assets, WorldAffinity.Both, latch: true);
+
+            // Sealed Vault at x = 6.5 & Horizontal Vault Shelf at y = 1.4
+            CreateWall("VaultWall_Upper", new Vector3(6.5f, 2.6f, 0f), new Vector2(0.85f, 6.8f), assets, WorldAffinity.Both, WallTileStyle.Pillar);
+            CreateWall("VaultShelf_H", new Vector3(8.4f, 1.4f, 0f), new Vector2(3.8f, 0.7f), assets, WorldAffinity.Both, WallTileStyle.Medium);
+            CreateWall("VaultWall_Lower", new Vector3(6.5f, -4.7f, 0f), new Vector2(0.85f, 2.4f), assets, WorldAffinity.Both, WallTileStyle.Pillar);
+
+            PuzzleDoor door = CreateDoor("PuzzleDoor_Matrix", new Vector3(6.5f, -2.5f, 0f), new Vector2(1.1f, 2.4f), assets,
+                new[] { topSensor, rightSensor }, new[] { vaultButton }, null, requireAll: true, stayOpen: false);
+
+            CreateExit("LevelExit", new Vector3(8.6f, -2.5f, 0f), assets, new[] { door }, "OpticsPuzzle_Level6");
+
+            EditorSceneManager.SaveScene(scene, Level5Path);
+            RegisterScenesInBuildSettings();
+            AssetDatabase.Refresh();
+            Debug.Log("Created Optics Puzzle Level 5 at " + Level5Path);
+        }
+
+        [MenuItem("Shadow Flip/Create Level 6 (Grandmaster Sanctum)")]
+        public static void CreateOpticsPuzzleLevel6()
+        {
+            if (IsInPlayModeGuard()) return;
+            CelAssets assets = LoadCelAssets();
+            var scene = EditorSceneManager.NewScene(NewSceneSetup.EmptyScene, NewSceneMode.Single);
+
+            SetupCoreScene(
+                assets,
+                out logic gameLogic,
+                out PlayerMovement playerMovement,
+                out PuzzleHUD hud,
+                out ShadowStalkerController stalker,
+                new Color(0.04f, 0.03f, 0.09f, 1f),
+                new Color(1f, 0.94f, 0.80f, 1f), 1.05f,
+                new Color(0.26f, 0.18f, 0.50f, 1f), 0.45f,
+                new Vector3(-8.0f, -3.5f, 0f));
+
+            stalker.umbraSafeDuration = 11.0f;
+            hud.parFlips = 5;
+            hud.lessonTitle = "Level 6: Grandmaster Sanctum";
+            hud.levelHint = "Free the Pushable Mirror Cart via the Forcefield, warp the beam across the wall, charge the 7s Capacitor Crystal in Light Realm, then flip [F] so the Realm Inverter converts the beam to Shadow!";
+
+            CreateArenaWalls(assets);
+            CreateSanctuary("Sanctuary_NorthWest", new Vector3(-7.5f, 3.5f, 0f), 2.2f, assets);
+
+            // Main Emitter -> RealmInverter Relay -> Splitter_Master
+            CreateEmitter("Emitter_Grand", new Vector3(-8.5f, 0.5f, 0f), LightColor.White, WorldAffinity.Both, Vector2.right, assets);
+            CreateBeamRelay("Relay_RealmInverter", new Vector3(-5.0f, 0.5f, 0f), BeamRelayCrystal.RelayMode.RealmInverter, Vector2.right, false, assets);
+            CreatePrism("Splitter_Grand", new Vector3(-2.0f, 0.5f, 0f), 0f, OpticalPrism.PrismMode.Splitter, 90f, false, false, 90f, assets);
+
+            // Top Branch: PortalMirror_A -> PortalMirror_B across Divider_Top (x = 0)
+            CreateWall("Divider_Top", new Vector3(0.0f, 3.3f, 0f), new Vector2(0.8f, 5.2f), assets, WorldAffinity.Both, WallTileStyle.Pillar);
+            PortalMirror portalB = CreatePortalMirror("PortalMirror_B", new Vector3(1.8f, 4.2f, 0f), assets.PortalMirrorB, Vector2.down, null, canRotate: false);
+            CreatePortalMirror("PortalMirror_A", new Vector3(-2.0f, 4.2f, 0f), assets.PortalMirrorA, Vector2.right, portalB, canRotate: false);
+
+            // Bottom Branch: Mirror_Bot -> Forcefield Cage guarding PushableMirrorCart
+            CreateIsometricMirror("Mirror_Bot", new Vector3(-2.0f, -3.8f, 0f), 45f, 90f, WorldAffinity.Both, assets);
+            CreateShadowBarrierGate("Cage_Forcefield", new Vector3(2.3f, -3.8f, 0f), new Vector2(0.8f, 2.2f), assets);
+            CreateWall("Cage_Top", new Vector3(4.0f, -2.3f, 0f), new Vector2(3.8f, 0.65f), assets, WorldAffinity.Both, WallTileStyle.Medium);
+            CreateWall("Cage_Right", new Vector3(5.7f, -3.8f, 0f), new Vector2(0.65f, 3.6f), assets, WorldAffinity.Both, WallTileStyle.Pillar);
+            CreateWall("Cage_Bot", new Vector3(4.0f, -5.2f, 0f), new Vector2(3.8f, 0.65f), assets, WorldAffinity.Both, WallTileStyle.Medium);
+
+            CreatePushableMirrorCart("PushableMirrorCart", new Vector3(3.6f, -3.8f, 0f), 45f, 90f, assets);
+
+            // Dual Target Sensors on x = 4.8 (Light 7s Capacitor at y = 2.0, Shadow at y = -0.2)
+            LightSensor lightCapSensor = CreateSensor("Sensor_Capacitor_7s", new Vector3(4.8f, 2.0f, 0f), LightColor.White, WorldAffinity.LightOnly, assets);
+            lightCapSensor.holdDuration = 7.0f;
+            LightSensor shadowFinalSensor = CreateSensor("Sensor_Shadow_Grand", new Vector3(4.8f, -0.2f, 0f), LightColor.Shadow, WorldAffinity.ShadowOnly, assets);
+
+            // Grandmaster Vault at x = 6.5
+            CreateWall("VaultWall_Upper", new Vector3(6.5f, 3.9f, 0f), new Vector2(0.85f, 4.2f), assets, WorldAffinity.Both, WallTileStyle.Pillar);
+            CreateWall("VaultWall_Lower", new Vector3(6.5f, -3.2f, 0f), new Vector2(0.85f, 5.6f), assets, WorldAffinity.Both, WallTileStyle.Pillar);
+            PuzzleDoor grandDoor = CreateDoor("PuzzleDoor_Grandmaster", new Vector3(6.5f, 0.8f, 0f), new Vector2(1.1f, 2.4f), assets,
+                new[] { lightCapSensor, shadowFinalSensor }, null, null, requireAll: true, stayOpen: false);
+
+            CreateExit("LevelExit", new Vector3(8.6f, 0.8f, 0f), assets, new[] { grandDoor }, "");
+
+            EditorSceneManager.SaveScene(scene, Level6Path);
+            RegisterScenesInBuildSettings();
+            AssetDatabase.Refresh();
+            Debug.Log("Created Optics Puzzle Level 6 at " + Level6Path);
         }
 
         private static void SetupCoreScene(
@@ -510,6 +647,8 @@ namespace ShadowFlip.EditorTools
             audioMgr.portalWarpClip = LoadAudio(SfxDir + "portal_warp.wav");
             audioMgr.echoRecordClip = LoadAudio(SfxDir + "echo_record.wav");
             audioMgr.monsterPetrifyClip = LoadAudio(SfxDir + "monster_petrify.wav");
+            audioMgr.teleportPadClip = LoadAudio(SfxDir + "teleport_pad.wav");
+            audioMgr.barrierHumClip = LoadAudio(SfxDir + "barrier_hum.wav");
             audioMgr.bgmLightClip = LoadAudio(SfxDir + "bgm_light_realm.wav");
             audioMgr.bgmShadowClip = LoadAudio(SfxDir + "bgm_shadow_realm.wav");
 
@@ -792,6 +931,64 @@ namespace ShadowFlip.EditorTools
             echo.echoSprite = echoSprite;
         }
 
+        private static void CreateBeamRelay(string name, Vector3 pos, BeamRelayCrystal.RelayMode mode, Vector2 outDir, bool canRotate, CelAssets assets)
+        {
+            GameObject go = new GameObject(name);
+            go.transform.position = pos;
+            go.transform.localScale = new Vector3(0.95f, 0.95f, 1f);
+
+            SpriteRenderer sr = go.AddComponent<SpriteRenderer>();
+            sr.sprite = assets.RelayCrystal;
+            sr.sortingOrder = 4;
+
+            BoxCollider2D col = go.AddComponent<BoxCollider2D>();
+            col.size = new Vector2(1.0f, 1.0f);
+
+            BeamRelayCrystal relay = go.AddComponent<BeamRelayCrystal>();
+            relay.mode = mode;
+            relay.localOutputDirection = outDir;
+            relay.canRotate = canRotate;
+        }
+
+        private static void CreateShadowBarrierGate(string name, Vector3 pos, Vector2 size, CelAssets assets, bool openWhenLit = true)
+        {
+            GameObject go = new GameObject(name);
+            go.transform.position = pos;
+            go.transform.localScale = new Vector3(size.x / 1.28f, size.y / 1.28f, 1f);
+
+            SpriteRenderer sr = go.AddComponent<SpriteRenderer>();
+            sr.sprite = assets.LaserBarrier;
+            sr.sortingOrder = 4;
+
+            BoxCollider2D col = go.AddComponent<BoxCollider2D>();
+            col.size = new Vector2(1.1f, 1.1f);
+            col.isTrigger = true;
+
+            ShadowBarrierGate gate = go.AddComponent<ShadowBarrierGate>();
+            gate.openWhenLit = openWhenLit;
+            gate.acceptAnyColor = true;
+        }
+
+        private static PhaseShiftTile CreatePhaseShiftTile(string name, Vector3 pos, PhaseShiftTile linkedPad, bool flipOnStep, CelAssets assets)
+        {
+            GameObject go = new GameObject(name);
+            go.transform.position = pos;
+            go.transform.localScale = new Vector3(0.9f, 0.9f, 1f);
+
+            SpriteRenderer sr = go.AddComponent<SpriteRenderer>();
+            sr.sprite = assets.PhasePad;
+            sr.sortingOrder = 0;
+
+            BoxCollider2D col = go.AddComponent<BoxCollider2D>();
+            col.size = new Vector2(1.1f, 1.1f);
+            col.isTrigger = true;
+
+            PhaseShiftTile pad = go.AddComponent<PhaseShiftTile>();
+            pad.linkedTeleportPad = linkedPad;
+            pad.flipRealmOnStep = flipOnStep;
+            return pad;
+        }
+
         private static GameObject CreatePrism(string name, Vector3 pos, float zAngle, OpticalPrism.PrismMode mode, float splitAngle, bool orientAlongTransform, bool canRotate, float stepDegrees, CelAssets assets)
         {
             GameObject prismGo = new GameObject(name);
@@ -1067,17 +1264,21 @@ namespace ShadowFlip.EditorTools
                 PortalMirrorB = LoadSprite(CelDir + "PortalMirror_B.png"),
                 CombinerCrystal = LoadSprite(CelDir + "Combiner_Crystal.png"),
                 LanternSanctuary = LoadSprite(CelDir + "Lantern_Sanctuary.png"),
-                EchoPedestal = LoadSprite(CelDir + "Echo_Pedestal.png")
+                EchoPedestal = LoadSprite(CelDir + "Echo_Pedestal.png"),
+                RelayCrystal = LoadSprite(CelDir + "Relay_Crystal.png"),
+                LaserBarrier = LoadSprite(CelDir + "Laser_Barrier.png"),
+                PhasePad = LoadSprite(CelDir + "Phase_Pad.png")
             };
         }
 
         private static void RegisterScenesInBuildSettings()
         {
-            string[] managed = { MainMenuPath, TutorialPath, Level1Path, Level2Path, Level3Path, Level4Path };
+            string[] managed = { MainMenuPath, TutorialPath, Level1Path, Level2Path, Level3Path, Level4Path, Level5Path, Level6Path };
             var scenes = new List<EditorBuildSettingsScene>();
             foreach (string path in managed) AddSceneIfMissing(scenes, path);
             foreach (var existing in EditorBuildSettings.scenes)
             {
+                if (!File.Exists(existing.path)) continue;
                 bool isManaged = false;
                 foreach (string m in managed) if (existing.path == m) { isManaged = true; break; }
                 if (!isManaged) scenes.Add(existing);

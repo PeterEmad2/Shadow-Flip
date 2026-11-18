@@ -28,7 +28,9 @@ namespace ShadowFlip.Puzzle
             "OpticsPuzzle",
             "OpticsPuzzle_Level2",
             "OpticsPuzzle_Level3",
-            "OpticsPuzzle_Level4"
+            "OpticsPuzzle_Level4",
+            "OpticsPuzzle_Level5",
+            "OpticsPuzzle_Level6"
         };
 
         private static readonly string[] LevelDisplayNames =
@@ -37,7 +39,9 @@ namespace ShadowFlip.Puzzle
             "Level 1: Chromatic Vault",
             "Level 2: Eclipse Temple",
             "Level 3: The Prism Sanctum",
-            "Level 4: Umbra Labyrinth"
+            "Level 4: Umbra Labyrinth",
+            "Level 5: The Flip-Clock Matrix",
+            "Level 6: Grandmaster Sanctum"
         };
 
         private static bool hasShownInitialMainMenu = false;
@@ -320,8 +324,8 @@ namespace ShadowFlip.Puzzle
             GUI.DrawTexture(new Rect(0, 0, Screen.width, Screen.height), whiteTex);
             GUI.color = Color.white;
 
-            float w = 620f;
-            float h = 500f;
+            float w = 640f;
+            float h = 590f;
             Rect modal = new Rect((Screen.width - w) * 0.5f, (Screen.height - h) * 0.5f, w, h);
             DrawCelPanel(modal, panelColor, inkColor, accentColor, 5f);
 
@@ -339,24 +343,19 @@ namespace ShadowFlip.Puzzle
 
             // Top Action Buttons
             string currentScene = SceneManager.GetActiveScene().name;
-            bool isSampleOrMenu = currentScene == "MainMenu" || currentScene == "SampleScene";
-            string primaryLabel = isSampleOrMenu ? "▶ START TUTORIAL" : "▶ RESUME LEVEL";
+            string primaryLabel = isDedicatedMenuScene ? "▶ START TUTORIAL" : "▶ RESUME LEVEL";
 
-            if (GUI.Button(new Rect(modal.x + 28f, modal.y + 92f, 274f, 40f), primaryLabel))
+            if (GUI.Button(new Rect(modal.x + 28f, modal.y + 92f, 284f, 40f), primaryLabel))
             {
                 PuzzleAudioManager.Instance?.PlayButtonClick();
-                if (isSampleOrMenu) TryLoadLevel("OpticsPuzzle_Tutorial");
+                if (isDedicatedMenuScene) TryLoadLevel("OpticsPuzzle_Tutorial");
                 else CloseMainMenu();
             }
 
-            if (GUI.Button(new Rect(modal.x + 318f, modal.y + 92f, 274f, 40f), isSampleOrMenu ? "▶ PLAY CURRENT SCENE" : "↻ RESTART LEVEL"))
+            if (GUI.Button(new Rect(modal.x + 328f, modal.y + 92f, 284f, 40f), isDedicatedMenuScene ? "▶ PLAY LEVEL 1" : "↻ RESTART LEVEL"))
             {
                 PuzzleAudioManager.Instance?.PlayButtonClick();
-                if (isSampleOrMenu && !isDedicatedMenuScene)
-                {
-                    CloseMainMenu();
-                }
-                else if (isDedicatedMenuScene)
+                if (isDedicatedMenuScene)
                 {
                     TryLoadLevel("OpticsPuzzle");
                 }
@@ -368,7 +367,7 @@ namespace ShadowFlip.Puzzle
                 }
             }
 
-            // 5-Level Select List
+            // 7-Level Select List
             GUI.color = accentColor;
             GUI.Label(new Rect(modal.x + 28f, modal.y + 144f, 400f, 24f), "SELECT LEVEL:", statusStyle);
             GUI.color = Color.white;
@@ -380,7 +379,7 @@ namespace ShadowFlip.Puzzle
                 string starStr = new string('★', stars) + new string('☆', 3 - stars);
                 string activeTag = sceneName == currentScene ? " [CURRENT]" : "";
 
-                Rect btnRect = new Rect(modal.x + 28f, modal.y + 172f + i * 48f, modal.width - 56f, 40f);
+                Rect btnRect = new Rect(modal.x + 28f, modal.y + 172f + i * 46f, modal.width - 56f, 38f);
                 if (GUI.Button(btnRect, $"  {LevelDisplayNames[i]}{activeTag}    [{starStr}]"))
                 {
                     PuzzleAudioManager.Instance?.PlayButtonClick();
@@ -391,7 +390,7 @@ namespace ShadowFlip.Puzzle
             if (!string.IsNullOrEmpty(menuNotice))
             {
                 GUI.color = new Color(1f, 0.55f, 0.45f, 1f);
-                GUI.Label(new Rect(modal.x + 28f, modal.y + 414f, modal.width - 56f, 28f), menuNotice, statusStyle);
+                GUI.Label(new Rect(modal.x + 28f, modal.y + 498f, modal.width - 56f, 28f), menuNotice, statusStyle);
                 GUI.color = Color.white;
             }
 
