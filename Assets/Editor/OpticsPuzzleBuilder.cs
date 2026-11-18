@@ -1,0 +1,800 @@
+using System.Collections.Generic;
+using System.IO;
+using ShadowFlip.Optics;
+using ShadowFlip.Puzzle;
+using UnityEditor;
+using UnityEditor.SceneManagement;
+using UnityEngine;
+using UnityEngine.Rendering.Universal;
+
+namespace ShadowFlip.EditorTools
+{
+    public static class OpticsPuzzleBuilder
+    {
+        private const string CelDir = "Assets/Images/CelShaded/";
+        private const string SfxDir = "Assets/Sounds/SFX/";
+        private const string TutorialPath = "Assets/Scenes/OpticsPuzzle_Tutorial.unity";
+        private const string Level1Path = "Assets/Scenes/OpticsPuzzle.unity";
+        private const string Level2Path = "Assets/Scenes/OpticsPuzzle_Level2.unity";
+
+        private enum WallTileStyle { Long, Medium, Pillar, Ruined }
+
+        private struct CelAssets
+        {
+            public Sprite EmitterIdle, EmitterActive, EmitterBroken;
+            public Sprite[] MirrorDirections;
+            public Sprite ReceiverInactive, ReceiverActiveWhite, ReceiverInactiveDark, ReceiverActiveGlow;
+            public Sprite WallLightLong, WallLightMedium, WallLightPillar, WallLightRuined;
+            public Sprite WallShadowLong, WallShadowMedium, WallShadowPillar, WallShadowRuined;
+            public Sprite DoorClosed, DoorOpen, LeverOff, LeverOn, ButtonUp, ButtonDown;
+            public Sprite FloorLight, FloorShadow, PrismCrystal;
+        }
+
+        [MenuItem("Shadow Flip/Create All Levels (Tutorial + Level 1 + Level 2)")]
+        public static void CreateAllLevels()
+        {
+            if (IsInPlayModeGuard()) return;
+            ConfigureCelShadedSprites();
+            CreateTutorialLevel();
+            CreateOpticsPuzzleLevel();
+            CreateOpticsPuzzleLevel2();
+            RegisterScenesInBuildSettings();
+            Debug.Log("Created Tutorial, Level 1, and Level 2 with Cel-Shaded walls, doors, levers, buttons & SFX.");
+        }
+
+        [MenuItem("Shadow Flip/Create Tutorial Level")]
+        public static void CreateTutorialLevel()
+        {
+            if (IsInPlayModeGuard()) return;
+            CelAssets assets = LoadCelAssets();
+            var scene = EditorSceneManager.NewScene(NewSceneSetup.EmptyScene, NewSceneMode.Single);
+
+            SetupCoreScene(
+                assets,
+                out logic gameLogic,
+                out PlayerMovement playerMovement,
+                out PuzzleHUD hud,
+                new Color(0.11f, 0.09f, 0.16f, 1f),
+                new Color(1f, 0.96f, 0.88f, 1f), 1.05f,
+                new Color(0.42f, 0.36f, 0.78f, 1f), 0.58f,
+                new Vector3(-8.0f, -2.5f, 0f));
+
+            CreateArenaWalls(assets);
+            CreateWall("RuinedDecor_Tut1", new Vector3(-8.7f, -4.8f, 0f), new Vector2(1.24f, 1.14f), assets, WorldAffinity.Both, WallTileStyle.Ruined);
+            CreateWall("RuinedDecor_Tut2", new Vector3(8.7f, 4.7f, 0f), new Vector2(1.24f, 1.14f), assets, WorldAffinity.Both, WallTileStyle.Ruined);
+
+            // Lesson 1 Zone (x < -4.0): Rotate Mirror_Tut1 (45 -> 135) + Pull Lever_Tut to open TutDoor_1
+            CreateEmitter("Emitter_Tut1", new Vector3(-8.5f, 3.0f, 0f), LightColor.White, WorldAffinity.Both, Vector2.right, assets);
+            GameObject mirror1 = CreateIsometricMirror("Mirror_Tut1", new Vector3(-6.0f, 3.0f, 0f), 45f, 90f, WorldAffinity.Both, assets);
+            LightSensor sensor1 = CreateSensor("Sensor_Tut1", new Vector3(-6.0f, -0.5f, 0f), LightColor.White, WorldAffinity.Both, assets, acceptAny: true);
+            PuzzleLever lever1 = CreateLever("Lever_Tut", new Vector3(-6.0f, -3.5f, 0f), assets, WorldAffinity.Both);
+
+            CreateWall("TutWall1_Top", new Vector3(-4.0f, 3.2f, 0f), new Vector2(0.85f, 5.2f), assets, WorldAffinity.Both, WallTileStyle.Pillar);
+            CreateWall("TutWall1_Bottom", new Vector3(-4.0f, -4.0f, 0f), new Vector2(0.85f, 3.6f), assets, WorldAffinity.Both, WallTileStyle.Pillar);
+            PuzzleDoor door1 = CreateDoor("TutDoor_1", new Vector3(-4.0f, -0.8f, 0f), new Vector2(1.1f, 2.8f), assets,
+                new[] { sensor1 }, null, new[] { lever1 }, requireAll: true, stayOpen: true);
+
+            // Lesson 2 Barrier (x = -1.5): LightOnly stone wall spanning hallway -> Flip [F] to Shadow Realm to pass!
+            GameObject phaseWall = CreateWall("TutPhaseWall_LightOnly", new Vector3(-1.5f, 0.0f, 0f), new Vector2(0.85f, 11.4f), assets, WorldAffinity.LightOnly, WallTileStyle.Pillar);
+
+            // Lesson 3 Zone (Shadow Realm Mirror)
+            CreateEmitter("Emitter_Tut2_Shadow", new Vector3(0.5f, 3.5f, 0f), LightColor.Shadow, WorldAffinity.ShadowOnly, Vector2.right, assets);
+            GameObject mirror2 = CreateIsometricMirror("Mirror_Tut2_Shadow", new Vector3(4.0f, 3.5f, 0f), 45f, 90f, WorldAffinity.ShadowOnly, assets);
+            LightSensor sensor2 = CreateSensor("Sensor_Tut2_Shadow", new Vector3(4.0f, 0.5f, 0f), LightColor.Shadow, WorldAffinity.ShadowOnly, assets);
+
+            // Lesson 4 Zone (Pushable Ruin Block -> Floor Button -> Final Dungeon Gate)
+            GameObject blockTut = CreatePushableBlock("RuinBlock_Tut", new Vector3(0.5f, -3.0f, 0f), assets);
+            PressurePlate plateTut = CreatePressurePlate("Button_Tut", new Vector3(4.0f, -3.0f, 0f), assets, WorldAffinity.Both, latch: false);
+
+            CreateWall("TutVault_Top", new Vector3(6.5f, 3.0f, 0f), new Vector2(0.85f, 5.8f), assets, WorldAffinity.Both, WallTileStyle.Pillar);
+            CreateWall("TutVault_Bottom", new Vector3(6.5f, -4.4f, 0f), new Vector2(0.85f, 2.8f), assets, WorldAffinity.Both, WallTileStyle.Pillar);
+            PuzzleDoor door2 = CreateDoor("TutDoor_Final", new Vector3(6.5f, -1.5f, 0f), new Vector2(1.1f, 3.0f), assets,
+                new[] { sensor2 }, new[] { plateTut }, null, requireAll: true, stayOpen: false);
+
+            GameObject exitGo = CreateExit("LevelExit", new Vector3(8.5f, -1.5f, 0f), assets, new[] { door1, door2 }, "OpticsPuzzle");
+
+            GameObject tutGo = new GameObject("TutorialManager");
+            TutorialManager tut = tutGo.AddComponent<TutorialManager>();
+            tut.player = playerMovement;
+            tut.gameLogic = gameLogic;
+            tut.hud = hud;
+            tut.tutorialSensor1 = sensor1;
+            tut.tutorialLever1 = lever1;
+            tut.tutorialDoor1 = door1;
+            tut.crossXThreshold = -0.6f;
+            tut.tutorialSensor2 = sensor2;
+            tut.tutorialDoor2 = door2;
+            tut.stageTargets = new[]
+            {
+                mirror1.transform,
+                phaseWall.transform,
+                mirror2.transform,
+                blockTut.transform,
+                exitGo.transform,
+                lever1.transform
+            };
+
+            EditorSceneManager.SaveScene(scene, TutorialPath);
+            RegisterScenesInBuildSettings();
+            AssetDatabase.Refresh();
+            Debug.Log("Created Tutorial Level at " + TutorialPath);
+        }
+
+        [MenuItem("Shadow Flip/Create Optics Puzzle Level")]
+        public static void CreateOpticsPuzzleLevel()
+        {
+            if (IsInPlayModeGuard()) return;
+            CelAssets assets = LoadCelAssets();
+            var scene = EditorSceneManager.NewScene(NewSceneSetup.EmptyScene, NewSceneMode.Single);
+
+            SetupCoreScene(
+                assets,
+                out logic gameLogic,
+                out PlayerMovement playerMovement,
+                out PuzzleHUD hud,
+                new Color(0.08f, 0.09f, 0.13f, 1f),
+                new Color(1f, 0.98f, 0.92f, 1f), 1.0f,
+                new Color(0.45f, 0.52f, 0.85f, 1f), 0.55f,
+                new Vector3(-7.8f, -3.5f, 0f));
+
+            hud.lessonTitle = "Level 1: Chromatic Vault";
+            hud.levelHint = "Align Mirror_Red1 in Light Realm, pull the Green Shutter Lever, step on the Vault Button, then flip [F] to Shadow Realm!";
+
+            CreateArenaWalls(assets);
+            CreateWall("RuinedDecor_L1_Top", new Vector3(-8.7f, 4.7f, 0f), new Vector2(1.24f, 1.14f), assets, WorldAffinity.Both, WallTileStyle.Ruined);
+            CreateWall("RuinedDecor_L1_Vault", new Vector3(8.7f, 4.6f, 0f), new Vector2(1.24f, 1.14f), assets, WorldAffinity.Both, WallTileStyle.Ruined);
+
+            CreateWall("LightOnly_Shutter", new Vector3(-6.0f, 1.5f, 0f), new Vector2(0.8f, 2.6f), assets, WorldAffinity.LightOnly, WallTileStyle.Pillar);
+            CreateEmitter("WhiteBeamEmitter", new Vector3(-8.5f, 1.5f, 0f), LightColor.White, WorldAffinity.Both, Vector2.right, assets);
+
+            CreatePrism("RGB_Prism", new Vector3(-3.5f, 1.5f, 0f), 90f, OpticalPrism.PrismMode.DisperseRGB, 90f, true, true, 90f, assets);
+
+            // Blue Path (+90 UP)
+            CreateIsometricMirror("Mirror_Blue1", new Vector3(-3.5f, 4.2f, 0f), 135f, 90f, WorldAffinity.Both, assets);
+            CreateColorFilter("BlueFilter", new Vector3(0.5f, 4.2f, 0f), new Vector2(0.45f, 1.1f), LightColor.Blue, assets);
+            LightSensor blueSensor = CreateSensor("Sensor_Blue", new Vector3(4.2f, 4.2f, 0f), LightColor.Blue, WorldAffinity.ShadowOnly, assets);
+
+            // Green Path (0 RIGHT) with Lever-controlled Stone Shutter at (0.8, 1.5)
+            CreateColorFilter("GreenFilter", new Vector3(-0.5f, 1.5f, 0f), new Vector2(0.45f, 1.1f), LightColor.Green, assets);
+            GameObject greenBarrier = CreateWall("GreenPath_Barrier", new Vector3(0.8f, 1.5f, 0f), new Vector2(0.65f, 1.4f), assets, WorldAffinity.Both, WallTileStyle.Medium);
+            CreateIsometricMirror("Mirror_Green", new Vector3(2.2f, 1.5f, 0f), 45f, 90f, WorldAffinity.ShadowOnly, assets);
+            LightSensor greenSensor = CreateSensor("Sensor_Green", new Vector3(2.2f, -1.2f, 0f), LightColor.Green, WorldAffinity.Both, assets);
+
+            PuzzleLever greenLever = CreateLever("Lever_GreenShutter", new Vector3(-1.0f, -2.2f, 0f), assets, WorldAffinity.Both,
+                toggledObjects: new[] { greenBarrier });
+
+            // Red Path (-90 DOWN)
+            GameObject mirrorRed1 = CreateIsometricMirror("Mirror_Red1", new Vector3(-3.5f, -3.5f, 0f), 45f, 90f, WorldAffinity.Both, assets);
+            mirrorRed1.GetComponent<OpticalMirror>().requireLightWorldToRotate = true;
+            mirrorRed1.GetComponent<SpriteRenderer>().color = new Color(1f, 0.88f, 0.55f, 1f);
+
+            CreateIsometricMirror("Mirror_Red2", new Vector3(4.5f, -3.5f, 0f), 135f, 90f, WorldAffinity.Both, assets);
+            LightSensor redSensor = CreateSensor("Sensor_Red", new Vector3(4.5f, -0.8f, 0f), LightColor.Red, WorldAffinity.Both, assets);
+
+            // Latching Vault Floor Button
+            PressurePlate vaultButton = CreatePressurePlate("Button_VaultSeal", new Vector3(0.5f, 2.8f, 0f), assets, WorldAffinity.Both, latch: true);
+
+            // Sealed Vault at x = 6.5
+            CreateWall("VaultWall_Upper", new Vector3(6.5f, 3.8f, 0f), new Vector2(0.85f, 4.4f), assets, WorldAffinity.Both, WallTileStyle.Pillar);
+            CreateWall("VaultWall_Lower", new Vector3(6.5f, -3.6f, 0f), new Vector2(0.85f, 4.8f), assets, WorldAffinity.Both, WallTileStyle.Pillar);
+            PuzzleDoor door = CreateDoor("PuzzleDoor", new Vector3(6.5f, 0.2f, 0f), new Vector2(1.1f, 2.8f), assets,
+                new[] { redSensor, greenSensor, blueSensor }, new[] { vaultButton }, new[] { greenLever }, requireAll: true, stayOpen: false);
+
+            CreateExit("LevelExit", new Vector3(8.6f, 0.2f, 0f), assets, new[] { door }, "OpticsPuzzle_Level2");
+
+            EditorSceneManager.SaveScene(scene, Level1Path);
+            RegisterScenesInBuildSettings();
+            AssetDatabase.Refresh();
+            Debug.Log("Created Optics Puzzle Level 1 at " + Level1Path);
+        }
+
+        [MenuItem("Shadow Flip/Create Optics Puzzle Level 2 (Eclipse Temple)")]
+        public static void CreateOpticsPuzzleLevel2()
+        {
+            if (IsInPlayModeGuard()) return;
+            CelAssets assets = LoadCelAssets();
+            var scene = EditorSceneManager.NewScene(NewSceneSetup.EmptyScene, NewSceneMode.Single);
+
+            SetupCoreScene(
+                assets,
+                out logic gameLogic,
+                out PlayerMovement playerMovement,
+                out PuzzleHUD hud,
+                new Color(0.05f, 0.04f, 0.09f, 1f),
+                new Color(1f, 0.91f, 0.70f, 1f), 1.15f,
+                new Color(0.32f, 0.22f, 0.58f, 1f), 0.48f,
+                new Vector3(-7.5f, 0f, 0f));
+
+            hud.lessonTitle = "Level 2: Eclipse Temple";
+            hud.levelHint = "Light Realm: route Red & press the Light Button. Pull the Lever to rotate the enclosed Shadow Mirror, then flip [F] to push the Ruin Block!";
+
+            CreateArenaWalls(assets);
+
+            // Stage 1 (Light World)
+            CreateEmitter("LightOnly_Emitter", new Vector3(-8.5f, 3.8f, 0f), LightColor.White, WorldAffinity.LightOnly, Vector2.right, assets);
+            CreateIsometricMirror("Mirror_L1", new Vector3(-5.2f, 3.8f, 0f), 45f, 90f, WorldAffinity.Both, assets);
+            CreatePrism("Splitter_Prism", new Vector3(-5.2f, 0.5f, 0f), -90f, OpticalPrism.PrismMode.Splitter, 90f, true, false, 90f, assets);
+            CreateIsometricMirror("Mirror_L2", new Vector3(-2.8f, 0.5f, 0f), 45f, 90f, WorldAffinity.Both, assets);
+            CreateColorFilter("RedFilter", new Vector3(-2.8f, -1.2f, 0f), new Vector2(1.1f, 0.45f), LightColor.Red, assets);
+            CreateIsometricMirror("Mirror_L3", new Vector3(-2.8f, -2.8f, 0f), 45f, 90f, WorldAffinity.Both, assets);
+            LightSensor stage1Sensor = CreateSensor("Sensor_Stage1_Red", new Vector3(4.2f, -2.8f, 0f), LightColor.Red, WorldAffinity.LightOnly, assets);
+            PressurePlate lightButton = CreatePressurePlate("Light_Button", new Vector3(1.5f, -1.6f, 0f), assets, WorldAffinity.LightOnly, latch: true);
+
+            // Stage 2 (Shadow World) + Stone Alcove around remote-controlled Mirror_S2
+            CreateEmitter("ShadowOnly_Emitter", new Vector3(-8.5f, -4.3f, 0f), LightColor.Shadow, WorldAffinity.ShadowOnly, Vector2.right, assets);
+            CreateIsometricMirror("Mirror_S1", new Vector3(-1.2f, -4.3f, 0f), 135f, 90f, WorldAffinity.ShadowOnly, assets);
+
+            GameObject mirrorS2Go = CreateIsometricMirror("Mirror_S2", new Vector3(-1.2f, 4.3f, 0f), 135f, 90f, WorldAffinity.ShadowOnly, assets, canRotate: false);
+            OpticalMirror mirrorS2 = mirrorS2Go.GetComponent<OpticalMirror>();
+            CreateWall("AlcoveWall_Left", new Vector3(-2.4f, 4.5f, 0f), new Vector2(0.65f, 2.2f), assets, WorldAffinity.Both, WallTileStyle.Pillar);
+            CreateWall("AlcoveWall_Ruined", new Vector3(0.2f, 5.1f, 0f), new Vector2(1.1f, 0.9f), assets, WorldAffinity.Both, WallTileStyle.Ruined);
+
+            PuzzleLever remoteLever = CreateLever("Lever_RemoteMirror", new Vector3(-5.2f, -2.8f, 0f), assets, WorldAffinity.Both,
+                controlledMirrors: new[] { mirrorS2 });
+
+            LightSensor shadowSensor = CreateSensor("Sensor_Stage2_Shadow", new Vector3(4.2f, 4.3f, 0f), LightColor.Shadow, WorldAffinity.ShadowOnly, assets);
+
+            // Walled Block Chamber (entrance guarded by LightOnly_Gate at x = 0.4)
+            CreateWall("ChannelWall_Top", new Vector3(3.0f, 3.3f, 0f), new Vector2(6.4f, 0.65f), assets, WorldAffinity.Both, WallTileStyle.Medium);
+            CreateWall("ChannelWall_Bottom", new Vector3(3.0f, 0.4f, 0f), new Vector2(6.4f, 0.65f), assets, WorldAffinity.Both, WallTileStyle.Medium);
+            CreateWall("LightOnly_Gate", new Vector3(0.4f, 1.85f, 0f), new Vector2(0.75f, 2.5f), assets, WorldAffinity.LightOnly, WallTileStyle.Pillar);
+
+            CreatePushableBlock("PushableBlock", new Vector3(-2.5f, 1.85f, 0f), assets);
+            PressurePlate shadowPlate = CreatePressurePlate("Shadow_PressurePlate", new Vector3(3.6f, 1.85f, 0f), assets, WorldAffinity.ShadowOnly, latch: false);
+
+            // Sealed Double-Door Airlock Vault at x = 6.2 and x = 7.3
+            CreateWall("Vault1_Upper", new Vector3(6.2f, 4.6f, 0f), new Vector2(0.75f, 3.0f), assets, WorldAffinity.Both, WallTileStyle.Pillar);
+            CreateWall("Vault1_Lower", new Vector3(6.2f, -2.7f, 0f), new Vector2(0.75f, 6.6f), assets, WorldAffinity.Both, WallTileStyle.Pillar);
+            PuzzleDoor lightDoor = CreateDoor("PuzzleDoor_Light", new Vector3(6.2f, 1.85f, 0f), new Vector2(1.0f, 2.5f), assets,
+                new[] { stage1Sensor }, new[] { lightButton }, null, requireAll: true, stayOpen: true);
+
+            CreateWall("Vault2_Upper", new Vector3(7.3f, 4.6f, 0f), new Vector2(0.75f, 3.0f), assets, WorldAffinity.Both, WallTileStyle.Pillar);
+            CreateWall("Vault2_Lower", new Vector3(7.3f, -2.7f, 0f), new Vector2(0.75f, 6.6f), assets, WorldAffinity.Both, WallTileStyle.Pillar);
+            PuzzleDoor shadowDoor = CreateDoor("PuzzleDoor_Shadow", new Vector3(7.3f, 1.85f, 0f), new Vector2(1.0f, 2.5f), assets,
+                new[] { shadowSensor }, new[] { shadowPlate }, new[] { remoteLever }, requireAll: true, stayOpen: false);
+
+            CreateExit("LevelExit", new Vector3(8.9f, 1.85f, 0f), assets, new[] { lightDoor, shadowDoor }, "");
+
+            EditorSceneManager.SaveScene(scene, Level2Path);
+            RegisterScenesInBuildSettings();
+            AssetDatabase.Refresh();
+            Debug.Log("Created Optics Puzzle Level 2 at " + Level2Path);
+        }
+
+        private static void SetupCoreScene(
+            CelAssets assets,
+            out logic gameLogic,
+            out PlayerMovement playerMovement,
+            out PuzzleHUD hud,
+            Color camBg,
+            Color lightColor,
+            float lightIntensity,
+            Color shadowColor,
+            float shadowIntensity,
+            Vector3 playerStart)
+        {
+            GameObject camGo = new GameObject("Main Camera");
+            Camera cam = camGo.AddComponent<Camera>();
+            camGo.AddComponent<AudioListener>();
+            cam.orthographic = true;
+            cam.orthographicSize = 7f;
+            cam.backgroundColor = camBg;
+            cam.clearFlags = CameraClearFlags.SolidColor;
+            camGo.tag = "MainCamera";
+            camGo.transform.position = new Vector3(0f, 0f, -10f);
+
+            GameObject globalLightGo = new GameObject("Global Light 2D");
+            Light2D globalLight = globalLightGo.AddComponent<Light2D>();
+            globalLight.lightType = Light2D.LightType.Global;
+            globalLight.intensity = lightIntensity;
+
+            GameObject floorGo = new GameObject("DungeonFloor");
+            floorGo.transform.position = Vector3.zero;
+            SpriteRenderer floorSr = floorGo.AddComponent<SpriteRenderer>();
+            floorSr.sprite = assets.FloorLight;
+            floorSr.drawMode = SpriteDrawMode.Tiled;
+            floorSr.size = new Vector2(22f, 13f);
+            floorSr.sortingOrder = -20;
+            WorldPhaseObject floorPhase = floorGo.AddComponent<WorldPhaseObject>();
+            floorPhase.affinity = WorldAffinity.Both;
+            floorPhase.lightWorldSprite = assets.FloorLight;
+            floorPhase.shadowWorldSprite = assets.FloorShadow;
+
+            GameObject logicGo = new GameObject("Logic");
+            gameLogic = logicGo.AddComponent<logic>();
+            gameLogic.globalLight = globalLight;
+            gameLogic.lightWorldColor = lightColor;
+            gameLogic.lightWorldIntensity = lightIntensity;
+            gameLogic.shadowWorldColor = shadowColor;
+            gameLogic.shadowWorldIntensity = shadowIntensity;
+
+            PuzzleAudioManager audioMgr = logicGo.AddComponent<PuzzleAudioManager>();
+            audioMgr.flipLightClip = LoadAudio(SfxDir + "flip_light.wav");
+            audioMgr.flipShadowClip = LoadAudio(SfxDir + "flip_shadow.wav");
+            audioMgr.flipBlockedClip = LoadAudio(SfxDir + "flip_blocked.wav");
+            audioMgr.mirrorRotateClip = LoadAudio(SfxDir + "mirror_rotate.wav");
+            audioMgr.leverPullClip = LoadAudio(SfxDir + "lever_pull.wav");
+            audioMgr.sensorOnClip = LoadAudio(SfxDir + "sensor_on.wav");
+            audioMgr.sensorOffClip = LoadAudio(SfxDir + "sensor_off.wav");
+            audioMgr.platePressClip = LoadAudio(SfxDir + "plate_press.wav");
+            audioMgr.buttonClickClip = LoadAudio(SfxDir + "button_click.wav");
+            audioMgr.doorOpenClip = LoadAudio(SfxDir + "door_open.wav");
+            audioMgr.levelWinClip = LoadAudio(SfxDir + "level_win.wav");
+            audioMgr.blockPushClip = LoadAudio(SfxDir + "block_push.wav");
+            audioMgr.bgmLightClip = LoadAudio(SfxDir + "bgm_light_realm.wav");
+            audioMgr.bgmShadowClip = LoadAudio(SfxDir + "bgm_shadow_realm.wav");
+
+            hud = logicGo.AddComponent<PuzzleHUD>();
+            hud.gameLogic = gameLogic;
+
+            GameObject jimmyGo = new GameObject("Jimmy");
+            playerMovement = jimmyGo.AddComponent<PlayerMovement>();
+            playerMovement.logic = gameLogic;
+            hud.player = playerMovement;
+
+            AudioSource walkSource = jimmyGo.AddComponent<AudioSource>();
+            walkSource.playOnAwake = false;
+            walkSource.volume = 0.55f;
+            MusicShuffler shuffler = jimmyGo.AddComponent<MusicShuffler>();
+            shuffler.Jimmy = playerMovement;
+            shuffler.walking = walkSource;
+            shuffler.songs = new[]
+            {
+                LoadAudio("Assets/Sounds/Walking/walking_1.mp3"),
+                LoadAudio("Assets/Sounds/Walking/walking_2.mp3")
+            };
+
+            GameObjectToggle switcher = jimmyGo.AddComponent<GameObjectToggle>();
+            switcher.logic = gameLogic;
+
+            GameObject lightForm = CreatePlayerForm("LightJimmy", jimmyGo.transform, playerStart,
+                "Assets/Images/Jimmy/Light/light_down.PNG", Color.white);
+            Light lightComp = lightForm.AddComponent<Light>();
+            lightComp.Jimmy = playerMovement;
+            lightComp.moveSpeed = 8f;
+
+            GameObject darkForm = CreatePlayerForm("DarkJimmy", jimmyGo.transform, playerStart,
+                "Assets/Images/Jimmy/Dark/dark_down.PNG", new Color(0.85f, 0.85f, 1f, 1f));
+            Dark darkComp = darkForm.AddComponent<Dark>();
+            darkComp.Jimmy = playerMovement;
+            darkComp.moveSpeed = 6.5f;
+            darkForm.SetActive(false);
+
+            switcher.lightObject = lightForm;
+            switcher.darkObject = darkForm;
+
+            playerMovement.LightspriteRenderer = lightForm.GetComponent<SpriteRenderer>();
+            playerMovement.DarkspriteRenderer = darkForm.GetComponent<SpriteRenderer>();
+            playerMovement.LightspriteUp = LoadSprite("Assets/Images/Jimmy/Light/light_up.PNG");
+            playerMovement.LightspriteDown = LoadSprite("Assets/Images/Jimmy/Light/light_down.PNG");
+            playerMovement.LightspriteLeft = LoadSprite("Assets/Images/Jimmy/Light/light_left.PNG");
+            playerMovement.LightspriteRight = LoadSprite("Assets/Images/Jimmy/Light/light_right.PNG");
+            playerMovement.DarkspriteUp = LoadSprite("Assets/Images/Jimmy/Dark/dark_up.PNG");
+            playerMovement.DarkspriteDown = LoadSprite("Assets/Images/Jimmy/Dark/dark_down.PNG");
+            playerMovement.DarkspriteLeft = LoadSprite("Assets/Images/Jimmy/Dark/dark_left.PNG");
+            playerMovement.DarkspriteRight = LoadSprite("Assets/Images/Jimmy/Dark/dark_right.PNG");
+        }
+
+        private static void CreateArenaWalls(CelAssets assets)
+        {
+            CreateWall("Wall_Top", new Vector3(0f, 6.1f, 0f), new Vector2(22f, 1.05f), assets, WorldAffinity.Both, WallTileStyle.Long);
+            CreateWall("Wall_Bottom", new Vector3(0f, -6.1f, 0f), new Vector2(22f, 1.05f), assets, WorldAffinity.Both, WallTileStyle.Long);
+            CreateWall("Wall_Left", new Vector3(-10.5f, 0f, 0f), new Vector2(1.0f, 13.2f), assets, WorldAffinity.Both, WallTileStyle.Pillar);
+            CreateWall("Wall_Right", new Vector3(10.5f, 0f, 0f), new Vector2(1.0f, 13.2f), assets, WorldAffinity.Both, WallTileStyle.Pillar);
+        }
+
+        private static GameObject CreatePlayerForm(string name, Transform parent, Vector3 pos, string spritePath, Color fallbackColor)
+        {
+            GameObject go = new GameObject(name);
+            go.transform.SetParent(parent, false);
+            go.transform.position = pos;
+
+            SpriteRenderer sr = go.AddComponent<SpriteRenderer>();
+            sr.sprite = LoadSprite(spritePath);
+            sr.color = fallbackColor;
+            sr.sortingOrder = 10;
+
+            Rigidbody2D rb = go.AddComponent<Rigidbody2D>();
+            rb.gravityScale = 0f;
+            rb.freezeRotation = true;
+
+            CircleCollider2D col = go.AddComponent<CircleCollider2D>();
+            col.radius = 0.38f;
+
+            return go;
+        }
+
+        private static GameObject CreateWall(string name, Vector3 pos, Vector2 size, CelAssets assets, WorldAffinity affinity, WallTileStyle style = WallTileStyle.Medium)
+        {
+            GameObject go = new GameObject(name);
+            go.transform.position = pos;
+
+            Sprite lightSprite = assets.WallLightMedium;
+            Sprite shadowSprite = assets.WallShadowMedium;
+            switch (style)
+            {
+                case WallTileStyle.Long:
+                    lightSprite = assets.WallLightLong;
+                    shadowSprite = assets.WallShadowLong;
+                    break;
+                case WallTileStyle.Pillar:
+                    lightSprite = assets.WallLightPillar;
+                    shadowSprite = assets.WallShadowPillar;
+                    break;
+                case WallTileStyle.Ruined:
+                    lightSprite = assets.WallLightRuined;
+                    shadowSprite = assets.WallShadowRuined;
+                    break;
+            }
+
+            SpriteRenderer sr = go.AddComponent<SpriteRenderer>();
+            sr.sprite = affinity == WorldAffinity.ShadowOnly ? shadowSprite : lightSprite;
+            sr.drawMode = style == WallTileStyle.Ruined ? SpriteDrawMode.Simple : SpriteDrawMode.Tiled;
+            if (sr.drawMode == SpriteDrawMode.Tiled)
+            {
+                sr.size = size;
+            }
+            sr.sortingOrder = 2;
+
+            BoxCollider2D col = go.AddComponent<BoxCollider2D>();
+            col.size = size;
+
+            WorldPhaseObject phase = go.AddComponent<WorldPhaseObject>();
+            phase.affinity = affinity;
+            if (affinity == WorldAffinity.Both)
+            {
+                phase.lightWorldSprite = lightSprite;
+                phase.shadowWorldSprite = shadowSprite;
+            }
+            return go;
+        }
+
+        private static LightBeamEmitter CreateEmitter(string name, Vector3 pos, LightColor color, WorldAffinity world, Vector2 dir, CelAssets assets)
+        {
+            GameObject go = new GameObject(name);
+            go.transform.position = pos;
+            go.transform.localScale = new Vector3(0.95f, 0.95f, 1f);
+
+            SpriteRenderer sr = go.AddComponent<SpriteRenderer>();
+            sr.sprite = assets.EmitterActive;
+            sr.color = Color.Lerp(Color.white, LightColorUtility.ToUnityColor(color), 0.25f);
+            sr.sortingOrder = 4;
+
+            LightBeamEmitter emitter = go.AddComponent<LightBeamEmitter>();
+            emitter.beamColor = color;
+            emitter.activeInWorld = world;
+            emitter.localEmitDirection = dir;
+            emitter.emitterRenderer = sr;
+            emitter.activeEmitterSprite = assets.EmitterActive;
+            emitter.inactiveEmitterSprite = assets.EmitterIdle;
+            return emitter;
+        }
+
+        private static GameObject CreateIsometricMirror(string name, Vector3 pos, float startAngle, float stepDegrees, WorldAffinity affinity, CelAssets assets, bool canRotate = true)
+        {
+            GameObject go = new GameObject(name);
+            go.transform.position = pos;
+            go.transform.localScale = new Vector3(0.95f, 0.95f, 1f);
+
+            SpriteRenderer sr = go.AddComponent<SpriteRenderer>();
+            sr.sprite = assets.MirrorDirections[0];
+            sr.sortingOrder = 4;
+
+            BoxCollider2D col = go.AddComponent<BoxCollider2D>();
+            col.size = new Vector2(1.05f, 1.05f);
+
+            OpticalMirror mirror = go.AddComponent<OpticalMirror>();
+            mirror.isTwoSided = true;
+            mirror.canRotate = canRotate;
+            mirror.rotationStepDegrees = stepDegrees;
+            mirror.directionalSprites = assets.MirrorDirections;
+            mirror.logicalAngle = startAngle;
+            mirror.ApplyIsometricVisual();
+
+            WorldPhaseObject phase = go.AddComponent<WorldPhaseObject>();
+            phase.affinity = affinity;
+            return go;
+        }
+
+        private static GameObject CreatePrism(string name, Vector3 pos, float zAngle, OpticalPrism.PrismMode mode, float splitAngle, bool orientAlongTransform, bool canRotate, float stepDegrees, CelAssets assets)
+        {
+            GameObject prismGo = new GameObject(name);
+            prismGo.transform.position = pos;
+            prismGo.transform.rotation = Quaternion.Euler(0f, 0f, zAngle);
+            prismGo.transform.localScale = new Vector3(0.95f, 0.95f, 1f);
+
+            SpriteRenderer prismSr = prismGo.AddComponent<SpriteRenderer>();
+            prismSr.sprite = assets.PrismCrystal;
+            prismSr.sortingOrder = 4;
+
+            BoxCollider2D col = prismGo.AddComponent<BoxCollider2D>();
+            col.size = new Vector2(1.0f, 1.0f);
+
+            OpticalPrism prism = prismGo.AddComponent<OpticalPrism>();
+            prism.mode = mode;
+            prism.splitAngle = splitAngle;
+            prism.orientAlongTransform = orientAlongTransform;
+            prism.canRotate = canRotate;
+            prism.rotationStepDegrees = stepDegrees;
+            return prismGo;
+        }
+
+        private static GameObject CreateColorFilter(string name, Vector3 pos, Vector2 size, LightColor color, CelAssets assets)
+        {
+            GameObject filterGo = new GameObject(name);
+            filterGo.transform.position = pos;
+
+            SpriteRenderer sr = filterGo.AddComponent<SpriteRenderer>();
+            sr.sprite = assets.FloorLight;
+            sr.drawMode = SpriteDrawMode.Tiled;
+            sr.size = size;
+            sr.sortingOrder = 3;
+
+            BoxCollider2D col = filterGo.AddComponent<BoxCollider2D>();
+            col.size = size;
+
+            ColorFilter filter = filterGo.AddComponent<ColorFilter>();
+            filter.filterColor = color;
+            return filterGo;
+        }
+
+        private static LightSensor CreateSensor(string name, Vector3 pos, LightColor color, WorldAffinity requiredWorld, CelAssets assets, bool acceptAny = false)
+        {
+            GameObject go = new GameObject(name);
+            go.transform.position = pos;
+            go.transform.localScale = new Vector3(0.9f, 0.9f, 1f);
+
+            SpriteRenderer sr = go.AddComponent<SpriteRenderer>();
+            sr.sprite = requiredWorld == WorldAffinity.ShadowOnly ? assets.ReceiverInactiveDark : assets.ReceiverInactive;
+            sr.sortingOrder = 3;
+
+            BoxCollider2D col = go.AddComponent<BoxCollider2D>();
+            col.size = new Vector2(1.05f, 1.05f);
+
+            LightSensor sensor = go.AddComponent<LightSensor>();
+            sensor.requiredColor = color;
+            sensor.acceptAnyColor = acceptAny;
+            sensor.requiredWorld = requiredWorld;
+            sensor.indicatorRenderer = sr;
+            sensor.inactiveSprite = requiredWorld == WorldAffinity.ShadowOnly ? assets.ReceiverInactiveDark : assets.ReceiverInactive;
+            sensor.activeSprite = assets.ReceiverActiveGlow;
+            return sensor;
+        }
+
+        private static PuzzleLever CreateLever(string name, Vector3 pos, CelAssets assets, WorldAffinity usableWorld,
+            OpticalMirror[] controlledMirrors = null, GameObject[] toggledObjects = null)
+        {
+            GameObject go = new GameObject(name);
+            go.transform.position = pos;
+            go.transform.localScale = new Vector3(0.95f, 0.95f, 1f);
+
+            SpriteRenderer sr = go.AddComponent<SpriteRenderer>();
+            sr.sprite = assets.LeverOff;
+            sr.sortingOrder = 3;
+
+            BoxCollider2D col = go.AddComponent<BoxCollider2D>();
+            col.size = new Vector2(1.1f, 1.0f);
+            col.isTrigger = true;
+
+            PuzzleLever lever = go.AddComponent<PuzzleLever>();
+            lever.usableInWorld = usableWorld;
+            lever.leverRenderer = sr;
+            lever.leverOffSprite = assets.LeverOff;
+            lever.leverOnSprite = assets.LeverOn;
+            lever.controlledMirrors = controlledMirrors;
+            lever.toggledObjects = toggledObjects;
+            return lever;
+        }
+
+        private static PuzzleDoor CreateDoor(string name, Vector3 pos, Vector2 size, CelAssets assets,
+            LightSensor[] sensors, PressurePlate[] plates, PuzzleLever[] levers, bool requireAll, bool stayOpen)
+        {
+            GameObject doorGo = new GameObject(name);
+            doorGo.transform.position = pos;
+            doorGo.transform.localScale = new Vector3(size.x / 1.28f, size.y / 1.60f, 1f);
+
+            SpriteRenderer doorSr = doorGo.AddComponent<SpriteRenderer>();
+            doorSr.sprite = assets.DoorClosed;
+            doorSr.color = Color.white;
+            doorSr.sortingOrder = 3;
+
+            BoxCollider2D col = doorGo.AddComponent<BoxCollider2D>();
+            col.size = new Vector2(1.15f, 1.5f);
+
+            PuzzleDoor door = doorGo.AddComponent<PuzzleDoor>();
+            door.requiredSensors = sensors;
+            door.requiredPlates = plates;
+            door.requiredLevers = levers;
+            door.requireAll = requireAll;
+            door.stayOpenOnceUnlocked = stayOpen;
+            door.closedSprite = assets.DoorClosed;
+            door.openSprite = assets.DoorOpen;
+            return door;
+        }
+
+        private static GameObject CreatePushableBlock(string name, Vector3 pos, CelAssets assets)
+        {
+            GameObject go = new GameObject(name);
+            go.transform.position = pos;
+            go.transform.localScale = new Vector3(0.95f, 0.95f, 1f);
+
+            SpriteRenderer sr = go.AddComponent<SpriteRenderer>();
+            sr.sprite = assets.EmitterBroken;
+            sr.sortingOrder = 4;
+
+            BoxCollider2D col = go.AddComponent<BoxCollider2D>();
+            col.size = new Vector2(0.95f, 0.85f);
+
+            go.AddComponent<PushableBlock>();
+            return go;
+        }
+
+        private static PressurePlate CreatePressurePlate(string name, Vector3 pos, CelAssets assets, WorldAffinity form, bool latch = false)
+        {
+            GameObject plateGo = new GameObject(name);
+            plateGo.transform.position = pos;
+            plateGo.transform.localScale = new Vector3(0.9f, 0.9f, 1f);
+
+            SpriteRenderer plateSr = plateGo.AddComponent<SpriteRenderer>();
+            plateSr.sprite = assets.ButtonUp;
+            plateSr.sortingOrder = -1;
+
+            BoxCollider2D col = plateGo.AddComponent<BoxCollider2D>();
+            col.size = new Vector2(1.15f, 1.15f);
+            col.isTrigger = true;
+
+            PressurePlate plate = plateGo.AddComponent<PressurePlate>();
+            plate.acceptedForm = form;
+            plate.latchOncePressed = latch;
+            plate.plateRenderer = plateSr;
+            plate.unpressedSprite = assets.ButtonUp;
+            plate.pressedSprite = assets.ButtonDown;
+            return plate;
+        }
+
+        private static GameObject CreateExit(string name, Vector3 pos, CelAssets assets, PuzzleDoor[] requiredDoors, string nextScene)
+        {
+            GameObject exitGo = new GameObject(name);
+            exitGo.transform.position = pos;
+            exitGo.transform.localScale = new Vector3(1.05f, 1.05f, 1f);
+
+            SpriteRenderer exitSr = exitGo.AddComponent<SpriteRenderer>();
+            exitSr.sprite = assets.ReceiverActiveWhite;
+            exitSr.color = new Color(0.45f, 1f, 0.72f, 1f);
+            exitSr.sortingOrder = 1;
+
+            BoxCollider2D col = exitGo.AddComponent<BoxCollider2D>();
+            col.size = new Vector2(1.2f, 1.0f);
+            col.isTrigger = true;
+
+            LevelExit exit = exitGo.AddComponent<LevelExit>();
+            exit.requiredDoors = requiredDoors;
+            exit.nextSceneName = nextScene;
+            return exitGo;
+        }
+
+        private static bool IsInPlayModeGuard()
+        {
+            if (!EditorApplication.isPlayingOrWillChangePlaymode) return false;
+            EditorUtility.DisplayDialog("Stop Play Mode", "Please exit Play Mode before generating puzzle scenes.", "OK");
+            return true;
+        }
+
+        private static void ConfigureCelShadedSprites()
+        {
+            if (!Directory.Exists(CelDir)) return;
+            string[] files = Directory.GetFiles(CelDir, "*.png");
+            foreach (string file in files)
+            {
+                string assetPath = file.Replace('\\', '/');
+                if (assetPath.EndsWith("CelShaded_SpriteSheet.png")) continue;
+                TextureImporter importer = AssetImporter.GetAtPath(assetPath) as TextureImporter;
+                if (importer == null) continue;
+
+                bool changed = false;
+                if (importer.textureType != TextureImporterType.Sprite)
+                {
+                    importer.textureType = TextureImporterType.Sprite;
+                    changed = true;
+                }
+                if (Mathf.Abs(importer.spritePixelsPerUnit - 100f) > 0.1f)
+                {
+                    importer.spritePixelsPerUnit = 100f;
+                    changed = true;
+                }
+                if (importer.wrapMode != TextureWrapMode.Repeat)
+                {
+                    importer.wrapMode = TextureWrapMode.Repeat;
+                    changed = true;
+                }
+
+                TextureImporterSettings settings = new TextureImporterSettings();
+                importer.ReadTextureSettings(settings);
+                if (settings.spriteMeshType != SpriteMeshType.FullRect)
+                {
+                    settings.spriteMeshType = SpriteMeshType.FullRect;
+                    importer.SetTextureSettings(settings);
+                    changed = true;
+                }
+
+                if (changed) importer.SaveAndReimport();
+            }
+            AssetDatabase.Refresh();
+        }
+
+        private static CelAssets LoadCelAssets()
+        {
+            ConfigureCelShadedSprites();
+            return new CelAssets
+            {
+                EmitterIdle = LoadSprite(CelDir + "Emitter_Idle.png"),
+                EmitterActive = LoadSprite(CelDir + "Emitter_Active.png"),
+                EmitterBroken = LoadSprite(CelDir + "Emitter_Broken.png"),
+                MirrorDirections = new[]
+                {
+                    LoadSprite(CelDir + "Mirror_45.png"),
+                    LoadSprite(CelDir + "Mirror_135.png"),
+                    LoadSprite(CelDir + "Mirror_225.png"),
+                    LoadSprite(CelDir + "Mirror_315.png")
+                },
+                ReceiverInactive = LoadSprite(CelDir + "Receiver_Inactive.png"),
+                ReceiverActiveWhite = LoadSprite(CelDir + "Receiver_Active_White.png"),
+                ReceiverInactiveDark = LoadSprite(CelDir + "Receiver_Inactive_Dark.png"),
+                ReceiverActiveGlow = LoadSprite(CelDir + "Receiver_Active_Glow.png"),
+                WallLightLong = LoadSprite(CelDir + "Wall_Light_Long.png"),
+                WallLightMedium = LoadSprite(CelDir + "Wall_Light_Medium.png"),
+                WallLightPillar = LoadSprite(CelDir + "Wall_Light_Pillar.png"),
+                WallLightRuined = LoadSprite(CelDir + "Wall_Light_Ruined.png"),
+                WallShadowLong = LoadSprite(CelDir + "Wall_Shadow_Long.png"),
+                WallShadowMedium = LoadSprite(CelDir + "Wall_Shadow_Medium.png"),
+                WallShadowPillar = LoadSprite(CelDir + "Wall_Shadow_Pillar.png"),
+                WallShadowRuined = LoadSprite(CelDir + "Wall_Shadow_Ruined.png"),
+                DoorClosed = LoadSprite(CelDir + "Door_Closed.png"),
+                DoorOpen = LoadSprite(CelDir + "Door_Open.png"),
+                LeverOff = LoadSprite(CelDir + "Lever_Off.png"),
+                LeverOn = LoadSprite(CelDir + "Lever_On.png"),
+                ButtonUp = LoadSprite(CelDir + "Button_Up.png"),
+                ButtonDown = LoadSprite(CelDir + "Button_Down.png"),
+                FloorLight = LoadSprite(CelDir + "Floor_Light.png"),
+                FloorShadow = LoadSprite(CelDir + "Floor_Shadow.png"),
+                PrismCrystal = LoadSprite(CelDir + "Prism_Crystal.png")
+            };
+        }
+
+        private static void RegisterScenesInBuildSettings()
+        {
+            var scenes = new List<EditorBuildSettingsScene>();
+            AddSceneIfMissing(scenes, TutorialPath);
+            AddSceneIfMissing(scenes, Level1Path);
+            AddSceneIfMissing(scenes, Level2Path);
+            foreach (var existing in EditorBuildSettings.scenes)
+            {
+                if (existing.path != TutorialPath && existing.path != Level1Path && existing.path != Level2Path)
+                {
+                    scenes.Add(existing);
+                }
+            }
+            EditorBuildSettings.scenes = scenes.ToArray();
+        }
+
+        private static void AddSceneIfMissing(List<EditorBuildSettingsScene> scenes, string path)
+        {
+            if (!File.Exists(path)) return;
+            foreach (var s in scenes)
+            {
+                if (s.path == path) return;
+            }
+            scenes.Add(new EditorBuildSettingsScene(path, true));
+        }
+
+        private static Sprite LoadSprite(string path)
+        {
+            return AssetDatabase.LoadAssetAtPath<Sprite>(path);
+        }
+
+        private static AudioClip LoadAudio(string path)
+        {
+            return AssetDatabase.LoadAssetAtPath<AudioClip>(path);
+        }
+    }
+}
