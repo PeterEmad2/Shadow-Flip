@@ -25,6 +25,9 @@ namespace ShadowFlip.Puzzle
         public AudioClip doorOpenClip;
         public AudioClip levelWinClip;
         public AudioClip blockPushClip;
+        public AudioClip monsterWarnClip;
+        public AudioClip monsterSpawnClip;
+        public AudioClip monsterCatchClip;
 
         [Header("Realm Music")]
         public AudioClip bgmLightClip;
@@ -177,6 +180,9 @@ namespace ShadowFlip.Puzzle
         public void PlayButtonClick() => PlayClip(buttonClickClip, 0.85f);
         public void PlayDoorOpen() => PlayClip(doorOpenClip, 0.9f);
         public void PlayLevelWin() => PlayClip(levelWinClip, 1.0f);
+        public void PlayMonsterWarn() => PlayClip(monsterWarnClip, 0.75f);
+        public void PlayMonsterSpawn() => PlayClip(monsterSpawnClip, 0.95f);
+        public void PlayMonsterCatch() => PlayClip(monsterCatchClip, 1.0f);
 
         public void SetBlockPushing(bool pushing)
         {
@@ -215,6 +221,9 @@ namespace ShadowFlip.Puzzle
             doorOpenClip = doorOpenClip != null ? doorOpenClip : Resources.Load<AudioClip>("SFX/door_open");
             levelWinClip = levelWinClip != null ? levelWinClip : Resources.Load<AudioClip>("SFX/level_win");
             blockPushClip = blockPushClip != null ? blockPushClip : Resources.Load<AudioClip>("SFX/block_push");
+            monsterWarnClip = monsterWarnClip != null ? monsterWarnClip : Resources.Load<AudioClip>("SFX/monster_warn");
+            monsterSpawnClip = monsterSpawnClip != null ? monsterSpawnClip : Resources.Load<AudioClip>("SFX/monster_spawn");
+            monsterCatchClip = monsterCatchClip != null ? monsterCatchClip : Resources.Load<AudioClip>("SFX/monster_catch");
             bgmLightClip = bgmLightClip != null ? bgmLightClip : Resources.Load<AudioClip>("SFX/bgm_light_realm");
             bgmShadowClip = bgmShadowClip != null ? bgmShadowClip : Resources.Load<AudioClip>("SFX/bgm_shadow_realm");
         }

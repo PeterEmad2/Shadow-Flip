@@ -112,6 +112,8 @@ namespace ShadowFlip.Puzzle
             GUI.Label(new Rect(30, 52, 550, 22), $"Crystals: {activeSensors}/{totalSensors}   |   Levers/Buttons: {activeSwitches}/{totalSwitches}   |   Gates: {doorText}", statusStyle);
             GUI.Label(new Rect(30, 76, 550, 22), "[WASD] Move   [F] Flip Realm   [E] Interact   [R] Reset", promptStyle);
 
+            DrawUmbraStalkerHUD(isDark, panelColor, inkColor);
+
             // Interact Prompt Pill
             if (player != null && player.NearbyInteractable != null)
             {
@@ -156,6 +158,59 @@ namespace ShadowFlip.Puzzle
                 GUI.color = Color.white;
                 GUI.Label(new Rect(modalRect.x, modalRect.y + 64f, modalRect.width, 32f), "Advancing... (or press [R] to replay)", hintStyle);
             }
+
+            if (ShadowStalkerController.Instance != null && ShadowStalkerController.Instance.IsPlayerCaught)
+            {
+                Color crimson = new Color(0.95f, 0.22f, 0.35f, 1f);
+                Rect caughtRect = new Rect(Screen.width * 0.5f - 200f, Screen.height * 0.5f - 54f, 400f, 108f);
+                DrawCelPanel(caughtRect, panelColor, inkColor, crimson, 5f);
+                GUI.color = crimson;
+                GUI.Label(new Rect(caughtRect.x, caughtRect.y + 20f, caughtRect.width, 36f), "CAUGHT BY THE UMBRA!", bannerStyle);
+                GUI.color = Color.white;
+                GUI.Label(new Rect(caughtRect.x, caughtRect.y + 60f, caughtRect.width, 28f), "Resetting realm...", bannerStyle);
+            }
+        }
+
+        private void DrawUmbraStalkerHUD(bool isDark, Color panelColor, Color inkColor)
+        {
+            ShadowStalkerController stalker = ShadowStalkerController.Instance;
+            if (stalker == null) return;
+            if (!isDark && stalker.UmbraProgress <= 0.01f && !stalker.IsMonsterActive) return;
+
+            float progress = stalker.UmbraProgress;
+            Color violet = new Color(0.58f, 0.35f, 1.0f, 1f);
+            Color crimson = new Color(0.96f, 0.22f, 0.36f, 1f);
+            Color barColor = Color.Lerp(violet, crimson, progress);
+            if (stalker.IsMonsterActive)
+            {
+                float pulse = 0.65f + 0.35f * Mathf.Sin(Time.unscaledTime * 10f);
+                barColor = Color.Lerp(crimson, Color.white, pulse * 0.35f);
+            }
+
+            Rect dangerPanel = new Rect(Screen.width - 336f, 14f, 320f, 64f);
+            DrawCelPanel(dangerPanel, panelColor, inkColor, barColor, 4f);
+
+            string label = stalker.IsMonsterActive
+                ? "⚠ UMBRA STALKER HUNTING! FLIP [F]!"
+                : $"UMBRA STALKER AWAKENS: {stalker.RemainingSeconds:0.0}s";
+
+            GUI.color = stalker.IsMonsterActive ? barColor : Color.white;
+            GUI.Label(new Rect(dangerPanel.x + 14f, dangerPanel.y + 10f, dangerPanel.width - 28f, 22f), label, statusStyle);
+
+            // Progress bar track + fill
+            Rect track = new Rect(dangerPanel.x + 14f, dangerPanel.y + 38f, dangerPanel.width - 28f, 14f);
+            GUI.color = inkColor;
+            GUI.DrawTexture(track, whiteTex);
+            GUI.color = new Color(0.14f, 0.1f, 0.22f, 1f);
+            GUI.DrawTexture(new Rect(track.x + 2f, track.y + 2f, track.width - 4f, track.height - 4f), whiteTex);
+
+            float fillWidth = (track.width - 4f) * (stalker.IsMonsterActive ? 1f : progress);
+            if (fillWidth > 0.5f)
+            {
+                GUI.color = barColor;
+                GUI.DrawTexture(new Rect(track.x + 2f, track.y + 2f, fillWidth, track.height - 4f), whiteTex);
+            }
+            GUI.color = Color.white;
         }
 
         private void DrawCelPanel(Rect rect, Color fill, Color border, Color topStripe, float borderWidth)

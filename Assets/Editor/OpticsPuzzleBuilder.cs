@@ -28,6 +28,7 @@ namespace ShadowFlip.EditorTools
             public Sprite WallShadowLong, WallShadowMedium, WallShadowPillar, WallShadowRuined;
             public Sprite DoorClosed, DoorOpen, LeverOff, LeverOn, ButtonUp, ButtonDown;
             public Sprite FloorLight, FloorShadow, PrismCrystal;
+            public Sprite UmbraMonster1, UmbraMonster2;
         }
 
         [MenuItem("Shadow Flip/Create All Levels (Tutorial + Level 1 + Level 2)")]
@@ -321,8 +322,15 @@ namespace ShadowFlip.EditorTools
             audioMgr.doorOpenClip = LoadAudio(SfxDir + "door_open.wav");
             audioMgr.levelWinClip = LoadAudio(SfxDir + "level_win.wav");
             audioMgr.blockPushClip = LoadAudio(SfxDir + "block_push.wav");
+            audioMgr.monsterWarnClip = LoadAudio(SfxDir + "monster_warn.wav");
+            audioMgr.monsterSpawnClip = LoadAudio(SfxDir + "monster_spawn.wav");
+            audioMgr.monsterCatchClip = LoadAudio(SfxDir + "monster_catch.wav");
             audioMgr.bgmLightClip = LoadAudio(SfxDir + "bgm_light_realm.wav");
             audioMgr.bgmShadowClip = LoadAudio(SfxDir + "bgm_shadow_realm.wav");
+
+            ShadowStalkerController stalker = logicGo.AddComponent<ShadowStalkerController>();
+            stalker.monsterFrame1 = assets.UmbraMonster1;
+            stalker.monsterFrame2 = assets.UmbraMonster2;
 
             hud = logicGo.AddComponent<PuzzleHUD>();
             hud.gameLogic = gameLogic;
@@ -682,8 +690,15 @@ namespace ShadowFlip.EditorTools
 
         private static void ConfigureCelShadedSprites()
         {
-            if (!Directory.Exists(CelDir)) return;
-            string[] files = Directory.GetFiles(CelDir, "*.png");
+            ConfigureSpriteFolder(CelDir);
+            ConfigureSpriteFolder("Assets/Resources/Sprites/");
+            AssetDatabase.Refresh();
+        }
+
+        private static void ConfigureSpriteFolder(string folderPath)
+        {
+            if (!Directory.Exists(folderPath)) return;
+            string[] files = Directory.GetFiles(folderPath, "*.png");
             foreach (string file in files)
             {
                 string assetPath = file.Replace('\\', '/');
@@ -719,7 +734,6 @@ namespace ShadowFlip.EditorTools
 
                 if (changed) importer.SaveAndReimport();
             }
-            AssetDatabase.Refresh();
         }
 
         private static CelAssets LoadCelAssets()
@@ -757,7 +771,9 @@ namespace ShadowFlip.EditorTools
                 ButtonDown = LoadSprite(CelDir + "Button_Down.png"),
                 FloorLight = LoadSprite(CelDir + "Floor_Light.png"),
                 FloorShadow = LoadSprite(CelDir + "Floor_Shadow.png"),
-                PrismCrystal = LoadSprite(CelDir + "Prism_Crystal.png")
+                PrismCrystal = LoadSprite(CelDir + "Prism_Crystal.png"),
+                UmbraMonster1 = LoadSprite(CelDir + "UmbraMonster_1.png"),
+                UmbraMonster2 = LoadSprite(CelDir + "UmbraMonster_2.png")
             };
         }
 
