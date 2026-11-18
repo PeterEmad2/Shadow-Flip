@@ -16,6 +16,8 @@ namespace ShadowFlip.EditorTools
         private const string TutorialPath = "Assets/Scenes/OpticsPuzzle_Tutorial.unity";
         private const string Level1Path = "Assets/Scenes/OpticsPuzzle.unity";
         private const string Level2Path = "Assets/Scenes/OpticsPuzzle_Level2.unity";
+        private const string Level3Path = "Assets/Scenes/OpticsPuzzle_Level3.unity";
+        private const string Level4Path = "Assets/Scenes/OpticsPuzzle_Level4.unity";
 
         private enum WallTileStyle { Long, Medium, Pillar, Ruined }
 
@@ -28,10 +30,11 @@ namespace ShadowFlip.EditorTools
             public Sprite WallShadowLong, WallShadowMedium, WallShadowPillar, WallShadowRuined;
             public Sprite DoorClosed, DoorOpen, LeverOff, LeverOn, ButtonUp, ButtonDown;
             public Sprite FloorLight, FloorShadow, PrismCrystal;
-            public Sprite UmbraMonster1, UmbraMonster2;
+            public Sprite UmbraMonster1, UmbraMonster2, MonsterPetrified;
+            public Sprite PortalMirrorA, PortalMirrorB, CombinerCrystal, LanternSanctuary, EchoPedestal;
         }
 
-        [MenuItem("Shadow Flip/Create All Levels (Tutorial + Level 1 + Level 2)")]
+        [MenuItem("Shadow Flip/Create All Levels (Tutorial + Levels 1-4)")]
         public static void CreateAllLevels()
         {
             if (IsInPlayModeGuard()) return;
@@ -39,8 +42,10 @@ namespace ShadowFlip.EditorTools
             CreateTutorialLevel();
             CreateOpticsPuzzleLevel();
             CreateOpticsPuzzleLevel2();
+            CreateOpticsPuzzleLevel3();
+            CreateOpticsPuzzleLevel4();
             RegisterScenesInBuildSettings();
-            Debug.Log("Created Tutorial, Level 1, and Level 2 with Cel-Shaded walls, doors, levers, buttons & SFX.");
+            Debug.Log("Created Tutorial and Levels 1-4 with all Cel-Shaded optics, Umbra mechanics & SFX, and registered all 5 in Build Settings.");
         }
 
         [MenuItem("Shadow Flip/Create Tutorial Level")]
@@ -55,16 +60,17 @@ namespace ShadowFlip.EditorTools
                 out logic gameLogic,
                 out PlayerMovement playerMovement,
                 out PuzzleHUD hud,
+                out _,
                 new Color(0.11f, 0.09f, 0.16f, 1f),
                 new Color(1f, 0.96f, 0.88f, 1f), 1.05f,
                 new Color(0.42f, 0.36f, 0.78f, 1f), 0.58f,
                 new Vector3(-8.0f, -2.5f, 0f));
 
+            hud.parFlips = 3;
             CreateArenaWalls(assets);
             CreateWall("RuinedDecor_Tut1", new Vector3(-8.7f, -4.8f, 0f), new Vector2(1.24f, 1.14f), assets, WorldAffinity.Both, WallTileStyle.Ruined);
             CreateWall("RuinedDecor_Tut2", new Vector3(8.7f, 4.7f, 0f), new Vector2(1.24f, 1.14f), assets, WorldAffinity.Both, WallTileStyle.Ruined);
 
-            // Lesson 1 Zone (x < -4.0): Rotate Mirror_Tut1 (45 -> 135) + Pull Lever_Tut to open TutDoor_1
             CreateEmitter("Emitter_Tut1", new Vector3(-8.5f, 3.0f, 0f), LightColor.White, WorldAffinity.Both, Vector2.right, assets);
             GameObject mirror1 = CreateIsometricMirror("Mirror_Tut1", new Vector3(-6.0f, 3.0f, 0f), 45f, 90f, WorldAffinity.Both, assets);
             LightSensor sensor1 = CreateSensor("Sensor_Tut1", new Vector3(-6.0f, -0.5f, 0f), LightColor.White, WorldAffinity.Both, assets, acceptAny: true);
@@ -75,15 +81,12 @@ namespace ShadowFlip.EditorTools
             PuzzleDoor door1 = CreateDoor("TutDoor_1", new Vector3(-4.0f, -0.8f, 0f), new Vector2(1.1f, 2.8f), assets,
                 new[] { sensor1 }, null, new[] { lever1 }, requireAll: true, stayOpen: true);
 
-            // Lesson 2 Barrier (x = -1.5): LightOnly stone wall spanning hallway -> Flip [F] to Shadow Realm to pass!
             GameObject phaseWall = CreateWall("TutPhaseWall_LightOnly", new Vector3(-1.5f, 0.0f, 0f), new Vector2(0.85f, 11.4f), assets, WorldAffinity.LightOnly, WallTileStyle.Pillar);
 
-            // Lesson 3 Zone (Shadow Realm Mirror)
             CreateEmitter("Emitter_Tut2_Shadow", new Vector3(0.5f, 3.5f, 0f), LightColor.Shadow, WorldAffinity.ShadowOnly, Vector2.right, assets);
             GameObject mirror2 = CreateIsometricMirror("Mirror_Tut2_Shadow", new Vector3(4.0f, 3.5f, 0f), 45f, 90f, WorldAffinity.ShadowOnly, assets);
             LightSensor sensor2 = CreateSensor("Sensor_Tut2_Shadow", new Vector3(4.0f, 0.5f, 0f), LightColor.Shadow, WorldAffinity.ShadowOnly, assets);
 
-            // Lesson 4 Zone (Pushable Ruin Block -> Floor Button -> Final Dungeon Gate)
             GameObject blockTut = CreatePushableBlock("RuinBlock_Tut", new Vector3(0.5f, -3.0f, 0f), assets);
             PressurePlate plateTut = CreatePressurePlate("Button_Tut", new Vector3(4.0f, -3.0f, 0f), assets, WorldAffinity.Both, latch: false);
 
@@ -133,11 +136,13 @@ namespace ShadowFlip.EditorTools
                 out logic gameLogic,
                 out PlayerMovement playerMovement,
                 out PuzzleHUD hud,
+                out _,
                 new Color(0.08f, 0.09f, 0.13f, 1f),
                 new Color(1f, 0.98f, 0.92f, 1f), 1.0f,
                 new Color(0.45f, 0.52f, 0.85f, 1f), 0.55f,
                 new Vector3(-7.8f, -3.5f, 0f));
 
+            hud.parFlips = 3;
             hud.lessonTitle = "Level 1: Chromatic Vault";
             hud.levelHint = "Align Mirror_Red1 in Light Realm, pull the Green Shutter Lever, step on the Vault Button, then flip [F] to Shadow Realm!";
 
@@ -150,12 +155,10 @@ namespace ShadowFlip.EditorTools
 
             CreatePrism("RGB_Prism", new Vector3(-3.5f, 1.5f, 0f), 90f, OpticalPrism.PrismMode.DisperseRGB, 90f, true, true, 90f, assets);
 
-            // Blue Path (+90 UP)
             CreateIsometricMirror("Mirror_Blue1", new Vector3(-3.5f, 4.2f, 0f), 135f, 90f, WorldAffinity.Both, assets);
             CreateColorFilter("BlueFilter", new Vector3(0.5f, 4.2f, 0f), new Vector2(0.45f, 1.1f), LightColor.Blue, assets);
             LightSensor blueSensor = CreateSensor("Sensor_Blue", new Vector3(4.2f, 4.2f, 0f), LightColor.Blue, WorldAffinity.ShadowOnly, assets);
 
-            // Green Path (0 RIGHT) with Lever-controlled Stone Shutter at (0.8, 1.5)
             CreateColorFilter("GreenFilter", new Vector3(-0.5f, 1.5f, 0f), new Vector2(0.45f, 1.1f), LightColor.Green, assets);
             GameObject greenBarrier = CreateWall("GreenPath_Barrier", new Vector3(0.8f, 1.5f, 0f), new Vector2(0.65f, 1.4f), assets, WorldAffinity.Both, WallTileStyle.Medium);
             CreateIsometricMirror("Mirror_Green", new Vector3(2.2f, 1.5f, 0f), 45f, 90f, WorldAffinity.ShadowOnly, assets);
@@ -164,7 +167,6 @@ namespace ShadowFlip.EditorTools
             PuzzleLever greenLever = CreateLever("Lever_GreenShutter", new Vector3(-1.0f, -2.2f, 0f), assets, WorldAffinity.Both,
                 toggledObjects: new[] { greenBarrier });
 
-            // Red Path (-90 DOWN)
             GameObject mirrorRed1 = CreateIsometricMirror("Mirror_Red1", new Vector3(-3.5f, -3.5f, 0f), 45f, 90f, WorldAffinity.Both, assets);
             mirrorRed1.GetComponent<OpticalMirror>().requireLightWorldToRotate = true;
             mirrorRed1.GetComponent<SpriteRenderer>().color = new Color(1f, 0.88f, 0.55f, 1f);
@@ -172,10 +174,8 @@ namespace ShadowFlip.EditorTools
             CreateIsometricMirror("Mirror_Red2", new Vector3(4.5f, -3.5f, 0f), 135f, 90f, WorldAffinity.Both, assets);
             LightSensor redSensor = CreateSensor("Sensor_Red", new Vector3(4.5f, -0.8f, 0f), LightColor.Red, WorldAffinity.Both, assets);
 
-            // Latching Vault Floor Button
             PressurePlate vaultButton = CreatePressurePlate("Button_VaultSeal", new Vector3(0.5f, 2.8f, 0f), assets, WorldAffinity.Both, latch: true);
 
-            // Sealed Vault at x = 6.5
             CreateWall("VaultWall_Upper", new Vector3(6.5f, 3.8f, 0f), new Vector2(0.85f, 4.4f), assets, WorldAffinity.Both, WallTileStyle.Pillar);
             CreateWall("VaultWall_Lower", new Vector3(6.5f, -3.6f, 0f), new Vector2(0.85f, 4.8f), assets, WorldAffinity.Both, WallTileStyle.Pillar);
             PuzzleDoor door = CreateDoor("PuzzleDoor", new Vector3(6.5f, 0.2f, 0f), new Vector2(1.1f, 2.8f), assets,
@@ -201,17 +201,18 @@ namespace ShadowFlip.EditorTools
                 out logic gameLogic,
                 out PlayerMovement playerMovement,
                 out PuzzleHUD hud,
+                out _,
                 new Color(0.05f, 0.04f, 0.09f, 1f),
                 new Color(1f, 0.91f, 0.70f, 1f), 1.15f,
                 new Color(0.32f, 0.22f, 0.58f, 1f), 0.48f,
                 new Vector3(-7.5f, 0f, 0f));
 
+            hud.parFlips = 3;
             hud.lessonTitle = "Level 2: Eclipse Temple";
             hud.levelHint = "Light Realm: route Red & press the Light Button. Pull the Lever to rotate the enclosed Shadow Mirror, then flip [F] to push the Ruin Block!";
 
             CreateArenaWalls(assets);
 
-            // Stage 1 (Light World)
             CreateEmitter("LightOnly_Emitter", new Vector3(-8.5f, 3.8f, 0f), LightColor.White, WorldAffinity.LightOnly, Vector2.right, assets);
             CreateIsometricMirror("Mirror_L1", new Vector3(-5.2f, 3.8f, 0f), 45f, 90f, WorldAffinity.Both, assets);
             CreatePrism("Splitter_Prism", new Vector3(-5.2f, 0.5f, 0f), -90f, OpticalPrism.PrismMode.Splitter, 90f, true, false, 90f, assets);
@@ -221,7 +222,6 @@ namespace ShadowFlip.EditorTools
             LightSensor stage1Sensor = CreateSensor("Sensor_Stage1_Red", new Vector3(4.2f, -2.8f, 0f), LightColor.Red, WorldAffinity.LightOnly, assets);
             PressurePlate lightButton = CreatePressurePlate("Light_Button", new Vector3(1.5f, -1.6f, 0f), assets, WorldAffinity.LightOnly, latch: true);
 
-            // Stage 2 (Shadow World) + Stone Alcove around remote-controlled Mirror_S2
             CreateEmitter("ShadowOnly_Emitter", new Vector3(-8.5f, -4.3f, 0f), LightColor.Shadow, WorldAffinity.ShadowOnly, Vector2.right, assets);
             CreateIsometricMirror("Mirror_S1", new Vector3(-1.2f, -4.3f, 0f), 135f, 90f, WorldAffinity.ShadowOnly, assets);
 
@@ -235,7 +235,6 @@ namespace ShadowFlip.EditorTools
 
             LightSensor shadowSensor = CreateSensor("Sensor_Stage2_Shadow", new Vector3(4.2f, 4.3f, 0f), LightColor.Shadow, WorldAffinity.ShadowOnly, assets);
 
-            // Walled Block Chamber (entrance guarded by LightOnly_Gate at x = 0.4)
             CreateWall("ChannelWall_Top", new Vector3(3.0f, 3.3f, 0f), new Vector2(6.4f, 0.65f), assets, WorldAffinity.Both, WallTileStyle.Medium);
             CreateWall("ChannelWall_Bottom", new Vector3(3.0f, 0.4f, 0f), new Vector2(6.4f, 0.65f), assets, WorldAffinity.Both, WallTileStyle.Medium);
             CreateWall("LightOnly_Gate", new Vector3(0.4f, 1.85f, 0f), new Vector2(0.75f, 2.5f), assets, WorldAffinity.LightOnly, WallTileStyle.Pillar);
@@ -243,7 +242,6 @@ namespace ShadowFlip.EditorTools
             CreatePushableBlock("PushableBlock", new Vector3(-2.5f, 1.85f, 0f), assets);
             PressurePlate shadowPlate = CreatePressurePlate("Shadow_PressurePlate", new Vector3(3.6f, 1.85f, 0f), assets, WorldAffinity.ShadowOnly, latch: false);
 
-            // Sealed Double-Door Airlock Vault at x = 6.2 and x = 7.3
             CreateWall("Vault1_Upper", new Vector3(6.2f, 4.6f, 0f), new Vector2(0.75f, 3.0f), assets, WorldAffinity.Both, WallTileStyle.Pillar);
             CreateWall("Vault1_Lower", new Vector3(6.2f, -2.7f, 0f), new Vector2(0.75f, 6.6f), assets, WorldAffinity.Both, WallTileStyle.Pillar);
             PuzzleDoor lightDoor = CreateDoor("PuzzleDoor_Light", new Vector3(6.2f, 1.85f, 0f), new Vector2(1.0f, 2.5f), assets,
@@ -254,7 +252,7 @@ namespace ShadowFlip.EditorTools
             PuzzleDoor shadowDoor = CreateDoor("PuzzleDoor_Shadow", new Vector3(7.3f, 1.85f, 0f), new Vector2(1.0f, 2.5f), assets,
                 new[] { shadowSensor }, new[] { shadowPlate }, new[] { remoteLever }, requireAll: true, stayOpen: false);
 
-            CreateExit("LevelExit", new Vector3(8.9f, 1.85f, 0f), assets, new[] { lightDoor, shadowDoor }, "");
+            CreateExit("LevelExit", new Vector3(8.9f, 1.85f, 0f), assets, new[] { lightDoor, shadowDoor }, "OpticsPuzzle_Level3");
 
             EditorSceneManager.SaveScene(scene, Level2Path);
             RegisterScenesInBuildSettings();
@@ -262,11 +260,132 @@ namespace ShadowFlip.EditorTools
             Debug.Log("Created Optics Puzzle Level 2 at " + Level2Path);
         }
 
+        [MenuItem("Shadow Flip/Create Level 3 (The Prism Sanctum)")]
+        public static void CreateOpticsPuzzleLevel3()
+        {
+            if (IsInPlayModeGuard()) return;
+            CelAssets assets = LoadCelAssets();
+            var scene = EditorSceneManager.NewScene(NewSceneSetup.EmptyScene, NewSceneMode.Single);
+
+            SetupCoreScene(
+                assets,
+                out logic gameLogic,
+                out PlayerMovement playerMovement,
+                out PuzzleHUD hud,
+                out _,
+                new Color(0.06f, 0.08f, 0.14f, 1f),
+                new Color(1f, 0.96f, 0.86f, 1f), 1.05f,
+                new Color(0.35f, 0.30f, 0.68f, 1f), 0.52f,
+                new Vector3(-8.0f, -3.5f, 0f));
+
+            hud.parFlips = 4;
+            hud.lessonTitle = "Level 3: The Prism Sanctum";
+            hud.levelHint = "Combine Red+Blue into White, warp across the wall via Portal Mirrors, push & rotate the Mirror Cart to charge the 7s Capacitor Crystal, then flip [F] and dash through!";
+
+            CreateArenaWalls(assets);
+
+            // Center Divider Wall at x = -0.5 with a LightOnly gate at (-0.5, -0.5)
+            CreateWall("Divider_Top", new Vector3(-0.5f, 3.3f, 0f), new Vector2(0.8f, 5.2f), assets, WorldAffinity.Both, WallTileStyle.Pillar);
+            CreateWall("Divider_Gate_LightOnly", new Vector3(-0.5f, -0.5f, 0f), new Vector2(0.8f, 2.4f), assets, WorldAffinity.LightOnly, WallTileStyle.Pillar);
+            CreateWall("Divider_Bottom", new Vector3(-0.5f, -3.9f, 0f), new Vector2(0.8f, 4.4f), assets, WorldAffinity.Both, WallTileStyle.Pillar);
+
+            // West Chamber: Red + Blue -> ColorCombiner -> PortalMirror_A -> PortalMirror_B
+            CreateEmitter("Emitter_Red", new Vector3(-8.5f, 4.0f, 0f), LightColor.Red, WorldAffinity.Both, Vector2.right, assets);
+            CreateIsometricMirror("Mirror_W1", new Vector3(-4.5f, 4.0f, 0f), 45f, 90f, WorldAffinity.Both, assets);
+            CreateEmitter("Emitter_Blue", new Vector3(-8.5f, 1.5f, 0f), LightColor.Blue, WorldAffinity.Both, Vector2.right, assets);
+            CreateColorCombiner("Combiner_White", new Vector3(-4.5f, 1.5f, 0f), LightColor.Red, LightColor.Blue, LightColor.White, assets);
+
+            PortalMirror portalB = CreatePortalMirror("PortalMirror_B", new Vector3(1.2f, 4.0f, 0f), assets.PortalMirrorB, Vector2.down, null);
+            CreatePortalMirror("PortalMirror_A", new Vector3(-2.0f, 1.5f, 0f), assets.PortalMirrorA, Vector2.right, portalB, canRotate: false);
+
+            // East Chamber: Backstop wall + Pushable Mirror Cart + Timed Capacitor Crystal
+            CreateWall("Cart_Backstop", new Vector3(4.2f, 5.05f, 0f), new Vector2(1.4f, 0.7f), assets, WorldAffinity.Both, WallTileStyle.Medium);
+            CreatePushableMirrorCart("PushableMirrorCart", new Vector3(4.2f, 1.8f, 0f), 45f, 90f, assets);
+
+            LightSensor capSensor = CreateSensor("Sensor_Capacitor_7s", new Vector3(4.2f, -0.2f, 0f), LightColor.White, WorldAffinity.LightOnly, assets);
+            capSensor.holdDuration = 7.0f;
+
+            // Inner Shutter corridor before PuzzleDoor
+            CreateWall("Shutter_Corridor_Top", new Vector3(5.95f, -0.4f, 0f), new Vector2(1.7f, 0.6f), assets, WorldAffinity.Both, WallTileStyle.Medium);
+            CreateWall("Shutter_Corridor_Bot", new Vector3(5.95f, -3.6f, 0f), new Vector2(1.7f, 0.6f), assets, WorldAffinity.Both, WallTileStyle.Medium);
+            CreateWall("InnerShutter_LightOnly", new Vector3(5.4f, -2.0f, 0f), new Vector2(0.65f, 2.6f), assets, WorldAffinity.LightOnly, WallTileStyle.Pillar);
+
+            CreateWall("VaultWall_Upper", new Vector3(6.5f, 2.8f, 0f), new Vector2(0.8f, 6.2f), assets, WorldAffinity.Both, WallTileStyle.Pillar);
+            CreateWall("VaultWall_Lower", new Vector3(6.5f, -4.7f, 0f), new Vector2(0.8f, 2.4f), assets, WorldAffinity.Both, WallTileStyle.Pillar);
+            PuzzleDoor door = CreateDoor("PuzzleDoor_Capacitor", new Vector3(6.5f, -2.0f, 0f), new Vector2(1.05f, 2.6f), assets,
+                new[] { capSensor }, null, null, requireAll: true, stayOpen: false);
+
+            CreateExit("LevelExit", new Vector3(8.6f, -2.0f, 0f), assets, new[] { door }, "OpticsPuzzle_Level4");
+
+            EditorSceneManager.SaveScene(scene, Level3Path);
+            RegisterScenesInBuildSettings();
+            AssetDatabase.Refresh();
+            Debug.Log("Created Optics Puzzle Level 3 at " + Level3Path);
+        }
+
+        [MenuItem("Shadow Flip/Create Level 4 (Umbra Labyrinth)")]
+        public static void CreateOpticsPuzzleLevel4()
+        {
+            if (IsInPlayModeGuard()) return;
+            CelAssets assets = LoadCelAssets();
+            var scene = EditorSceneManager.NewScene(NewSceneSetup.EmptyScene, NewSceneMode.Single);
+
+            SetupCoreScene(
+                assets,
+                out logic gameLogic,
+                out PlayerMovement playerMovement,
+                out PuzzleHUD hud,
+                out ShadowStalkerController stalker,
+                new Color(0.04f, 0.03f, 0.08f, 1f),
+                new Color(1f, 0.94f, 0.80f, 1f), 1.05f,
+                new Color(0.28f, 0.18f, 0.52f, 1f), 0.45f,
+                new Vector3(-8.0f, 3.5f, 0f));
+
+            stalker.umbraSafeDuration = 8.0f;
+            stalker.canBePetrifiedByLaser = true;
+            stalker.petrifyExposureTime = 1.1f;
+
+            hud.parFlips = 4;
+            hud.lessonTitle = "Level 4: Umbra Labyrinth";
+            hud.levelHint = "Record a Light Echo [E] holding the Light Button, step out of the Sanctuary in Shadow Realm to lure the Umbra Stalker into the Laser to petrify it, then push its Statue onto the final Button!";
+
+            CreateArenaWalls(assets);
+            CreateWall("RuinedDecor_L4", new Vector3(4.5f, 4.5f, 0f), new Vector2(1.24f, 1.14f), assets, WorldAffinity.Both, WallTileStyle.Ruined);
+
+            // Light Sanctuary in bottom-left
+            CreateSanctuary("Lantern_Sanctuary", new Vector3(-7.5f, -3.0f, 0f), 2.2f, assets);
+
+            // Echo Pedestal + LightOnly Button
+            CreateEchoPedestal("Echo_Pedestal", new Vector3(-7.5f, 0.5f, 0f), playerMovement.LightspriteDown, assets);
+            PressurePlate echoButton = CreatePressurePlate("Button_Echo_LightOnly", new Vector3(-4.5f, 0.5f, 0f), assets, WorldAffinity.LightOnly, latch: false);
+
+            // Central Petrification Laser Beam
+            CreateEmitter("Emitter_Petrify", new Vector3(-1.0f, 4.5f, 0f), LightColor.White, WorldAffinity.Both, Vector2.down, assets);
+            LightSensor arenaSensor = CreateSensor("Sensor_Arena", new Vector3(-1.0f, -4.5f, 0f), LightColor.White, WorldAffinity.Both, assets);
+
+            // Heavy Statue Button (no PushableBlock exists—must petrify the Umbra Stalker!)
+            PressurePlate statueButton = CreatePressurePlate("Button_Statue", new Vector3(3.5f, -1.5f, 0f), assets, WorldAffinity.Both, latch: false);
+
+            // Sealed Vault at x = 6.5
+            CreateWall("VaultWall_Top", new Vector3(6.5f, 3.6f, 0f), new Vector2(0.85f, 4.4f), assets, WorldAffinity.Both, WallTileStyle.Pillar);
+            CreateWall("VaultWall_Bot", new Vector3(6.5f, -3.6f, 0f), new Vector2(0.85f, 4.4f), assets, WorldAffinity.Both, WallTileStyle.Pillar);
+            PuzzleDoor finalDoor = CreateDoor("PuzzleDoor_Final", new Vector3(6.5f, 0.0f, 0f), new Vector2(1.1f, 2.8f), assets,
+                new[] { arenaSensor }, new[] { echoButton, statueButton }, null, requireAll: true, stayOpen: false);
+
+            CreateExit("LevelExit", new Vector3(8.6f, 0.0f, 0f), assets, new[] { finalDoor }, "");
+
+            EditorSceneManager.SaveScene(scene, Level4Path);
+            RegisterScenesInBuildSettings();
+            AssetDatabase.Refresh();
+            Debug.Log("Created Optics Puzzle Level 4 at " + Level4Path);
+        }
+
         private static void SetupCoreScene(
             CelAssets assets,
             out logic gameLogic,
             out PlayerMovement playerMovement,
             out PuzzleHUD hud,
+            out ShadowStalkerController stalker,
             Color camBg,
             Color lightColor,
             float lightIntensity,
@@ -325,12 +444,18 @@ namespace ShadowFlip.EditorTools
             audioMgr.monsterWarnClip = LoadAudio(SfxDir + "monster_warn.wav");
             audioMgr.monsterSpawnClip = LoadAudio(SfxDir + "monster_spawn.wav");
             audioMgr.monsterCatchClip = LoadAudio(SfxDir + "monster_catch.wav");
+            audioMgr.portalWarpClip = LoadAudio(SfxDir + "portal_warp.wav");
+            audioMgr.echoRecordClip = LoadAudio(SfxDir + "echo_record.wav");
+            audioMgr.monsterPetrifyClip = LoadAudio(SfxDir + "monster_petrify.wav");
             audioMgr.bgmLightClip = LoadAudio(SfxDir + "bgm_light_realm.wav");
             audioMgr.bgmShadowClip = LoadAudio(SfxDir + "bgm_shadow_realm.wav");
 
-            ShadowStalkerController stalker = logicGo.AddComponent<ShadowStalkerController>();
+            stalker = logicGo.AddComponent<ShadowStalkerController>();
             stalker.monsterFrame1 = assets.UmbraMonster1;
             stalker.monsterFrame2 = assets.UmbraMonster2;
+            stalker.petrifiedSprite = assets.MonsterPetrified;
+
+            logicGo.AddComponent<PuzzleVFXManager>();
 
             hud = logicGo.AddComponent<PuzzleHUD>();
             hud.gameLogic = gameLogic;
@@ -502,6 +627,106 @@ namespace ShadowFlip.EditorTools
             WorldPhaseObject phase = go.AddComponent<WorldPhaseObject>();
             phase.affinity = affinity;
             return go;
+        }
+
+        private static GameObject CreatePushableMirrorCart(string name, Vector3 pos, float startAngle, float stepDegrees, CelAssets assets)
+        {
+            GameObject go = new GameObject(name);
+            go.transform.position = pos;
+            go.transform.localScale = new Vector3(0.95f, 0.95f, 1f);
+
+            SpriteRenderer sr = go.AddComponent<SpriteRenderer>();
+            sr.sprite = assets.MirrorDirections[0];
+            sr.color = new Color(0.9f, 0.95f, 1f, 1f);
+            sr.sortingOrder = 5;
+
+            BoxCollider2D col = go.AddComponent<BoxCollider2D>();
+            col.size = new Vector2(0.95f, 0.95f);
+
+            OpticalMirror mirror = go.AddComponent<OpticalMirror>();
+            mirror.isTwoSided = true;
+            mirror.canRotate = true;
+            mirror.rotationStepDegrees = stepDegrees;
+            mirror.directionalSprites = assets.MirrorDirections;
+            mirror.logicalAngle = startAngle;
+            mirror.ApplyIsometricVisual();
+
+            go.AddComponent<PushableBlock>();
+            return go;
+        }
+
+        private static PortalMirror CreatePortalMirror(string name, Vector3 pos, Sprite sprite, Vector2 exitDir, PortalMirror linked, bool canRotate = true)
+        {
+            GameObject go = new GameObject(name);
+            go.transform.position = pos;
+            go.transform.localScale = new Vector3(0.95f, 0.95f, 1f);
+
+            SpriteRenderer sr = go.AddComponent<SpriteRenderer>();
+            sr.sprite = sprite;
+            sr.sortingOrder = 4;
+
+            BoxCollider2D col = go.AddComponent<BoxCollider2D>();
+            col.size = new Vector2(1.0f, 1.0f);
+
+            PortalMirror pm = go.AddComponent<PortalMirror>();
+            pm.localExitDirection = exitDir;
+            pm.linkedPortal = linked;
+            pm.canRotateExit = canRotate;
+            return pm;
+        }
+
+        private static GameObject CreateColorCombiner(string name, Vector3 pos, LightColor a, LightColor b, LightColor output, CelAssets assets)
+        {
+            GameObject go = new GameObject(name);
+            go.transform.position = pos;
+            go.transform.localScale = new Vector3(0.95f, 0.95f, 1f);
+
+            SpriteRenderer sr = go.AddComponent<SpriteRenderer>();
+            sr.sprite = assets.CombinerCrystal;
+            sr.sortingOrder = 4;
+
+            BoxCollider2D col = go.AddComponent<BoxCollider2D>();
+            col.size = new Vector2(1.0f, 1.0f);
+
+            ColorCombiner cc = go.AddComponent<ColorCombiner>();
+            cc.requiredColorA = a;
+            cc.requiredColorB = b;
+            cc.outputColor = output;
+            cc.localOutputDirection = Vector2.right;
+            cc.canRotate = false;
+            return go;
+        }
+
+        private static void CreateSanctuary(string name, Vector3 pos, float radius, CelAssets assets)
+        {
+            GameObject go = new GameObject(name);
+            go.transform.position = pos;
+            go.transform.localScale = new Vector3(0.95f, 0.95f, 1f);
+
+            SpriteRenderer sr = go.AddComponent<SpriteRenderer>();
+            sr.sprite = assets.LanternSanctuary;
+            sr.sortingOrder = 3;
+
+            LightSanctuary sanc = go.AddComponent<LightSanctuary>();
+            sanc.sanctuaryRadius = radius;
+        }
+
+        private static void CreateEchoPedestal(string name, Vector3 pos, Sprite echoSprite, CelAssets assets)
+        {
+            GameObject go = new GameObject(name);
+            go.transform.position = pos;
+            go.transform.localScale = new Vector3(0.95f, 0.95f, 1f);
+
+            SpriteRenderer sr = go.AddComponent<SpriteRenderer>();
+            sr.sprite = assets.EchoPedestal;
+            sr.sortingOrder = 3;
+
+            BoxCollider2D col = go.AddComponent<BoxCollider2D>();
+            col.size = new Vector2(1.1f, 1.0f);
+            col.isTrigger = true;
+
+            ShadowEchoPedestal echo = go.AddComponent<ShadowEchoPedestal>();
+            echo.echoSprite = echoSprite;
         }
 
         private static GameObject CreatePrism(string name, Vector3 pos, float zAngle, OpticalPrism.PrismMode mode, float splitAngle, bool orientAlongTransform, bool canRotate, float stepDegrees, CelAssets assets)
@@ -773,22 +998,26 @@ namespace ShadowFlip.EditorTools
                 FloorShadow = LoadSprite(CelDir + "Floor_Shadow.png"),
                 PrismCrystal = LoadSprite(CelDir + "Prism_Crystal.png"),
                 UmbraMonster1 = LoadSprite(CelDir + "UmbraMonster_1.png"),
-                UmbraMonster2 = LoadSprite(CelDir + "UmbraMonster_2.png")
+                UmbraMonster2 = LoadSprite(CelDir + "UmbraMonster_2.png"),
+                MonsterPetrified = LoadSprite(CelDir + "Monster_Petrified.png"),
+                PortalMirrorA = LoadSprite(CelDir + "PortalMirror_A.png"),
+                PortalMirrorB = LoadSprite(CelDir + "PortalMirror_B.png"),
+                CombinerCrystal = LoadSprite(CelDir + "Combiner_Crystal.png"),
+                LanternSanctuary = LoadSprite(CelDir + "Lantern_Sanctuary.png"),
+                EchoPedestal = LoadSprite(CelDir + "Echo_Pedestal.png")
             };
         }
 
         private static void RegisterScenesInBuildSettings()
         {
+            string[] managed = { TutorialPath, Level1Path, Level2Path, Level3Path, Level4Path };
             var scenes = new List<EditorBuildSettingsScene>();
-            AddSceneIfMissing(scenes, TutorialPath);
-            AddSceneIfMissing(scenes, Level1Path);
-            AddSceneIfMissing(scenes, Level2Path);
+            foreach (string path in managed) AddSceneIfMissing(scenes, path);
             foreach (var existing in EditorBuildSettings.scenes)
             {
-                if (existing.path != TutorialPath && existing.path != Level1Path && existing.path != Level2Path)
-                {
-                    scenes.Add(existing);
-                }
+                bool isManaged = false;
+                foreach (string m in managed) if (existing.path == m) { isManaged = true; break; }
+                if (!isManaged) scenes.Add(existing);
             }
             EditorBuildSettings.scenes = scenes.ToArray();
         }
@@ -803,14 +1032,7 @@ namespace ShadowFlip.EditorTools
             scenes.Add(new EditorBuildSettingsScene(path, true));
         }
 
-        private static Sprite LoadSprite(string path)
-        {
-            return AssetDatabase.LoadAssetAtPath<Sprite>(path);
-        }
-
-        private static AudioClip LoadAudio(string path)
-        {
-            return AssetDatabase.LoadAssetAtPath<AudioClip>(path);
-        }
+        private static Sprite LoadSprite(string path) => AssetDatabase.LoadAssetAtPath<Sprite>(path);
+        private static AudioClip LoadAudio(string path) => AssetDatabase.LoadAssetAtPath<AudioClip>(path);
     }
 }

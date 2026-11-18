@@ -28,6 +28,9 @@ namespace ShadowFlip.Puzzle
         public AudioClip monsterWarnClip;
         public AudioClip monsterSpawnClip;
         public AudioClip monsterCatchClip;
+        public AudioClip portalWarpClip;
+        public AudioClip echoRecordClip;
+        public AudioClip monsterPetrifyClip;
 
         [Header("Realm Music")]
         public AudioClip bgmLightClip;
@@ -183,6 +186,9 @@ namespace ShadowFlip.Puzzle
         public void PlayMonsterWarn() => PlayClip(monsterWarnClip, 0.75f);
         public void PlayMonsterSpawn() => PlayClip(monsterSpawnClip, 0.95f);
         public void PlayMonsterCatch() => PlayClip(monsterCatchClip, 1.0f);
+        public void PlayPortalWarp() => PlayClip(portalWarpClip, 0.8f);
+        public void PlayEchoRecord() => PlayClip(echoRecordClip, 0.85f);
+        public void PlayMonsterPetrify() => PlayClip(monsterPetrifyClip, 0.95f);
 
         public void SetBlockPushing(bool pushing)
         {
@@ -224,6 +230,9 @@ namespace ShadowFlip.Puzzle
             monsterWarnClip = monsterWarnClip != null ? monsterWarnClip : Resources.Load<AudioClip>("SFX/monster_warn");
             monsterSpawnClip = monsterSpawnClip != null ? monsterSpawnClip : Resources.Load<AudioClip>("SFX/monster_spawn");
             monsterCatchClip = monsterCatchClip != null ? monsterCatchClip : Resources.Load<AudioClip>("SFX/monster_catch");
+            portalWarpClip = portalWarpClip != null ? portalWarpClip : Resources.Load<AudioClip>("SFX/portal_warp");
+            echoRecordClip = echoRecordClip != null ? echoRecordClip : Resources.Load<AudioClip>("SFX/echo_record");
+            monsterPetrifyClip = monsterPetrifyClip != null ? monsterPetrifyClip : Resources.Load<AudioClip>("SFX/monster_petrify");
             bgmLightClip = bgmLightClip != null ? bgmLightClip : Resources.Load<AudioClip>("SFX/bgm_light_realm");
             bgmShadowClip = bgmShadowClip != null ? bgmShadowClip : Resources.Load<AudioClip>("SFX/bgm_shadow_realm");
         }

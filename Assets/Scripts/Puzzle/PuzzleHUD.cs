@@ -1,16 +1,20 @@
 using ShadowFlip.Optics;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 
 namespace ShadowFlip.Puzzle
 {
     /// <summary>
-    /// Cel-shaded UI HUD displaying the active realm, sensor/door progress, controls,
-    /// interaction prompts, and bottom tutorial/level hint banner.
+    /// Cel-shaded UI HUD displaying the active realm, progress, Umbra danger meter,
+    /// 3-star victory rating, and a [Tab]/[M] Level Select Map.
     /// </summary>
     public class PuzzleHUD : MonoBehaviour
     {
         public PlayerMovement player;
         public logic gameLogic;
+
+        [Header("Progression")]
+        public int parFlips = 6;
 
         [TextArea]
         public string levelHint = "";
@@ -18,11 +22,34 @@ namespace ShadowFlip.Puzzle
         [TextArea]
         public string lessonTitle = "";
 
+        private static readonly string[] LevelScenes =
+        {
+            "OpticsPuzzle_Tutorial",
+            "OpticsPuzzle",
+            "OpticsPuzzle_Level2",
+            "OpticsPuzzle_Level3",
+            "OpticsPuzzle_Level4"
+        };
+
+        private static readonly string[] LevelDisplayNames =
+        {
+            "Tutorial: Basics of Shadow & Light",
+            "Level 1: Chromatic Vault",
+            "Level 2: Eclipse Temple",
+            "Level 3: The Prism Sanctum",
+            "Level 4: Umbra Labyrinth"
+        };
+
         private bool levelComplete = false;
+        private bool showLevelMap = false;
+        private int earnedStars = 1;
+        private int finalFlips = 0;
+
         private LightSensor[] cachedSensors;
         private PuzzleDoor[] cachedDoors;
         private PuzzleLever[] cachedLevers;
         private PressurePlate[] cachedPlates;
+        private ShadowEchoPedestal[] cachedEchoes;
         private Texture2D whiteTex;
         private GUIStyle badgeStyle;
         private GUIStyle promptStyle;
@@ -38,27 +65,52 @@ namespace ShadowFlip.Puzzle
             cachedDoors = FindObjectsByType<PuzzleDoor>(FindObjectsSortMode.None);
             cachedLevers = FindObjectsByType<PuzzleLever>(FindObjectsSortMode.None);
             cachedPlates = FindObjectsByType<PressurePlate>(FindObjectsSortMode.None);
+            cachedEchoes = FindObjectsByType<ShadowEchoPedestal>(FindObjectsSortMode.None);
+        }
+
+        void Update()
+        {
+            if (Input.GetKeyDown(KeyCode.Tab) || Input.GetKeyDown(KeyCode.M))
+            {
+                if (gameLogic != null && gameLogic.main_menu != null && gameLogic.main_menu.activeSelf) return;
+                showLevelMap = !showLevelMap;
+            }
         }
 
         public void ShowLevelComplete()
         {
+            if (levelComplete) return;
             levelComplete = true;
+
+            ShadowStalkerController stalker = ShadowStalkerController.Instance;
+            finalFlips = stalker != null ? stalker.FlipCount : 0;
+            bool withinPar = finalFlips <= parFlips;
+            bool safeFromMonster = stalker == null || !stalker.HasMonsterSpawnedThisRun || stalker.MonsterWasPetrified;
+
+            earnedStars = 1 + (withinPar ? 1 : 0) + (safeFromMonster ? 1 : 0);
+            string key = GetStarsKey(SceneManager.GetActiveScene().name);
+            int best = PlayerPrefs.GetInt(key, 0);
+            if (earnedStars > best)
+            {
+                PlayerPrefs.SetInt(key, earnedStars);
+                PlayerPrefs.Save();
+            }
         }
 
         void OnGUI()
         {
-            if (Time.timeScale == 0f && !levelComplete) return;
+            if (Time.timeScale == 0f && !levelComplete && !showLevelMap) return;
             EnsureResources();
 
             bool isDark = gameLogic != null && gameLogic.isDarkActive;
             string worldLabel = isDark ? "SHADOW REALM" : "LIGHT REALM";
-            Color inkColor = new Color(0.078f, 0.063f, 0.11f, 0.96f);     // #14101C
+            Color inkColor = new Color(0.078f, 0.063f, 0.11f, 0.96f);
             Color panelColor = isDark
                 ? new Color(0.16f, 0.12f, 0.27f, 0.92f)
                 : new Color(0.20f, 0.17f, 0.14f, 0.92f);
             Color accentColor = isDark
-                ? new Color(0.486f, 0.322f, 1.0f, 1f)                      // #7C52FF
-                : new Color(0.961f, 0.882f, 0.643f, 1f);                   // #F5E1A4
+                ? new Color(0.486f, 0.322f, 1.0f, 1f)
+                : new Color(0.961f, 0.882f, 0.643f, 1f);
 
             int totalSensors = cachedSensors != null ? cachedSensors.Length : 0;
             int activeSensors = 0;
@@ -99,7 +151,7 @@ namespace ShadowFlip.Puzzle
             }
 
             // Top-Left Cel-Shaded Panel
-            Rect topPanel = new Rect(16, 14, 580, 94);
+            Rect topPanel = new Rect(16, 14, 620, 94);
             DrawCelPanel(topPanel, panelColor, inkColor, accentColor, 4f);
 
             GUI.color = accentColor;
@@ -109,18 +161,19 @@ namespace ShadowFlip.Puzzle
             string doorText = totalDoors == 0
                 ? "No Gates"
                 : (openDoors == totalDoors ? "All Open" : $"{openDoors}/{totalDoors} Open");
-            GUI.Label(new Rect(30, 52, 550, 22), $"Crystals: {activeSensors}/{totalSensors}   |   Levers/Buttons: {activeSwitches}/{totalSwitches}   |   Gates: {doorText}", statusStyle);
-            GUI.Label(new Rect(30, 76, 550, 22), "[WASD] Move   [F] Flip Realm   [E] Interact   [R] Reset", promptStyle);
+            GUI.Label(new Rect(30, 52, 590, 22), $"Crystals: {activeSensors}/{totalSensors}   |   Levers/Buttons: {activeSwitches}/{totalSwitches}   |   Gates: {doorText}", statusStyle);
+            GUI.Label(new Rect(30, 76, 590, 22), "[WASD] Move   [F] Flip   [E] Interact   [R] Reset   [Tab/M] Level Map", promptStyle);
 
             DrawUmbraStalkerHUD(isDark, panelColor, inkColor);
+            DrawEchoRecordingHUD(panelColor, inkColor);
 
             // Interact Prompt Pill
-            if (player != null && player.NearbyInteractable != null)
+            if (!showLevelMap && player != null && player.NearbyInteractable != null)
             {
                 string prompt = player.NearbyInteractable.GetInteractPrompt();
                 if (!string.IsNullOrEmpty(prompt))
                 {
-                    Rect interactRect = new Rect(Screen.width * 0.5f - 145f, Screen.height - 134f, 290f, 36f);
+                    Rect interactRect = new Rect(Screen.width * 0.5f - 175f, Screen.height - 134f, 350f, 36f);
                     DrawCelPanel(interactRect, inkColor, accentColor, accentColor, 3f);
                     GUI.color = accentColor;
                     GUI.Label(interactRect, prompt, bannerStyle);
@@ -129,9 +182,9 @@ namespace ShadowFlip.Puzzle
             }
 
             // Bottom-Center Tutorial / Level Hint Banner
-            if (!string.IsNullOrEmpty(levelHint) || !string.IsNullOrEmpty(lessonTitle))
+            if (!showLevelMap && (!string.IsNullOrEmpty(levelHint) || !string.IsNullOrEmpty(lessonTitle)))
             {
-                float w = Mathf.Min(780f, Screen.width - 40f);
+                float w = Mathf.Min(820f, Screen.width - 40f);
                 Rect hintRect = new Rect((Screen.width - w) * 0.5f, Screen.height - 86f, w, 72f);
                 DrawCelPanel(hintRect, panelColor, inkColor, accentColor, 4f);
 
@@ -148,15 +201,20 @@ namespace ShadowFlip.Puzzle
                 }
             }
 
-            // Level Complete Modal
+            // Level Complete 3-Star Modal
             if (levelComplete)
             {
-                Rect modalRect = new Rect(Screen.width * 0.5f - 200f, Screen.height * 0.5f - 62f, 400f, 124f);
+                Rect modalRect = new Rect(Screen.width * 0.5f - 220f, Screen.height * 0.5f - 82f, 440f, 164f);
                 DrawCelPanel(modalRect, panelColor, inkColor, accentColor, 5f);
                 GUI.color = accentColor;
-                GUI.Label(new Rect(modalRect.x, modalRect.y + 18f, modalRect.width, 40f), "PUZZLE SOLVED!", bannerStyle);
+                GUI.Label(new Rect(modalRect.x, modalRect.y + 16f, modalRect.width, 36f), "PUZZLE SOLVED!", bannerStyle);
+
+                string starStr = new string('★', earnedStars) + new string('☆', 3 - earnedStars);
+                GUI.color = new Color(1f, 0.88f, 0.25f, 1f);
+                GUI.Label(new Rect(modalRect.x, modalRect.y + 54f, modalRect.width, 34f), starStr, bannerStyle);
                 GUI.color = Color.white;
-                GUI.Label(new Rect(modalRect.x, modalRect.y + 64f, modalRect.width, 32f), "Advancing... (or press [R] to replay)", hintStyle);
+                GUI.Label(new Rect(modalRect.x, modalRect.y + 92f, modalRect.width, 28f), $"Flips: {finalFlips} (Par {parFlips})   |   [R] Replay", bannerStyle);
+                GUI.Label(new Rect(modalRect.x, modalRect.y + 124f, modalRect.width, 26f), "Advancing to next realm...", promptStyle);
             }
 
             if (ShadowStalkerController.Instance != null && ShadowStalkerController.Instance.IsPlayerCaught)
@@ -169,6 +227,11 @@ namespace ShadowFlip.Puzzle
                 GUI.color = Color.white;
                 GUI.Label(new Rect(caughtRect.x, caughtRect.y + 60f, caughtRect.width, 28f), "Resetting realm...", bannerStyle);
             }
+
+            if (showLevelMap)
+            {
+                DrawLevelSelectModal(panelColor, inkColor, accentColor);
+            }
         }
 
         private void DrawUmbraStalkerHUD(bool isDark, Color panelColor, Color inkColor)
@@ -180,7 +243,8 @@ namespace ShadowFlip.Puzzle
             float progress = stalker.UmbraProgress;
             Color violet = new Color(0.58f, 0.35f, 1.0f, 1f);
             Color crimson = new Color(0.96f, 0.22f, 0.36f, 1f);
-            Color barColor = Color.Lerp(violet, crimson, progress);
+            Color safeGold = new Color(1f, 0.88f, 0.42f, 1f);
+            Color barColor = stalker.IsInSanctuary ? safeGold : Color.Lerp(violet, crimson, progress);
             if (stalker.IsMonsterActive)
             {
                 float pulse = 0.65f + 0.35f * Mathf.Sin(Time.unscaledTime * 10f);
@@ -191,20 +255,20 @@ namespace ShadowFlip.Puzzle
             DrawCelPanel(dangerPanel, panelColor, inkColor, barColor, 4f);
 
             string label = stalker.IsMonsterActive
-                ? "⚠ UMBRA STALKER HUNTING! FLIP [F]!"
-                : $"UMBRA STALKER AWAKENS: {stalker.RemainingSeconds:0.0}s";
+                ? (stalker.IsSlowedByLaser ? "LASER PETRIFYING UMBRA!" : "⚠ UMBRA STALKER HUNTING! FLIP [F]!")
+                : (stalker.IsInSanctuary ? "SAFE IN SANCTUARY (DRAINING)" : $"UMBRA STALKER AWAKENS: {stalker.RemainingSeconds:0.0}s");
 
-            GUI.color = stalker.IsMonsterActive ? barColor : Color.white;
+            GUI.color = stalker.IsMonsterActive || stalker.IsInSanctuary ? barColor : Color.white;
             GUI.Label(new Rect(dangerPanel.x + 14f, dangerPanel.y + 10f, dangerPanel.width - 28f, 22f), label, statusStyle);
 
-            // Progress bar track + fill
             Rect track = new Rect(dangerPanel.x + 14f, dangerPanel.y + 38f, dangerPanel.width - 28f, 14f);
             GUI.color = inkColor;
             GUI.DrawTexture(track, whiteTex);
             GUI.color = new Color(0.14f, 0.1f, 0.22f, 1f);
             GUI.DrawTexture(new Rect(track.x + 2f, track.y + 2f, track.width - 4f, track.height - 4f), whiteTex);
 
-            float fillWidth = (track.width - 4f) * (stalker.IsMonsterActive ? 1f : progress);
+            float fillRatio = stalker.IsMonsterActive ? (stalker.IsSlowedByLaser ? stalker.PetrifyProgress : 1f) : progress;
+            float fillWidth = (track.width - 4f) * fillRatio;
             if (fillWidth > 0.5f)
             {
                 GUI.color = barColor;
@@ -213,9 +277,62 @@ namespace ShadowFlip.Puzzle
             GUI.color = Color.white;
         }
 
+        private void DrawEchoRecordingHUD(Color panelColor, Color inkColor)
+        {
+            if (cachedEchoes == null) return;
+            for (int i = 0; i < cachedEchoes.Length; i++)
+            {
+                ShadowEchoPedestal echo = cachedEchoes[i];
+                if (echo != null && echo.IsRecording)
+                {
+                    Color cyan = new Color(0.35f, 0.92f, 1f, 1f);
+                    Rect recRect = new Rect(Screen.width - 336f, 86f, 320f, 44f);
+                    DrawCelPanel(recRect, panelColor, inkColor, cyan, 4f);
+                    GUI.color = cyan;
+                    GUI.Label(new Rect(recRect.x + 14f, recRect.y + 10f, recRect.width - 28f, 24f),
+                        $"RECORDING LIGHT ECHO: {echo.RecordRemaining:0.0}s", statusStyle);
+                    GUI.color = Color.white;
+                    break;
+                }
+            }
+        }
+
+        private void DrawLevelSelectModal(Color panelColor, Color inkColor, Color accentColor)
+        {
+            float w = 520f;
+            float h = 370f;
+            Rect modal = new Rect((Screen.width - w) * 0.5f, (Screen.height - h) * 0.5f, w, h);
+            DrawCelPanel(modal, panelColor, inkColor, accentColor, 5f);
+
+            GUI.color = accentColor;
+            GUI.Label(new Rect(modal.x, modal.y + 16f, modal.width, 32f), "SHADOW FLIP - LEVEL MAP", bannerStyle);
+            GUI.color = Color.white;
+
+            for (int i = 0; i < LevelScenes.Length; i++)
+            {
+                string sceneName = LevelScenes[i];
+                int stars = PlayerPrefs.GetInt(GetStarsKey(sceneName), 0);
+                string starStr = new string('★', stars) + new string('☆', 3 - stars);
+
+                Rect btnRect = new Rect(modal.x + 28f, modal.y + 62f + i * 52f, modal.width - 56f, 42f);
+                if (GUI.Button(btnRect, $"  {LevelDisplayNames[i]}    [{starStr}]"))
+                {
+                    showLevelMap = false;
+                    Time.timeScale = 1f;
+                    SceneManager.LoadScene(sceneName);
+                }
+            }
+
+            if (GUI.Button(new Rect(modal.x + modal.width * 0.5f - 70f, modal.y + h - 46f, 140f, 30f), "Close [Tab]"))
+            {
+                showLevelMap = false;
+            }
+        }
+
+        private static string GetStarsKey(string sceneName) => "ShadowFlip_Stars_" + sceneName;
+
         private void DrawCelPanel(Rect rect, Color fill, Color border, Color topStripe, float borderWidth)
         {
-            // Hard drop shadow for cel-shaded comic depth
             GUI.color = new Color(0f, 0f, 0f, 0.45f);
             GUI.DrawTexture(new Rect(rect.x + 4f, rect.y + 4f, rect.width, rect.height), whiteTex);
 
@@ -245,7 +362,8 @@ namespace ShadowFlip.Puzzle
                 badgeStyle = new GUIStyle(GUI.skin.label)
                 {
                     fontSize = 20,
-                    fontStyle = FontStyle.Bold
+                    fontStyle = FontStyle.Bold,
+                    alignment = TextAnchor.MiddleLeft
                 };
             }
 

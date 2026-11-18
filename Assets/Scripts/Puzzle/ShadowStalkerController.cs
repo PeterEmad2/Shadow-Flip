@@ -6,8 +6,8 @@ namespace ShadowFlip.Puzzle
 {
     /// <summary>
     /// Spawns an animated cel-shaded Umbra Stalker monster if the player stays too long
-    /// in Shadow/Umbra mode. Flipping back to Light mode banishes the monster.
-    /// Light beams slow the monster down.
+    /// in Shadow/Umbra mode. Flipping back to Light mode banishes it, standing in a Light
+    /// Sanctuary drains its timer, and holding it in a laser beam petrifies it into a stone block.
     /// </summary>
     public class ShadowStalkerController : MonoBehaviour
     {
@@ -23,6 +23,11 @@ namespace ShadowFlip.Puzzle
         public float spawnDistance = 5.0f;
         public float catchRadius = 0.62f;
 
+        [Header("Laser Petrification")]
+        public bool canBePetrifiedByLaser = true;
+        public float petrifyExposureTime = 1.1f;
+        public Sprite petrifiedSprite;
+
         [Header("Cel-Shaded Visuals")]
         public Sprite monsterFrame1;
         public Sprite monsterFrame2;
@@ -32,9 +37,16 @@ namespace ShadowFlip.Puzzle
         public bool IsMonsterActive { get; private set; }
         public bool IsPlayerCaught { get; private set; }
         public bool IsSlowedByLaser { get; private set; }
+        public bool IsInSanctuary { get; private set; }
+        public int FlipCount { get; private set; }
+        public bool HasMonsterSpawnedThisRun { get; private set; }
+        public bool MonsterWasPetrified { get; private set; }
+        public float PetrifyProgress => Mathf.Clamp01(laserExposureTimer / Mathf.Max(0.1f, petrifyExposureTime));
 
         private float umbraTimer = 0f;
+        private float laserExposureTimer = 0f;
         private int lastWarnSecond = -1;
+        private bool lastTrackedDark;
         private logic cachedLogic;
         private PlayerMovement cachedPlayer;
         private LightBeamEmitter[] cachedEmitters;
@@ -66,6 +78,7 @@ namespace ShadowFlip.Puzzle
 
             if (monsterFrame1 == null) monsterFrame1 = Resources.Load<Sprite>("Sprites/UmbraMonster_1");
             if (monsterFrame2 == null) monsterFrame2 = Resources.Load<Sprite>("Sprites/UmbraMonster_2");
+            if (petrifiedSprite == null) petrifiedSprite = Resources.Load<Sprite>("Sprites/Monster_Petrified");
             if (monsterFrame1 == null) monsterFrame1 = CreateFallbackSprite();
             if (monsterFrame2 == null) monsterFrame2 = monsterFrame1;
         }
@@ -76,11 +89,28 @@ namespace ShadowFlip.Puzzle
             cachedPlayer = FindFirstObjectByType<PlayerMovement>();
             cachedEmitters = FindObjectsByType<LightBeamEmitter>(FindObjectsSortMode.None);
             cachedExits = FindObjectsByType<LevelExit>(FindObjectsSortMode.None);
+
+            if (cachedLogic != null)
+            {
+                lastTrackedDark = cachedLogic.isDarkActive;
+                cachedLogic.OnWorldFlipped += HandleWorldFlipped;
+            }
         }
 
         void OnDestroy()
         {
+            if (cachedLogic != null)
+            {
+                cachedLogic.OnWorldFlipped -= HandleWorldFlipped;
+            }
             if (Instance == this) Instance = null;
+        }
+
+        private void HandleWorldFlipped(bool isDarkActive)
+        {
+            if (isDarkActive == lastTrackedDark) return;
+            lastTrackedDark = isDarkActive;
+            FlipCount++;
         }
 
         void Update()
@@ -105,8 +135,17 @@ namespace ShadowFlip.Puzzle
             Transform playerTransform = cachedPlayer.GetActiveFormTransform();
             if (playerTransform == null) return;
 
+            IsInSanctuary = LightSanctuary.IsPositionInSanctuary(playerTransform.position);
+
             if (!IsMonsterActive)
             {
+                if (IsInSanctuary)
+                {
+                    umbraTimer = Mathf.Max(0f, umbraTimer - Time.deltaTime * lightCooldownRate);
+                    lastWarnSecond = -1;
+                    return;
+                }
+
                 umbraTimer += Time.deltaTime;
 
                 float remaining = RemainingSeconds;
@@ -133,10 +172,12 @@ namespace ShadowFlip.Puzzle
 
         private void UpdateLightMode()
         {
+            IsInSanctuary = false;
             if (IsMonsterActive)
             {
                 IsMonsterActive = false;
                 IsSlowedByLaser = false;
+                laserExposureTimer = 0f;
                 if (monsterObj != null) monsterObj.SetActive(false);
                 umbraTimer = 0f;
                 lastWarnSecond = -1;
@@ -158,7 +199,9 @@ namespace ShadowFlip.Puzzle
             monsterObj.SetActive(true);
 
             IsMonsterActive = true;
+            HasMonsterSpawnedThisRun = true;
             IsSlowedByLaser = false;
+            laserExposureTimer = 0f;
             PuzzleAudioManager.Instance?.PlayMonsterSpawn();
         }
 
@@ -166,7 +209,6 @@ namespace ShadowFlip.Puzzle
         {
             if (monsterObj == null) return;
 
-            // Animate between frame 1 and frame 2 + vertical hover bob on child visual.
             if (monsterRenderer != null)
             {
                 int frame = Mathf.FloorToInt(Time.time * 5f) % 2;
@@ -180,9 +222,25 @@ namespace ShadowFlip.Puzzle
             }
 
             IsSlowedByLaser = CheckNearLaserBeam(basePosition);
+            if (IsSlowedByLaser)
+            {
+                laserExposureTimer += Time.deltaTime;
+                if (canBePetrifiedByLaser && laserExposureTimer >= petrifyExposureTime)
+                {
+                    PetrifyMonsterIntoBlock();
+                    return;
+                }
+            }
+            else
+            {
+                laserExposureTimer = Mathf.Max(0f, laserExposureTimer - Time.deltaTime * 0.5f);
+            }
+
             if (monsterRenderer != null)
             {
-                monsterRenderer.color = IsSlowedByLaser ? new Color(0.65f, 0.95f, 1f, 1f) : Color.white;
+                monsterRenderer.color = IsSlowedByLaser
+                    ? Color.Lerp(new Color(0.65f, 0.95f, 1f, 1f), new Color(0.85f, 0.85f, 0.9f, 1f), PetrifyProgress)
+                    : Color.white;
             }
 
             float speed = chaseSpeed * (IsSlowedByLaser ? laserSlowMultiplier : 1f);
@@ -194,6 +252,32 @@ namespace ShadowFlip.Puzzle
             {
                 OnPlayerCaught();
             }
+        }
+
+        private void PetrifyMonsterIntoBlock()
+        {
+            GameObject statue = new GameObject("PetrifiedUmbraStatue");
+            statue.transform.position = basePosition;
+            statue.transform.localScale = new Vector3(0.95f, 0.95f, 1f);
+
+            SpriteRenderer sr = statue.AddComponent<SpriteRenderer>();
+            sr.sprite = petrifiedSprite != null ? petrifiedSprite : monsterFrame1;
+            sr.sortingOrder = 4;
+
+            BoxCollider2D col = statue.AddComponent<BoxCollider2D>();
+            col.size = new Vector2(0.95f, 0.9f);
+
+            statue.AddComponent<PushableBlock>();
+
+            if (monsterObj != null) monsterObj.SetActive(false);
+            IsMonsterActive = false;
+            IsSlowedByLaser = false;
+            MonsterWasPetrified = true;
+            laserExposureTimer = 0f;
+            umbraTimer = 0f;
+            lastWarnSecond = -1;
+
+            PuzzleAudioManager.Instance?.PlayMonsterPetrify();
         }
 
         private void OnPlayerCaught()

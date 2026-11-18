@@ -6,7 +6,7 @@ namespace ShadowFlip.Optics
 {
     /// <summary>
     /// Optical receptor that activates when hit by a matching light beam.
-    /// Supports swapping cel-shaded Floor Receiver Crystal sprites.
+    /// Supports timed capacitor hold duration after losing its beam.
     /// </summary>
     public class LightSensor : MonoBehaviour, IOpticalElement
     {
@@ -15,6 +15,9 @@ namespace ShadowFlip.Optics
         public bool acceptAnyColor = false;
         public WorldAffinity requiredWorld = WorldAffinity.Both;
         public float chargeTime = 0f;
+
+        [Header("Capacitor Hold (Seconds active after beam stops)")]
+        public float holdDuration = 0f;
 
         [Header("Cel-Shaded Visuals")]
         public SpriteRenderer indicatorRenderer;
@@ -29,6 +32,7 @@ namespace ShadowFlip.Optics
 
         public bool IsActivated { get; private set; }
         public bool IsReceivingValidBeam { get; private set; }
+        public float HoldRemaining { get; private set; }
 
         private float chargeProgress = 0f;
         private int lastValidHitFrame = -100;
@@ -47,6 +51,7 @@ namespace ShadowFlip.Optics
             {
                 if (chargeTime <= 0f)
                 {
+                    HoldRemaining = holdDuration;
                     SetActivated(true);
                 }
                 else
@@ -54,6 +59,7 @@ namespace ShadowFlip.Optics
                     chargeProgress = Mathf.Min(chargeTime, chargeProgress + Time.deltaTime);
                     if (chargeProgress >= chargeTime)
                     {
+                        HoldRemaining = holdDuration;
                         SetActivated(true);
                     }
                 }
@@ -61,7 +67,15 @@ namespace ShadowFlip.Optics
             else
             {
                 chargeProgress = 0f;
-                SetActivated(false);
+                if (HoldRemaining > 0f)
+                {
+                    HoldRemaining = Mathf.Max(0f, HoldRemaining - Time.deltaTime);
+                    SetActivated(true);
+                }
+                else
+                {
+                    SetActivated(false);
+                }
             }
         }
 
@@ -79,6 +93,7 @@ namespace ShadowFlip.Optics
             if (chargeTime <= 0f)
             {
                 IsReceivingValidBeam = true;
+                HoldRemaining = holdDuration;
                 SetActivated(true);
             }
         }
