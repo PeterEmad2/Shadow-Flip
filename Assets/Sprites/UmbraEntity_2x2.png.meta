@@ -1,0 +1,377 @@
+fileFormatVersion: 2
+guid: 724f45480b3b5dd43832a0760b7d52f7
+TextureImporter:
+  internalIDToNameTable:
+  - first:
+      213: 4068111077785719374
+    second: UmbraEntity_2x2_0
+  - first:
+      213: 3631428269439951765
+    second: UmbraEntity_2x2_1
+  - first:
+      213: -702990556074071083
+    second: UmbraEntity_2x2_2
+  - first:
+      213: 5415382513007732065
+    second: UmbraEntity_2x2_3
+  - first:
+      213: 4598876575470626611
+    second: UmbraEntity_2x2_4
+  - first:
+      213: 7914659609363958547
+    second: UmbraEntity_2x2_5
+  - first:
+      213: 1169154691121142515
+    second: UmbraEntity_2x2_6
+  - first:
+      213: 4600259649413484154
+    second: UmbraEntity_2x2_7
+  - first:
+      213: 4911028581539569042
+    second: UmbraEntity_2x2_8
+  - first:
+      213: 5986474065707114544
+    second: UmbraEntity_2x2_9
+  externalObjects: {}
+  serializedVersion: 13
+  mipmaps:
+    mipMapMode: 0
+    enableMipMap: 0
+    sRGBTexture: 1
+    linearTexture: 0
+    fadeOut: 0
+    borderMipMap: 0
+    mipMapsPreserveCoverage: 0
+    alphaTestReferenceValue: 0.5
+    mipMapFadeDistanceStart: 1
+    mipMapFadeDistanceEnd: 3
+  bumpmap:
+    convertToNormalMap: 0
+    externalNormalMap: 0
+    heightScale: 0.25
+    normalMapFilter: 0
+    flipGreenChannel: 0
+  isReadable: 0
+  streamingMipmaps: 0
+  streamingMipmapsPriority: 0
+  vTOnly: 0
+  ignoreMipmapLimit: 0
+  grayScaleToAlpha: 0
+  generateCubemap: 6
+  cubemapConvolution: 0
+  seamlessCubemap: 0
+  textureFormat: 1
+  maxTextureSize: 2048
+  textureSettings:
+    serializedVersion: 2
+    filterMode: 1
+    aniso: 1
+    mipBias: 0
+    wrapU: 1
+    wrapV: 1
+    wrapW: 1
+  nPOTScale: 0
+  lightmap: 0
+  compressionQuality: 50
+  spriteMode: 2
+  spriteExtrude: 1
+  spriteMeshType: 1
+  alignment: 0
+  spritePivot: {x: 0.5, y: 0.5}
+  spritePixelsToUnits: 100
+  spriteBorder: {x: 0, y: 0, z: 0, w: 0}
+  spriteGenerateFallbackPhysicsShape: 1
+  alphaUsage: 1
+  alphaIsTransparency: 1
+  spriteTessellationDetail: -1
+  textureType: 8
+  textureShape: 1
+  singleChannelComponent: 0
+  flipbookRows: 1
+  flipbookColumns: 1
+  maxTextureSizeSet: 0
+  compressionQualitySet: 0
+  textureFormatSet: 0
+  ignorePngGamma: 0
+  applyGammaDecoding: 0
+  swizzle: 50462976
+  cookieLightType: 0
+  platformSettings:
+  - serializedVersion: 4
+    buildTarget: DefaultTexturePlatform
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  - serializedVersion: 4
+    buildTarget: Standalone
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  spriteSheet:
+    serializedVersion: 2
+    sprites:
+    - serializedVersion: 2
+      name: UmbraEntity_2x2_0
+      rect:
+        serializedVersion: 2
+        x: 44
+        y: 715
+        width: 65
+        height: 197
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: e42df32b875d47830800000000000000
+      internalID: 4068111077785719374
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: UmbraEntity_2x2_1
+      rect:
+        serializedVersion: 2
+        x: 84
+        y: 538
+        width: 343
+        height: 452
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 593a74b55cc656230800000000000000
+      internalID: 3631428269439951765
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: UmbraEntity_2x2_2
+      rect:
+        serializedVersion: 2
+        x: 399
+        y: 704
+        width: 69
+        height: 203
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 5db20c850d97e36f0800000000000000
+      internalID: -702990556074071083
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: UmbraEntity_2x2_3
+      rect:
+        serializedVersion: 2
+        x: 556
+        y: 715
+        width: 65
+        height: 197
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 16520b224bd472b40800000000000000
+      internalID: 5415382513007732065
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: UmbraEntity_2x2_4
+      rect:
+        serializedVersion: 2
+        x: 596
+        y: 538
+        width: 343
+        height: 452
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 337aac621ed72df30800000000000000
+      internalID: 4598876575470626611
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: UmbraEntity_2x2_5
+      rect:
+        serializedVersion: 2
+        x: 911
+        y: 704
+        width: 69
+        height: 203
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 31b45462bf486dd60800000000000000
+      internalID: 7914659609363958547
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: UmbraEntity_2x2_6
+      rect:
+        serializedVersion: 2
+        x: 120
+        y: 70
+        width: 267
+        height: 408
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 3fad1c34ffba93010800000000000000
+      internalID: 1169154691121142515
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: UmbraEntity_2x2_7
+      rect:
+        serializedVersion: 2
+        x: 127
+        y: 26
+        width: 259
+        height: 47
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: a7e8ad527c767df30800000000000000
+      internalID: 4600259649413484154
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: UmbraEntity_2x2_8
+      rect:
+        serializedVersion: 2
+        x: 637
+        y: 70
+        width: 268
+        height: 408
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 29dd474a97a772440800000000000000
+      internalID: 4911028581539569042
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: UmbraEntity_2x2_9
+      rect:
+        serializedVersion: 2
+        x: 639
+        y: 26
+        width: 259
+        height: 46
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 030af8fe17a341350800000000000000
+      internalID: 5986474065707114544
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    outline: []
+    customData: 
+    physicsShape: []
+    bones: []
+    spriteID: 
+    internalID: 0
+    vertices: []
+    indices: 
+    edges: []
+    weights: []
+    secondaryTextures: []
+    spriteCustomMetadata:
+      entries: []
+    nameFileIdTable:
+      UmbraEntity_2x2_0: 4068111077785719374
+      UmbraEntity_2x2_1: 3631428269439951765
+      UmbraEntity_2x2_2: -702990556074071083
+      UmbraEntity_2x2_3: 5415382513007732065
+      UmbraEntity_2x2_4: 4598876575470626611
+      UmbraEntity_2x2_5: 7914659609363958547
+      UmbraEntity_2x2_6: 1169154691121142515
+      UmbraEntity_2x2_7: 4600259649413484154
+      UmbraEntity_2x2_8: 4911028581539569042
+      UmbraEntity_2x2_9: 5986474065707114544
+  mipmapLimitGroupName: 
+  pSDRemoveMatte: 0
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
