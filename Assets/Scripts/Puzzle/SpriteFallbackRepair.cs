@@ -58,6 +58,10 @@ namespace ShadowFlip.Puzzle
             Sprite exitPortal = LoadRes("Sprites/Exit_Portal");
             Sprite wallLight = LoadRes("Sprites/Wall_Light_Long");
             Sprite wallShadow = LoadRes("Sprites/Wall_Shadow_Long");
+            Sprite labWallLight = LoadRes("Sprites/Laboratory/Lab_Wall_Light_Long");
+            Sprite labWallShadow = LoadRes("Sprites/Laboratory/Lab_Wall_Shadow_Long");
+            Sprite scifiWallLight = LoadRes("Sprites/ScifiFacility/Scifi_Wall_Light_Long");
+            Sprite scifiWallShadow = LoadRes("Sprites/ScifiFacility/Scifi_Wall_Shadow_Long");
             Sprite floorLight = LoadRes("Sprites/Floor_Light");
             Sprite floorShadow = LoadRes("Sprites/Floor_Shadow");
             Sprite[] obeliskFrames = LoadObeliskFrames();
@@ -205,7 +209,7 @@ namespace ShadowFlip.Puzzle
                 }
             }
 
-            // 6. Floors & Bordered Walls
+            // 6. Floors & Borderless Rotated Long Walls
             foreach (WorldPhaseObject phase in Object.FindObjectsByType<WorldPhaseObject>(FindObjectsSortMode.None))
             {
                 if (phase == null) continue;
@@ -230,26 +234,70 @@ namespace ShadowFlip.Puzzle
                     && phase.GetComponent<ColorFilter>() == null && phase.GetComponent<PortalMirror>() == null
                     && phase.GetComponent<ColorCombiner>() == null && phase.GetComponent<BeamRelayCrystal>() == null)
                 {
+                    RemoveWallBorders(phase.gameObject);
+
+                    string spriteName = sr != null && sr.sprite != null
+                        ? sr.sprite.name
+                        : (phase.lightWorldSprite != null ? phase.lightWorldSprite.name : string.Empty);
+
+                    Sprite targetLight = wallLight;
+                    Sprite targetShadow = wallShadow;
+                    if (spriteName.StartsWith("Lab_Wall_") && labWallLight != null && labWallShadow != null)
+                    {
+                        targetLight = labWallLight;
+                        targetShadow = labWallShadow;
+                    }
+                    else if (spriteName.StartsWith("Scifi_Wall_") && scifiWallLight != null && scifiWallShadow != null)
+                    {
+                        targetLight = scifiWallLight;
+                        targetShadow = scifiWallShadow;
+                    }
+
                     if (phase.affinity == WorldAffinity.Both)
                     {
-                        if (phase.lightWorldSprite == null) phase.lightWorldSprite = wallLight;
-                        if (phase.shadowWorldSprite == null) phase.shadowWorldSprite = wallShadow;
+                        phase.lightWorldSprite = targetLight;
+                        phase.shadowWorldSprite = targetShadow;
                     }
-                    if (sr != null && sr.sprite == null)
-                    {
-                        sr.sprite = phase.affinity == WorldAffinity.ShadowOnly ? wallShadow : wallLight;
-                    }
-                    phase.RefreshState();
 
-                    if (phase.GetComponent<WallBorderRenderer>() == null)
+                    if (sr != null)
                     {
-                        WallBorderRenderer border = phase.gameObject.AddComponent<WallBorderRenderer>();
-                        border.wallSize = box.size;
-                        border.affinity = phase.affinity;
-                        border.RefreshBorders(force: true);
+                        sr.drawMode = SpriteDrawMode.Tiled;
+                        sr.sprite = phase.affinity == WorldAffinity.ShadowOnly ? targetShadow : targetLight;
                     }
+
+                    Vector2 colSize = box.size;
+                    bool isVertical = colSize.y > colSize.x;
+                    bool isUnrotated = Mathf.Abs(Mathf.DeltaAngle(0f, phase.transform.eulerAngles.z)) < 1f;
+                    if (isVertical && isUnrotated)
+                    {
+                        float rotZ = phase.transform.position.x > 8f ? -90f : 90f;
+                        phase.transform.rotation = Quaternion.Euler(0f, 0f, rotZ);
+                        Vector2 swapped = new Vector2(colSize.y, colSize.x);
+                        box.size = swapped;
+                        if (sr != null) sr.size = swapped;
+                    }
+                    else if (sr != null)
+                    {
+                        sr.size = colSize;
+                    }
+
+                    phase.RefreshState();
                 }
             }
+        }
+
+        private static void RemoveWallBorders(GameObject wallGo)
+        {
+            if (wallGo == null) return;
+
+            Transform outer = wallGo.transform.Find("_OuterInkBorder");
+            if (outer != null) Object.Destroy(outer.gameObject);
+
+            Transform inner = wallGo.transform.Find("_InnerRealmBorder");
+            if (inner != null) Object.Destroy(inner.gameObject);
+
+            WallBorderRenderer border = wallGo.GetComponent<WallBorderRenderer>();
+            if (border != null) Object.Destroy(border);
         }
 
         private static Sprite LoadRes(string path) => Resources.Load<Sprite>(path);

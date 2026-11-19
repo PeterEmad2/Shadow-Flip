@@ -1058,8 +1058,8 @@ namespace ShadowFlip.EditorTools
         {
             CreateWall("Wall_Top", new Vector3(0f, 5.95f, 0f), new Vector2(21.8f, 1.1f), assets, WorldAffinity.Both, WallTileStyle.Long);
             CreateWall("Wall_Bottom", new Vector3(0f, -5.95f, 0f), new Vector2(21.8f, 1.1f), assets, WorldAffinity.Both, WallTileStyle.Long);
-            CreateWall("Wall_Left", new Vector3(-10.35f, 0f, 0f), new Vector2(1.1f, 13.0f), assets, WorldAffinity.Both, WallTileStyle.Pillar);
-            CreateWall("Wall_Right", new Vector3(10.35f, 0f, 0f), new Vector2(1.1f, 13.0f), assets, WorldAffinity.Both, WallTileStyle.Pillar);
+            CreateWall("Wall_Left", new Vector3(-10.35f, 0f, 0f), new Vector2(1.1f, 13.0f), assets, WorldAffinity.Both, WallTileStyle.Long);
+            CreateWall("Wall_Right", new Vector3(10.35f, 0f, 0f), new Vector2(1.1f, 13.0f), assets, WorldAffinity.Both, WallTileStyle.Long);
         }
 
         private static GameObject CreatePlayerForm(string name, Transform parent, Vector3 pos, string spritePath, Color fallbackColor)
@@ -1088,35 +1088,30 @@ namespace ShadowFlip.EditorTools
             GameObject go = new GameObject(name);
             go.transform.position = pos;
 
-            Sprite lightSprite = assets.WallLightMedium;
-            Sprite shadowSprite = assets.WallShadowMedium;
-            switch (style)
-            {
-                case WallTileStyle.Long:
-                    lightSprite = assets.WallLightLong;
-                    shadowSprite = assets.WallShadowLong;
-                    break;
-                case WallTileStyle.Pillar:
-                    lightSprite = assets.WallLightPillar;
-                    shadowSprite = assets.WallShadowPillar;
-                    break;
-                case WallTileStyle.Ruined:
-                    lightSprite = assets.WallLightRuined;
-                    shadowSprite = assets.WallShadowRuined;
-                    break;
-            }
+            Sprite lightSprite = assets.WallLightLong;
+            Sprite shadowSprite = assets.WallShadowLong;
 
             SpriteRenderer sr = go.AddComponent<SpriteRenderer>();
             sr.sprite = affinity == WorldAffinity.ShadowOnly ? shadowSprite : lightSprite;
-            sr.drawMode = style == WallTileStyle.Ruined ? SpriteDrawMode.Simple : SpriteDrawMode.Tiled;
-            if (sr.drawMode == SpriteDrawMode.Tiled)
-            {
-                sr.size = size;
-            }
+            sr.drawMode = SpriteDrawMode.Tiled;
             sr.sortingOrder = 2;
 
             BoxCollider2D col = go.AddComponent<BoxCollider2D>();
-            col.size = size;
+
+            bool isVertical = size.y > size.x;
+            if (isVertical)
+            {
+                float rotZ = pos.x > 8f ? -90f : 90f;
+                go.transform.rotation = Quaternion.Euler(0f, 0f, rotZ);
+                Vector2 localSize = new Vector2(size.y, size.x);
+                sr.size = localSize;
+                col.size = localSize;
+            }
+            else
+            {
+                sr.size = size;
+                col.size = size;
+            }
 
             WorldPhaseObject phase = go.AddComponent<WorldPhaseObject>();
             phase.affinity = affinity;
@@ -1126,10 +1121,6 @@ namespace ShadowFlip.EditorTools
                 phase.shadowWorldSprite = shadowSprite;
             }
 
-            WallBorderRenderer border = go.AddComponent<WallBorderRenderer>();
-            border.wallSize = size;
-            border.affinity = affinity;
-            border.RefreshBorders(force: true);
             return go;
         }
 
