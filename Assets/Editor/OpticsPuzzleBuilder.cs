@@ -13,6 +13,7 @@ namespace ShadowFlip.EditorTools
     {
         private const string CelDir = "Assets/Images/CelShaded/";
         private const string LabDir = "Assets/Images/Laboratory/";
+        private const string ScifiDir = "Assets/Images/ScifiFacility/";
         private const string SfxDir = "Assets/Sounds/SFX/";
         private const string MainMenuPath = "Assets/Scenes/MainMenu.unity";
         private const string TutorialPath = "Assets/Scenes/OpticsPuzzle_Tutorial.unity";
@@ -23,12 +24,13 @@ namespace ShadowFlip.EditorTools
         private const string Level5Path = "Assets/Scenes/OpticsPuzzle_Level5.unity";
         private const string Level6Path = "Assets/Scenes/OpticsPuzzle_Level6.unity";
         private const string Level7Path = "Assets/Scenes/OpticsPuzzle_Level7.unity";
+        private const string Level8Path = "Assets/Scenes/OpticsPuzzle_Level8.unity";
 
         private enum WallTileStyle { Long, Medium, Pillar, Ruined }
 
         private struct CelAssets
         {
-            public Sprite EmitterIdle, EmitterActive, EmitterBroken;
+            public Sprite EmitterIdle, EmitterActive, EmitterBroken, PushableBlockSprite;
             public Sprite[] MirrorDirections;
             public Sprite ReceiverInactive, ReceiverActiveWhite, ReceiverInactiveDark, ReceiverActiveGlow;
             public Sprite WallLightLong, WallLightMedium, WallLightPillar, WallLightRuined;
@@ -49,9 +51,25 @@ namespace ShadowFlip.EditorTools
             public Sprite LabTeslaTower, LabBioCapsule, LabMonitor, LabServerRack, LabWorkbench, LabShelves;
             public Sprite[] LabBulbs, LabLiquidUmbra, LabLiquidAcid, LabLiquidCryo;
             public Sprite[] LabNpcMale, LabNpcFemale, LabNpcHazmat; // [Down, Up, Left, Right]
+
+            // Sci-Fi Facility Builder Pack 1 Assets
+            public Sprite ScifiFloorLight, ScifiFloorShadow, ScifiFloorGrated;
+            public Sprite ScifiWallLightLong, ScifiWallLightMedium, ScifiWallLightPillar;
+            public Sprite ScifiWallShadowLong, ScifiWallShadowMedium, ScifiWallShadowPillar;
+            public Sprite ScifiDoorLabClosed, ScifiDoorLabOpen, ScifiDoorStdClosed, ScifiDoorStdOpen;
+            public Sprite ScifiThresholdH, ScifiThresholdV, ScifiDoorMarking;
+            public Sprite ScifiElecBoxClosed, ScifiElecBoxOpen, ScifiHatchButtonUp, ScifiHatchButtonDown, ScifiCratePushable;
+            public Sprite ScifiBenchFilled, ScifiBenchSide, ScifiShelfFilled1, ScifiShelfFilled2, ScifiCrateGroup1;
+            public Sprite ScifiPipesDouble, ScifiPipesTriple;
+            public Sprite ScifiAlarmOff, ScifiAlarmOn, ScifiAlarmGlow, ScifiCameraL, ScifiCameraR;
+            public Sprite ScifiSignBiohazard, ScifiSignRadiation, ScifiSignCaution, ScifiSignDoNotEnter;
+            public Sprite ScifiSignDirExit, ScifiSignDirLab, ScifiSignDirCtrl;
+            public Sprite ScifiLabelLab, ScifiLabelCtrl, ScifiLabelMed, ScifiLabelExit;
+            public Sprite ScifiArrowR, ScifiArrowL, ScifiArrowUp, ScifiArrowDown;
+            public Sprite ScifiBlood1, ScifiBlood2, ScifiHorrorDoorGlow;
         }
 
-        [MenuItem("Shadow Flip/Create All Levels (Main Menu + Tutorial + Levels 1-7)")]
+        [MenuItem("Shadow Flip/Create All Levels (Main Menu + Tutorial + Levels 1-8)")]
         public static void CreateAllLevels()
         {
             if (IsInPlayModeGuard()) return;
@@ -64,9 +82,10 @@ namespace ShadowFlip.EditorTools
             CreateOpticsPuzzleLevel5();
             CreateOpticsPuzzleLevel6();
             CreateOpticsPuzzleLevel7();
+            CreateOpticsPuzzleLevel8();
             CreateMainMenuScene();
             RegisterScenesInBuildSettings();
-            Debug.Log("Created Main Menu, Tutorial, and Levels 1-7 and registered all 9 in Build Settings.");
+            Debug.Log("Created Main Menu, Tutorial, and Levels 1-8 and registered all 10 in Build Settings.");
         }
 
         [MenuItem("Shadow Flip/Create Main Menu Scene")]
@@ -572,11 +591,11 @@ namespace ShadowFlip.EditorTools
             Debug.Log("Created Optics Puzzle Level 5 at " + Level5Path);
         }
 
-        [MenuItem("Shadow Flip/Create Level 6 (Grandmaster Lab Sanctum)")]
+        [MenuItem("Shadow Flip/Create Level 6 (Grandmaster Facility)")]
         public static void CreateOpticsPuzzleLevel6()
         {
             if (IsInPlayModeGuard()) return;
-            CelAssets assets = WithLaboratoryTheme(LoadCelAssets());
+            CelAssets assets = WithScifiFacilityTheme(LoadCelAssets());
             var scene = EditorSceneManager.NewScene(NewSceneSetup.EmptyScene, NewSceneMode.Single);
 
             SetupCoreScene(
@@ -585,23 +604,34 @@ namespace ShadowFlip.EditorTools
                 out PlayerMovement playerMovement,
                 out PuzzleHUD hud,
                 out ShadowStalkerController stalker,
-                new Color(0.04f, 0.03f, 0.09f, 1f),
-                new Color(1f, 0.94f, 0.80f, 1f), 1.05f,
-                new Color(0.26f, 0.18f, 0.50f, 1f), 0.45f,
+                new Color(0.04f, 0.04f, 0.09f, 1f),
+                new Color(0.96f, 0.98f, 1.0f, 1f), 1.05f,
+                new Color(0.28f, 0.18f, 0.44f, 1f), 0.46f,
                 new Vector3(-8.0f, -3.5f, 0f));
 
             stalker.umbraSafeDuration = 11.0f;
             hud.parFlips = 5;
-            hud.lessonTitle = "Level 6: Grandmaster Lab Sanctum";
+            hud.lessonTitle = "Level 6: Grandmaster Facility";
             hud.levelHint = "Free the Pushable Mirror Cart via the Forcefield, warp the beam across the wall, charge the 7s Capacitor Crystal in Light Realm, then flip [F] so the Realm Inverter converts the beam to Shadow!";
 
             CreateArenaWalls(assets);
             CreateLabSanctuary("Sanctuary_NorthWest", new Vector3(-7.5f, 3.5f, 0f), 2.2f, assets);
 
-            // Lab Props & Interactive Dr. Elena safely away from beams & spawn
-            CreateLabProp("Lab_BioCapsule_L6", new Vector3(8.7f, 4.2f, 0f), assets.LabBioCapsule, 0.9f, 3, hasCollider: true);
-            CreateLabProp("Lab_ServerRack_L6", new Vector3(8.7f, -4.2f, 0f), assets.LabServerRack, 0.9f, 3, hasCollider: true);
-            CreateLabProp("Lab_Monitor_L6", new Vector3(-5.6f, -4.9f, 0f), assets.LabMonitor, 0.8f, 3, hasCollider: true);
+            // Sci-Fi Facility Perimeter Props, Signage, Security & Shadow-Only Horror Decals
+            CreateLabProp("Scifi_Label_Ctrl_L6", new Vector3(-6.2f, 5.4f, 0f), assets.ScifiLabelCtrl, 1.0f, 3);
+            CreateLabProp("Scifi_Sign_Biohazard_L6", new Vector3(-3.8f, 5.4f, 0f), assets.ScifiSignBiohazard, 0.9f, 3);
+            CreateLabProp("Scifi_Sign_DirExit_L6", new Vector3(5.0f, 5.4f, 0f), assets.ScifiSignDirExit, 1.0f, 3);
+            CreateLabProp("Scifi_Camera_L_L6", new Vector3(-9.3f, 5.3f, 0f), assets.ScifiCameraL, 2.0f, 4);
+            CreateLabProp("Scifi_Camera_R_L6", new Vector3(9.3f, 5.3f, 0f), assets.ScifiCameraR, 2.0f, 4);
+            CreateScifiAlarmBeacon("Scifi_Alarm_West_L6", new Vector3(-1.2f, 5.4f, 0f), assets);
+            CreateScifiAlarmBeacon("Scifi_Alarm_East_L6", new Vector3(3.2f, 5.4f, 0f), assets);
+
+            CreateLabProp("Scifi_Bench_L6", new Vector3(8.6f, 4.3f, 0f), assets.ScifiBenchFilled, 0.95f, 3, hasCollider: true);
+            CreateLabProp("Scifi_Shelf_L6", new Vector3(8.6f, -4.3f, 0f), assets.ScifiShelfFilled1, 1.0f, 3, hasCollider: true);
+            CreateShadowHorrorDecal("Horror_Blood_L6_A", new Vector3(-3.8f, -1.8f, 0f), assets.ScifiBlood1, 1.4f, -15);
+            CreateShadowHorrorDecal("Horror_Blood_L6_B", new Vector3(5.2f, 0.8f, 0f), assets.ScifiBlood2, 1.3f, -15);
+            CreateShadowHorrorDecal("Horror_DoorGlow_L6", new Vector3(6.5f, 0.8f, 0f), assets.ScifiHorrorDoorGlow, 0.52f, -14);
+
             CreateLabNPC("Dr_Elena_L6", new Vector3(-5.8f, -1.8f, 0f), "Dr. Elena",
                 new[]
                 {
@@ -634,11 +664,11 @@ namespace ShadowFlip.EditorTools
             lightCapSensor.holdDuration = 7.0f;
             LightSensor shadowFinalSensor = CreateSensor("Sensor_Shadow_Grand", new Vector3(4.8f, -0.2f, 0f), LightColor.Shadow, WorldAffinity.ShadowOnly, assets);
 
-            // Grandmaster Vault at x = 6.5
+            // Grandmaster Vault at x = 6.5 using Sci-Fi Lab Sliding Door + Threshold
             CreateWall("VaultWall_Upper", new Vector3(6.5f, 3.9f, 0f), new Vector2(0.85f, 4.2f), assets, WorldAffinity.Both, WallTileStyle.Pillar);
             CreateWall("VaultWall_Lower", new Vector3(6.5f, -3.2f, 0f), new Vector2(0.85f, 5.6f), assets, WorldAffinity.Both, WallTileStyle.Pillar);
-            PuzzleDoor grandDoor = CreateLabBlastDoor("PuzzleDoor_Grandmaster", new Vector3(6.5f, 0.8f, 0f), new Vector2(1.1f, 2.4f), assets,
-                new[] { lightCapSensor, shadowFinalSensor }, null, null, requireAll: true, stayOpen: false, vertical: true, redVariant: true);
+            PuzzleDoor grandDoor = CreateScifiDoor("PuzzleDoor_Grandmaster", new Vector3(6.5f, 0.8f, 0f), new Vector2(1.1f, 2.4f), assets,
+                new[] { lightCapSensor, shadowFinalSensor }, null, null, requireAll: true, stayOpen: false, isLabDoor: true);
 
             CreateExit("LevelExit", new Vector3(8.6f, 0.8f, 0f), assets, new[] { grandDoor }, "OpticsPuzzle_Level7");
 
@@ -680,7 +710,7 @@ namespace ShadowFlip.EditorTools
             // Tesla Coil Sanctuary in NW corner
             CreateLabSanctuary("Sanctuary_Tesla", new Vector3(-7.8f, 3.8f, 0f), 2.2f, assets);
 
-            // Laboratory perimeter props & bubbling containment liquids (all clear of optical paths!)
+            // Laboratory perimeter props, bubbling vats, & Sci-Fi facility wall instrumentation
             CreateLabProp("Lab_Pipes_West", new Vector3(-8.6f, 2.5f, 0f), assets.LabWallPipes, 0.72f, 2);
             CreateLabProp("Lab_BioCapsule_NW", new Vector3(-6.2f, 4.6f, 0f), assets.LabBioCapsule, 0.85f, 3, hasCollider: true);
             CreateLabProp("Lab_Workbench_N", new Vector3(-3.0f, 4.9f, 0f), assets.LabWorkbench, 0.95f, 3, hasCollider: true);
@@ -691,6 +721,14 @@ namespace ShadowFlip.EditorTools
             CreateAnimatedLabProp("Lab_Vat_Umbra", new Vector3(3.8f, 3.8f, 0f), assets.LabLiquidUmbra, 1.35f, -16, 4.5f);
             CreateAnimatedLabProp("Lab_Vat_Acid", new Vector3(-9.1f, -4.9f, 0f), assets.LabLiquidAcid, 0.85f, -16, 4.0f);
             CreateAnimatedLabProp("Lab_Vat_Cryo", new Vector3(3.8f, -5.0f, 0f), assets.LabLiquidCryo, 0.85f, -16, 4.0f);
+
+            CreateScifiAlarmBeacon("Scifi_Alarm_West_L7", new Vector3(-4.0f, 5.5f, 0f), assets);
+            CreateScifiAlarmBeacon("Scifi_Alarm_East_L7", new Vector3(2.4f, 5.5f, 0f), assets);
+            CreateLabProp("Scifi_Label_Lab_L7", new Vector3(-1.2f, 5.5f, 0f), assets.ScifiLabelLab, 1.0f, 3);
+            CreateLabProp("Scifi_Sign_Rad_L7", new Vector3(0.4f, 5.5f, 0f), assets.ScifiSignRadiation, 0.85f, 3);
+            CreateLabProp("Scifi_Sign_DirExit_L7", new Vector3(6.75f, 5.5f, 0f), assets.ScifiSignDirExit, 1.0f, 3);
+            CreateLabProp("Scifi_Camera_L_L7", new Vector3(-9.3f, 5.3f, 0f), assets.ScifiCameraL, 2.0f, 4);
+            CreateLabProp("Scifi_Camera_R_L7", new Vector3(9.3f, 5.3f, 0f), assets.ScifiCameraR, 2.0f, 4);
 
             // Central Lab Partition Wall (x = -1.2) with a LightOnly Phase Gate in the middle
             CreateWall("LabPartition_Top", new Vector3(-1.2f, 3.8f, 0f), new Vector2(0.85f, 4.4f), assets, WorldAffinity.Both, WallTileStyle.Pillar);
@@ -751,12 +789,134 @@ namespace ShadowFlip.EditorTools
             PuzzleDoor blueAirlock = CreateLabBlastDoor("LabBlastDoor_Blue", new Vector3(7.4f, 0.0f, 0f), new Vector2(0.95f, 2.8f), assets,
                 new[] { shadowSensor }, new[] { eastButton }, new[] { eastConsole }, requireAll: true, stayOpen: true, vertical: true, redVariant: false);
 
-            CreateExit("LevelExit", new Vector3(9.0f, 0.0f, 0f), assets, new[] { redAirlock, blueAirlock }, "");
+            CreateExit("LevelExit", new Vector3(9.0f, 0.0f, 0f), assets, new[] { redAirlock, blueAirlock }, "OpticsPuzzle_Level8");
 
             EditorSceneManager.SaveScene(scene, Level7Path);
             RegisterScenesInBuildSettings();
             AssetDatabase.Refresh();
             Debug.Log("Created Optics Puzzle Level 7 (Quantum Laboratory) at " + Level7Path);
+        }
+
+        [MenuItem("Shadow Flip/Create Level 8 (Omega Containment Facility)")]
+        public static void CreateOpticsPuzzleLevel8()
+        {
+            if (IsInPlayModeGuard()) return;
+            CelAssets assets = WithScifiFacilityTheme(LoadCelAssets());
+            var scene = EditorSceneManager.NewScene(NewSceneSetup.EmptyScene, NewSceneMode.Single);
+
+            SetupCoreScene(
+                assets,
+                out logic gameLogic,
+                out PlayerMovement playerMovement,
+                out PuzzleHUD hud,
+                out ShadowStalkerController stalker,
+                new Color(0.03f, 0.04f, 0.08f, 1f),
+                new Color(0.96f, 0.98f, 1.0f, 1f), 1.05f,
+                new Color(0.24f, 0.16f, 0.42f, 1f), 0.44f,
+                new Vector3(-8.0f, -3.5f, 0f));
+
+            stalker.umbraSafeDuration = 11.0f;
+            hud.parFlips = 4;
+            hud.lessonTitle = "Level 8: Omega Containment Facility";
+            hud.levelHint = "Flip the Electrical Breaker [E] to lower the Containment Shutter, flip [F] to rotate the Turret & phase through the Security Gate, align Mirror_East_Aux [E], and push the Storage Crate onto the Floor Hatch!";
+
+            CreateArenaWalls(assets);
+
+            // Grated Engineering Walkway & Directional Floor Arrows
+            CreateFloorAccent("ScifiFloor_Engineering", new Vector3(3.2f, 0.0f, 0f), new Vector2(4.0f, 10.4f), assets.ScifiFloorGrated, -18);
+            CreateLabProp("FloorArrow_Gate", new Vector3(-2.6f, -2.5f, 0f), assets.ScifiArrowR, 1.8f, -15);
+            CreateLabProp("FloorArrow_Airlock", new Vector3(4.8f, 0.0f, 0f), assets.ScifiArrowR, 1.8f, -15);
+
+            // Tesla Sanctuary in NW corner
+            CreateLabSanctuary("Sanctuary_Tesla_L8", new Vector3(-8.0f, 3.8f, 0f), 2.2f, assets);
+
+            // Wall Mounting Props: Pipes, Cameras, Room Labels, Warning Signs, Pulsing Emergency Beacons
+            CreateLabProp("Pipes_NorthWest", new Vector3(-3.2f, 4.9f, 0f), assets.ScifiPipesDouble, 0.95f, 2);
+            CreateLabProp("Pipes_NorthEast", new Vector3(8.2f, 4.9f, 0f), assets.ScifiPipesTriple, 0.95f, 2);
+            CreateLabProp("Camera_NW", new Vector3(-9.3f, 5.3f, 0f), assets.ScifiCameraL, 2.0f, 4);
+            CreateLabProp("Camera_NE", new Vector3(9.3f, 5.3f, 0f), assets.ScifiCameraR, 2.0f, 4);
+
+            CreateLabProp("Label_Lab", new Vector3(-6.4f, 5.4f, 0f), assets.ScifiLabelLab, 1.0f, 3);
+            CreateLabProp("Label_Ctrl", new Vector3(-1.2f, 5.4f, 0f), assets.ScifiLabelCtrl, 1.0f, 3);
+            CreateLabProp("Label_Med", new Vector3(0.8f, 5.4f, 0f), assets.ScifiLabelMed, 1.0f, 3);
+            CreateLabProp("Label_Exit", new Vector3(6.85f, 5.4f, 0f), assets.ScifiLabelExit, 1.0f, 3);
+
+            CreateLabProp("Sign_Biohazard", new Vector3(-4.4f, 5.4f, 0f), assets.ScifiSignBiohazard, 0.85f, 3);
+            CreateLabProp("Sign_Radiation", new Vector3(3.6f, 5.4f, 0f), assets.ScifiSignRadiation, 0.85f, 3);
+            CreateLabProp("Sign_Caution", new Vector3(4.9f, 5.4f, 0f), assets.ScifiSignCaution, 0.85f, 3);
+            CreateLabProp("Sign_DirExit", new Vector3(4.9f, 2.4f, 0f), assets.ScifiSignDirExit, 1.0f, 3);
+
+            CreateScifiAlarmBeacon("Scifi_Alarm_West_L8", new Vector3(-6.5f, 5.5f, 0f), assets);
+            CreateScifiAlarmBeacon("Scifi_Alarm_Center_L8", new Vector3(2.2f, 5.5f, 0f), assets);
+            CreateScifiAlarmBeacon("Scifi_Alarm_Vault_L8", new Vector3(8.6f, 5.5f, 0f), assets);
+
+            // Freestanding Facility Furniture & Storage (clear of all beams and push paths!)
+            CreateLabProp("Bench_EastNW", new Vector3(0.5f, 4.6f, 0f), assets.ScifiBenchFilled, 0.9f, 3, hasCollider: true);
+            CreateLabProp("Shelf_EastNE", new Vector3(4.6f, 4.6f, 0f), assets.ScifiShelfFilled1, 1.0f, 3, hasCollider: true);
+            CreateLabProp("Shelf_VaultNE", new Vector3(8.8f, 4.5f, 0f), assets.ScifiShelfFilled2, 1.0f, 3, hasCollider: true);
+            CreateLabProp("Bench_VaultSE", new Vector3(8.9f, -4.2f, 0f), assets.ScifiBenchSide, 0.9f, 3, hasCollider: true);
+            CreateLabProp("Crates_SW", new Vector3(-9.0f, -4.8f, 0f), assets.ScifiCrateGroup1, 0.85f, 3, hasCollider: true);
+
+            // Shadow-Only Horror Mood Overlays (appear only when flipped to Shadow Realm!)
+            CreateShadowHorrorDecal("Horror_Blood_West", new Vector3(-6.2f, -1.6f, 0f), assets.ScifiBlood1, 1.4f, -15);
+            CreateShadowHorrorDecal("Horror_Blood_East", new Vector3(2.8f, -0.5f, 0f), assets.ScifiBlood2, 1.4f, -15);
+            CreateShadowHorrorDecal("Horror_Blood_Airlock", new Vector3(6.85f, 0.0f, 0f), assets.ScifiBlood1, 1.2f, -15);
+            CreateShadowHorrorDecal("Horror_Glow_Airlock1", new Vector3(6.2f, 0.0f, 0f), assets.ScifiHorrorDoorGlow, 0.52f, -14);
+            CreateShadowHorrorDecal("Horror_Glow_Airlock2", new Vector3(7.5f, 0.0f, 0f), assets.ScifiHorrorDoorGlow, 0.52f, -14);
+
+            // West Sector: Turret Emitter + Containment Shutter + Electrical Breaker Box + Engineer Mara
+            LightBeamEmitter turret = CreateEmitter("Turret_Emitter_L8", new Vector3(-5.2f, 1.5f, 0f), LightColor.White, WorldAffinity.Both, Vector2.up, assets);
+            RotatingTurretEmitter turretRot = turret.gameObject.AddComponent<RotatingTurretEmitter>();
+            turretRot.rotateOnWorldFlip = true;
+            turretRot.stepDegrees = -90f;
+
+            GameObject containmentShutter = CreateWall("Containment_Shutter_L8", new Vector3(-3.0f, 1.5f, 0f), new Vector2(0.75f, 1.6f), assets, WorldAffinity.Both, WallTileStyle.Medium);
+            PuzzleLever breakerLever = CreateLever("ElecBox_Breaker_L8", new Vector3(-7.8f, -0.8f, 0f), assets, WorldAffinity.Both,
+                toggledObjects: new[] { containmentShutter });
+
+            CreateLabNPC("Chief_Engineer_Mara", new Vector3(-5.5f, -3.8f, 0f), "Chief Engineer Mara",
+                new[]
+                {
+                    "Omega Containment is in lockdown! Open the Electrical Breaker Box [E] to drop the West optical shutter.",
+                    "Flip [F] to rotate the Turret right into Portal Mirror A—you'll also phase through the Security Gate at the same time!"
+                },
+                assets.LabNpcFemale, assets.LabNpcHazmat, assets, usableWorld: WorldAffinity.Both);
+
+            // Center Sterile Partition (x = -1.2): Top wall, LightOnly Phase Gate at y = -2.5, Portal Mirrors A -> B across top wall
+            CreateWall("Partition_Top_L8", new Vector3(-1.2f, 2.1f, 0f), new Vector2(0.85f, 7.6f), assets, WorldAffinity.Both, WallTileStyle.Pillar);
+            CreateWall("Security_PhaseGate_L8", new Vector3(-1.2f, -2.5f, 0f), new Vector2(0.85f, 2.4f), assets, WorldAffinity.LightOnly, WallTileStyle.Pillar);
+            CreateWall("Partition_Bot_L8", new Vector3(-1.2f, -4.6f, 0f), new Vector2(0.85f, 2.6f), assets, WorldAffinity.Both, WallTileStyle.Pillar);
+
+            PortalMirror portalB = CreatePortalMirror("PortalMirror_B_L8", new Vector3(0.5f, 1.5f, 0f), assets.PortalMirrorB, Vector2.right, null, canRotate: false);
+            CreatePortalMirror("PortalMirror_A_L8", new Vector3(-1.8f, 1.5f, 0f), assets.PortalMirrorA, Vector2.right, portalB, canRotate: false);
+
+            // East Sector: 4-Way Relay Crystal -> Top White Sensor + Bottom Mirror_East_Aux -> Shadow Sensor + Pushable Crate -> Hatch Button
+            CreateBeamRelay("Relay_4Way_L8", new Vector3(2.5f, 1.5f, 0f), BeamRelayCrystal.RelayMode.CrossRepeater4Way, Vector2.right, false, assets);
+            LightSensor topSensor = CreateSensor("Sensor_Facility_Top", new Vector3(2.5f, 4.2f, 0f), LightColor.White, WorldAffinity.Both, assets);
+
+            CreateIsometricMirror("Mirror_East_Aux", new Vector3(2.5f, -2.5f, 0f), 45f, 90f, WorldAffinity.Both, assets);
+            LightSensor botSensor = CreateSensor("Sensor_Facility_Bot", new Vector3(4.8f, -2.5f, 0f), LightColor.White, WorldAffinity.ShadowOnly, assets);
+
+            CreatePushableBlock("Scifi_StorageCrate", new Vector3(0.6f, -4.2f, 0f), assets);
+            PressurePlate hatchButton = CreatePressurePlate("Hatch_Button_L8", new Vector3(3.8f, -4.2f, 0f), assets, WorldAffinity.Both, latch: false);
+
+            // Dual Sliding Facility Door Airlock (x = 6.2 D1 Standard Sliding, x = 7.5 D2 Lab Door)
+            CreateWall("Airlock1_Upper_L8", new Vector3(6.2f, 3.8f, 0f), new Vector2(0.85f, 4.8f), assets, WorldAffinity.Both, WallTileStyle.Pillar);
+            CreateWall("Airlock1_Lower_L8", new Vector3(6.2f, -3.8f, 0f), new Vector2(0.85f, 4.8f), assets, WorldAffinity.Both, WallTileStyle.Pillar);
+            PuzzleDoor stdAirlock = CreateScifiDoor("ScifiDoor_Std_L8", new Vector3(6.2f, 0.0f, 0f), new Vector2(1.05f, 2.8f), assets,
+                new[] { topSensor, botSensor }, new[] { hatchButton }, new[] { breakerLever }, requireAll: true, stayOpen: true, isLabDoor: false);
+
+            CreateWall("Airlock2_Upper_L8", new Vector3(7.5f, 3.8f, 0f), new Vector2(0.85f, 4.8f), assets, WorldAffinity.Both, WallTileStyle.Pillar);
+            CreateWall("Airlock2_Lower_L8", new Vector3(7.5f, -3.8f, 0f), new Vector2(0.85f, 4.8f), assets, WorldAffinity.Both, WallTileStyle.Pillar);
+            PuzzleDoor labAirlock = CreateScifiDoor("ScifiDoor_Lab_L8", new Vector3(7.5f, 0.0f, 0f), new Vector2(1.05f, 2.8f), assets,
+                new[] { topSensor, botSensor }, new[] { hatchButton }, new[] { breakerLever }, requireAll: true, stayOpen: false, isLabDoor: true);
+
+            CreateExit("LevelExit", new Vector3(9.0f, 0.0f, 0f), assets, new[] { stdAirlock, labAirlock }, "");
+
+            EditorSceneManager.SaveScene(scene, Level8Path);
+            RegisterScenesInBuildSettings();
+            AssetDatabase.Refresh();
+            Debug.Log("Created Optics Puzzle Level 8 (Omega Containment Facility) at " + Level8Path);
         }
 
         private static void SetupCoreScene(
@@ -1294,7 +1454,7 @@ namespace ShadowFlip.EditorTools
             go.transform.localScale = new Vector3(0.95f, 0.95f, 1f);
 
             SpriteRenderer sr = go.AddComponent<SpriteRenderer>();
-            sr.sprite = assets.EmitterBroken;
+            sr.sprite = assets.PushableBlockSprite != null ? assets.PushableBlockSprite : assets.EmitterBroken;
             sr.sortingOrder = 4;
 
             BoxCollider2D col = go.AddComponent<BoxCollider2D>();
@@ -1348,6 +1508,117 @@ namespace ShadowFlip.EditorTools
             lab.LeverOff = src.LabConsoleOff != null ? src.LabConsoleOff : src.LeverOff;
             lab.LeverOn = src.LabConsoleOn != null ? src.LabConsoleOn : src.LeverOn;
             return lab;
+        }
+
+        private static CelAssets WithScifiFacilityTheme(CelAssets src)
+        {
+            CelAssets fac = src;
+            fac.FloorLight = src.ScifiFloorLight != null ? src.ScifiFloorLight : src.FloorLight;
+            fac.FloorShadow = src.ScifiFloorShadow != null ? src.ScifiFloorShadow : src.FloorShadow;
+            fac.WallLightLong = src.ScifiWallLightLong != null ? src.ScifiWallLightLong : src.WallLightLong;
+            fac.WallLightMedium = src.ScifiWallLightMedium != null ? src.ScifiWallLightMedium : src.WallLightMedium;
+            fac.WallLightPillar = src.ScifiWallLightPillar != null ? src.ScifiWallLightPillar : src.WallLightPillar;
+            fac.WallShadowLong = src.ScifiWallShadowLong != null ? src.ScifiWallShadowLong : src.WallShadowLong;
+            fac.WallShadowMedium = src.ScifiWallShadowMedium != null ? src.ScifiWallShadowMedium : src.WallShadowMedium;
+            fac.WallShadowPillar = src.ScifiWallShadowPillar != null ? src.ScifiWallShadowPillar : src.WallShadowPillar;
+            fac.DoorClosed = src.ScifiDoorLabClosed != null ? src.ScifiDoorLabClosed : src.DoorClosed;
+            fac.DoorOpen = src.ScifiDoorLabOpen != null ? src.ScifiDoorLabOpen : src.DoorOpen;
+            fac.LeverOff = src.ScifiElecBoxClosed != null ? src.ScifiElecBoxClosed : src.LeverOff;
+            fac.LeverOn = src.ScifiElecBoxOpen != null ? src.ScifiElecBoxOpen : src.LeverOn;
+            fac.ButtonUp = src.ScifiHatchButtonUp != null ? src.ScifiHatchButtonUp : src.ButtonUp;
+            fac.ButtonDown = src.ScifiHatchButtonDown != null ? src.ScifiHatchButtonDown : src.ButtonDown;
+            fac.PushableBlockSprite = src.ScifiCratePushable != null ? src.ScifiCratePushable : src.PushableBlockSprite;
+            return fac;
+        }
+
+        private static PuzzleDoor CreateScifiDoor(
+            string name, Vector3 pos, Vector2 size, CelAssets assets,
+            LightSensor[] sensors, PressurePlate[] plates, PuzzleLever[] levers,
+            bool requireAll, bool stayOpen, bool isLabDoor)
+        {
+            Sprite closedSprite = isLabDoor ? assets.ScifiDoorLabClosed : assets.ScifiDoorStdClosed;
+            Sprite openSprite = isLabDoor ? assets.ScifiDoorLabOpen : assets.ScifiDoorStdOpen;
+            if (closedSprite == null || openSprite == null)
+            {
+                return CreateDoor(name, pos, size, assets, sensors, plates, levers, requireAll, stayOpen);
+            }
+
+            if (assets.ScifiThresholdV != null)
+            {
+                CreateLabProp(name + "_Threshold", pos, assets.ScifiThresholdV, 0.9f, -14);
+            }
+            if (assets.ScifiDoorMarking != null)
+            {
+                CreateLabProp(name + "_Marking", pos + new Vector3(0f, -size.y * 0.45f, 0f), assets.ScifiDoorMarking, 0.6f, -14);
+            }
+
+            GameObject doorGo = new GameObject(name);
+            doorGo.transform.position = pos;
+            doorGo.transform.localScale = new Vector3(size.x / 1.11f, size.y / 1.39f, 1f);
+
+            SpriteRenderer doorSr = doorGo.AddComponent<SpriteRenderer>();
+            doorSr.sprite = closedSprite;
+            doorSr.color = Color.white;
+            doorSr.sortingOrder = 3;
+
+            BoxCollider2D col = doorGo.AddComponent<BoxCollider2D>();
+            col.size = new Vector2(1.05f, 1.32f);
+
+            PuzzleDoor door = doorGo.AddComponent<PuzzleDoor>();
+            door.requiredSensors = sensors;
+            door.requiredPlates = plates;
+            door.requiredLevers = levers;
+            door.requireAll = requireAll;
+            door.stayOpenOnceUnlocked = stayOpen;
+            door.closedSprite = closedSprite;
+            door.openSprite = openSprite;
+            return door;
+        }
+
+        private static void CreateScifiAlarmBeacon(string name, Vector3 pos, CelAssets assets)
+        {
+            GameObject go = new GameObject(name);
+            go.transform.position = pos;
+            go.transform.localScale = new Vector3(1.8f, 1.8f, 1f);
+
+            SpriteRenderer sr = go.AddComponent<SpriteRenderer>();
+            sr.sprite = assets.ScifiAlarmOff;
+            sr.sortingOrder = 4;
+
+            SpriteRenderer glowSr = null;
+            if (assets.ScifiAlarmGlow != null)
+            {
+                GameObject glowGo = new GameObject("AlarmGlow");
+                glowGo.transform.SetParent(go.transform, false);
+                glowGo.transform.localPosition = Vector3.zero;
+                glowGo.transform.localScale = new Vector3(1.25f, 1.25f, 1f);
+                glowSr = glowGo.AddComponent<SpriteRenderer>();
+                glowSr.sprite = assets.ScifiAlarmGlow;
+                glowSr.sortingOrder = 15;
+                glowSr.enabled = false;
+            }
+
+            ScifiAlarmBeacon beacon = go.AddComponent<ScifiAlarmBeacon>();
+            beacon.beaconRenderer = sr;
+            beacon.glowRenderer = glowSr;
+            beacon.offSprite = assets.ScifiAlarmOff;
+            beacon.onSprite = assets.ScifiAlarmOn;
+        }
+
+        private static void CreateShadowHorrorDecal(string name, Vector3 pos, Sprite sprite, float scale, int sortingOrder)
+        {
+            if (sprite == null) return;
+            GameObject go = new GameObject(name);
+            go.transform.position = pos;
+            go.transform.localScale = new Vector3(scale, scale, 1f);
+
+            SpriteRenderer sr = go.AddComponent<SpriteRenderer>();
+            sr.sprite = sprite;
+            sr.sortingOrder = sortingOrder;
+
+            WorldPhaseObject phase = go.AddComponent<WorldPhaseObject>();
+            phase.affinity = WorldAffinity.ShadowOnly;
+            phase.disableRenderersInsteadOfFade = true;
         }
 
         private static PuzzleDoor CreateLabBlastDoor(
@@ -1538,19 +1809,24 @@ namespace ShadowFlip.EditorTools
         {
             ConfigureSpriteFolder(CelDir, pointFilter: false);
             ConfigureSpriteFolder(LabDir, pointFilter: true);
+            ConfigureSpriteFolder(ScifiDir, pointFilter: false);
             ConfigureSpriteFolder("Assets/Resources/Sprites/", pointFilter: false);
             ConfigureSpriteFolder("Assets/Resources/Sprites/Laboratory/", pointFilter: true);
+            ConfigureSpriteFolder("Assets/Resources/Sprites/ScifiFacility/", pointFilter: false);
+            ConfigureSpriteFolder("Assets/Scifi_Facility_Buider_Pack_1_ver 2.0/", pointFilter: false, recursive: true, skipPreview: true);
             AssetDatabase.Refresh();
         }
 
-        private static void ConfigureSpriteFolder(string folderPath, bool pointFilter = false)
+        private static void ConfigureSpriteFolder(string folderPath, bool pointFilter = false, bool recursive = false, bool skipPreview = false)
         {
             if (!Directory.Exists(folderPath)) return;
-            string[] files = Directory.GetFiles(folderPath, "*.png");
+            SearchOption searchOption = recursive ? SearchOption.AllDirectories : SearchOption.TopDirectoryOnly;
+            string[] files = Directory.GetFiles(folderPath, "*.png", searchOption);
             foreach (string file in files)
             {
                 string assetPath = file.Replace('\\', '/');
                 if (assetPath.EndsWith("CelShaded_SpriteSheet.png")) continue;
+                if (skipPreview && assetPath.Contains("/Preview/")) continue;
                 TextureImporter importer = AssetImporter.GetAtPath(assetPath) as TextureImporter;
                 if (importer == null) continue;
 
@@ -1602,6 +1878,7 @@ namespace ShadowFlip.EditorTools
                 EmitterIdle = LoadSprite(CelDir + "Emitter_Idle.png"),
                 EmitterActive = LoadSprite(CelDir + "Emitter_Active.png"),
                 EmitterBroken = LoadSprite(CelDir + "Emitter_Broken.png"),
+                PushableBlockSprite = LoadSprite(CelDir + "Emitter_Broken.png"),
                 MirrorDirections = new[]
                 {
                     LoadSprite(CelDir + "Mirror_45.png"),
@@ -1712,13 +1989,66 @@ namespace ShadowFlip.EditorTools
                     LoadSprite(LabDir + "LabNPC_Hazmat_Up.png"),
                     LoadSprite(LabDir + "LabNPC_Hazmat_Left.png"),
                     LoadSprite(LabDir + "LabNPC_Hazmat_Right.png")
-                }
+                },
+
+                // Sci-Fi Facility Builder Pack 1 Assets
+                ScifiFloorLight = LoadSprite(ScifiDir + "Scifi_Floor_Light.png"),
+                ScifiFloorShadow = LoadSprite(ScifiDir + "Scifi_Floor_Shadow.png"),
+                ScifiFloorGrated = LoadSprite(ScifiDir + "Scifi_Floor_Grated.png"),
+                ScifiWallLightLong = LoadSprite(ScifiDir + "Scifi_Wall_Light_Long.png"),
+                ScifiWallLightMedium = LoadSprite(ScifiDir + "Scifi_Wall_Light_Medium.png"),
+                ScifiWallLightPillar = LoadSprite(ScifiDir + "Scifi_Wall_Light_Pillar.png"),
+                ScifiWallShadowLong = LoadSprite(ScifiDir + "Scifi_Wall_Shadow_Long.png"),
+                ScifiWallShadowMedium = LoadSprite(ScifiDir + "Scifi_Wall_Shadow_Medium.png"),
+                ScifiWallShadowPillar = LoadSprite(ScifiDir + "Scifi_Wall_Shadow_Pillar.png"),
+                ScifiDoorLabClosed = LoadSprite(ScifiDir + "Scifi_Door_Lab_Closed.png"),
+                ScifiDoorLabOpen = LoadSprite(ScifiDir + "Scifi_Door_Lab_Open.png"),
+                ScifiDoorStdClosed = LoadSprite(ScifiDir + "Scifi_Door_Std_Closed.png"),
+                ScifiDoorStdOpen = LoadSprite(ScifiDir + "Scifi_Door_Std_Open.png"),
+                ScifiThresholdH = LoadSprite(ScifiDir + "Scifi_Threshold_H.png"),
+                ScifiThresholdV = LoadSprite(ScifiDir + "Scifi_Threshold_V.png"),
+                ScifiDoorMarking = LoadSprite(ScifiDir + "Scifi_Door_Marking.png"),
+                ScifiElecBoxClosed = LoadSprite(ScifiDir + "Scifi_ElecBox_Closed.png"),
+                ScifiElecBoxOpen = LoadSprite(ScifiDir + "Scifi_ElecBox_Open.png"),
+                ScifiHatchButtonUp = LoadSprite(ScifiDir + "Scifi_Hatch_Button_Up.png"),
+                ScifiHatchButtonDown = LoadSprite(ScifiDir + "Scifi_Hatch_Button_Down.png"),
+                ScifiCratePushable = LoadSprite(ScifiDir + "Scifi_Crate_Pushable.png"),
+                ScifiBenchFilled = LoadSprite(ScifiDir + "Scifi_Bench_Filled.png"),
+                ScifiBenchSide = LoadSprite(ScifiDir + "Scifi_Bench_Side.png"),
+                ScifiShelfFilled1 = LoadSprite(ScifiDir + "Scifi_Shelf_Filled1.png"),
+                ScifiShelfFilled2 = LoadSprite(ScifiDir + "Scifi_Shelf_Filled2.png"),
+                ScifiCrateGroup1 = LoadSprite(ScifiDir + "Scifi_Crate_Group1.png"),
+                ScifiPipesDouble = LoadSprite(ScifiDir + "Scifi_Pipes_Double.png"),
+                ScifiPipesTriple = LoadSprite(ScifiDir + "Scifi_Pipes_Triple.png"),
+                ScifiAlarmOff = LoadSprite(ScifiDir + "Scifi_Alarm_Off.png"),
+                ScifiAlarmOn = LoadSprite(ScifiDir + "Scifi_Alarm_On.png"),
+                ScifiAlarmGlow = LoadSprite(ScifiDir + "Scifi_Alarm_Glow.png"),
+                ScifiCameraL = LoadSprite(ScifiDir + "Scifi_Camera_L.png"),
+                ScifiCameraR = LoadSprite(ScifiDir + "Scifi_Camera_R.png"),
+                ScifiSignBiohazard = LoadSprite(ScifiDir + "Scifi_Sign_Biohazard.png"),
+                ScifiSignRadiation = LoadSprite(ScifiDir + "Scifi_Sign_Radiation.png"),
+                ScifiSignCaution = LoadSprite(ScifiDir + "Scifi_Sign_Caution.png"),
+                ScifiSignDoNotEnter = LoadSprite(ScifiDir + "Scifi_Sign_DoNotEnter.png"),
+                ScifiSignDirExit = LoadSprite(ScifiDir + "Scifi_Sign_Dir_Exit.png"),
+                ScifiSignDirLab = LoadSprite(ScifiDir + "Scifi_Sign_Dir_Lab.png"),
+                ScifiSignDirCtrl = LoadSprite(ScifiDir + "Scifi_Sign_Dir_Ctrl.png"),
+                ScifiLabelLab = LoadSprite(ScifiDir + "Scifi_Label_Lab.png"),
+                ScifiLabelCtrl = LoadSprite(ScifiDir + "Scifi_Label_Ctrl.png"),
+                ScifiLabelMed = LoadSprite(ScifiDir + "Scifi_Label_Med.png"),
+                ScifiLabelExit = LoadSprite(ScifiDir + "Scifi_Label_Exit.png"),
+                ScifiArrowR = LoadSprite(ScifiDir + "Scifi_Arrow_R.png"),
+                ScifiArrowL = LoadSprite(ScifiDir + "Scifi_Arrow_L.png"),
+                ScifiArrowUp = LoadSprite(ScifiDir + "Scifi_Arrow_Up.png"),
+                ScifiArrowDown = LoadSprite(ScifiDir + "Scifi_Arrow_Down.png"),
+                ScifiBlood1 = LoadSprite(ScifiDir + "Scifi_Blood_1.png"),
+                ScifiBlood2 = LoadSprite(ScifiDir + "Scifi_Blood_2.png"),
+                ScifiHorrorDoorGlow = LoadSprite(ScifiDir + "Scifi_Horror_DoorGlow.png")
             };
         }
 
         private static void RegisterScenesInBuildSettings()
         {
-            string[] managed = { MainMenuPath, TutorialPath, Level1Path, Level2Path, Level3Path, Level4Path, Level5Path, Level6Path, Level7Path };
+            string[] managed = { MainMenuPath, TutorialPath, Level1Path, Level2Path, Level3Path, Level4Path, Level5Path, Level6Path, Level7Path, Level8Path };
             var scenes = new List<EditorBuildSettingsScene>();
             foreach (string path in managed) AddSceneIfMissing(scenes, path);
             foreach (var existing in EditorBuildSettings.scenes)

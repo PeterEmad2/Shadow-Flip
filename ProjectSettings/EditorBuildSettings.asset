@@ -29,6 +29,9 @@ EditorBuildSettings:
   - enabled: 1
     path: Assets/Scenes/OpticsPuzzle_Level6.unity
     guid: 84a347e0f93d8a2488ad7b3070db5e67
+  - enabled: 1
+    path: Assets/Scenes/OpticsPuzzle_Level7.unity
+    guid: bfe9bf0e8ab1c52499571fc37ad44f57
   m_configObjects:
     com.unity.input.settings.actions: {fileID: -944628639613478452, guid: 2bcd2660ca9b64942af0de543d8d7100, type: 3}
   m_UseUCBPForAssetBundles: 0

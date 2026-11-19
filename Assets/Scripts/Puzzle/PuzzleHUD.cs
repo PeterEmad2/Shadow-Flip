@@ -31,7 +31,8 @@ namespace ShadowFlip.Puzzle
             "OpticsPuzzle_Level4",
             "OpticsPuzzle_Level5",
             "OpticsPuzzle_Level6",
-            "OpticsPuzzle_Level7"
+            "OpticsPuzzle_Level7",
+            "OpticsPuzzle_Level8"
         };
 
         private static readonly string[] LevelDisplayNames =
@@ -42,8 +43,9 @@ namespace ShadowFlip.Puzzle
             "Level 3: The Prism Sanctum",
             "Level 4: Umbra Labyrinth",
             "Level 5: The Flip-Clock Matrix",
-            "Level 6: Grandmaster Lab Sanctum",
-            "Level 7: Quantum Laboratory"
+            "Level 6: Grandmaster Facility",
+            "Level 7: Quantum Laboratory",
+            "Level 8: Omega Containment Facility"
         };
 
         private static bool hasShownInitialMainMenu = false;
@@ -327,7 +329,7 @@ namespace ShadowFlip.Puzzle
             GUI.color = Color.white;
 
             float w = 640f;
-            float h = 608f;
+            float h = 628f;
             Rect modal = new Rect((Screen.width - w) * 0.5f, (Screen.height - h) * 0.5f, w, h);
             DrawCelPanel(modal, panelColor, inkColor, accentColor, 5f);
 
@@ -369,7 +371,7 @@ namespace ShadowFlip.Puzzle
                 }
             }
 
-            // 8-Level Select List
+            // 9-Level Select List
             GUI.color = accentColor;
             GUI.Label(new Rect(modal.x + 28f, modal.y + 142f, 400f, 24f), "SELECT LEVEL:", statusStyle);
             GUI.color = Color.white;
@@ -381,7 +383,7 @@ namespace ShadowFlip.Puzzle
                 string starStr = new string('★', stars) + new string('☆', 3 - stars);
                 string activeTag = sceneName == currentScene ? " [CURRENT]" : "";
 
-                Rect btnRect = new Rect(modal.x + 28f, modal.y + 168f + i * 42f, modal.width - 56f, 35f);
+                Rect btnRect = new Rect(modal.x + 28f, modal.y + 168f + i * 39f, modal.width - 56f, 33f);
                 if (GUI.Button(btnRect, $"  {LevelDisplayNames[i]}{activeTag}    [{starStr}]"))
                 {
                     PuzzleAudioManager.Instance?.PlayButtonClick();
@@ -392,7 +394,7 @@ namespace ShadowFlip.Puzzle
             if (!string.IsNullOrEmpty(menuNotice))
             {
                 GUI.color = new Color(1f, 0.55f, 0.45f, 1f);
-                GUI.Label(new Rect(modal.x + 28f, modal.y + 510f, modal.width - 56f, 28f), menuNotice, statusStyle);
+                GUI.Label(new Rect(modal.x + 28f, modal.y + 528f, modal.width - 56f, 28f), menuNotice, statusStyle);
                 GUI.color = Color.white;
             }
 
