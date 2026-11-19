@@ -1868,21 +1868,58 @@ namespace ShadowFlip.EditorTools
 
         private static void ConfigureCelShadedSprites()
         {
-            ConfigureSpriteFolder(CelDir, pointFilter: false);
-            ConfigureSpriteFolder(LabDir, pointFilter: true);
-            ConfigureSpriteFolder(ScifiDir, pointFilter: false);
-            ConfigureSpriteFolder(NewDataDir, pointFilter: true);
-            ConfigureSpriteFolder("Assets/Resources/Sprites/", pointFilter: false);
-            ConfigureSpriteFolder("Assets/Resources/Sprites/Laboratory/", pointFilter: true);
-            ConfigureSpriteFolder("Assets/Resources/Sprites/ScifiFacility/", pointFilter: false);
-            ConfigureSpriteFolder("Assets/Resources/Sprites/NewData/", pointFilter: true);
-            ConfigureSpriteFolder("Assets/New data/", pointFilter: true, recursive: true);
-            ConfigureSpriteFolder("Assets/Scifi_Facility_Buider_Pack_1_ver 2.0/", pointFilter: false, recursive: true, skipPreview: true);
+            ConfigureSpriteFolder(CelDir, pointFilter: true, forceSingleMode: true);
+            ConfigureSpriteFolder(LabDir, pointFilter: true, forceSingleMode: true);
+            ConfigureSpriteFolder(ScifiDir, pointFilter: true, forceSingleMode: true);
+            ConfigureSpriteFolder(NewDataDir, pointFilter: true, forceSingleMode: true);
+            ConfigureSpriteFolder("Assets/Resources/Sprites/", pointFilter: true, forceSingleMode: true);
+            ConfigureSpriteFolder("Assets/Resources/Sprites/Laboratory/", pointFilter: true, forceSingleMode: true);
+            ConfigureSpriteFolder("Assets/Resources/Sprites/ScifiFacility/", pointFilter: true, forceSingleMode: true);
+            ConfigureSpriteFolder("Assets/Resources/Sprites/NewData/", pointFilter: true, forceSingleMode: true);
+            ConfigureSpriteFolder("Assets/Images/Jimmy/", pointFilter: true, recursive: true, forceSingleMode: false);
+            ConfigureSpriteFolder("Assets/New data/", pointFilter: true, recursive: true, forceSingleMode: false);
+            ConfigureSpriteFolder("Assets/tiles_laboratory_LandOfPixels/", pointFilter: true, recursive: true, forceSingleMode: false);
+            ConfigureSpriteFolder("Assets/Scifi_Facility_Buider_Pack_1_ver 2.0/", pointFilter: true, recursive: true, skipPreview: true, forceSingleMode: false);
+            ConfigurePixelTexture("Assets/Images/cursor/Cursor.png", TextureImporterType.Cursor, ensureReadable: true);
             AssetDatabase.SaveAssets();
             AssetDatabase.Refresh(ImportAssetOptions.ForceSynchronousImport);
         }
 
-        private static void ConfigureSpriteFolder(string folderPath, bool pointFilter = false, bool recursive = false, bool skipPreview = false)
+        private static void ConfigurePixelTexture(string assetPath, TextureImporterType requiredType, bool ensureReadable)
+        {
+            TextureImporter importer = AssetImporter.GetAtPath(assetPath) as TextureImporter;
+            if (importer == null) return;
+
+            bool changed = false;
+            if (importer.textureType != requiredType)
+            {
+                importer.textureType = requiredType;
+                changed = true;
+            }
+            if (ensureReadable && !importer.isReadable)
+            {
+                importer.isReadable = true;
+                changed = true;
+            }
+            if (importer.mipmapEnabled)
+            {
+                importer.mipmapEnabled = false;
+                changed = true;
+            }
+            if (importer.filterMode != FilterMode.Point)
+            {
+                importer.filterMode = FilterMode.Point;
+                changed = true;
+            }
+            if (importer.textureCompression != TextureImporterCompression.Uncompressed)
+            {
+                importer.textureCompression = TextureImporterCompression.Uncompressed;
+                changed = true;
+            }
+            if (changed) importer.SaveAndReimport();
+        }
+
+        private static void ConfigureSpriteFolder(string folderPath, bool pointFilter = true, bool recursive = false, bool skipPreview = false, bool forceSingleMode = true)
         {
             if (!Directory.Exists(folderPath)) return;
             SearchOption searchOption = recursive ? SearchOption.AllDirectories : SearchOption.TopDirectoryOnly;
@@ -1896,24 +1933,42 @@ namespace ShadowFlip.EditorTools
                 if (importer == null) continue;
 
                 bool changed = false;
-                if (importer.textureType != TextureImporterType.Sprite)
+                if (forceSingleMode)
                 {
-                    importer.textureType = TextureImporterType.Sprite;
-                    changed = true;
+                    if (importer.textureType != TextureImporterType.Sprite)
+                    {
+                        importer.textureType = TextureImporterType.Sprite;
+                        changed = true;
+                    }
+                    if (importer.spriteImportMode != SpriteImportMode.Single)
+                    {
+                        importer.spriteImportMode = SpriteImportMode.Single;
+                        changed = true;
+                    }
+                    if (importer.wrapMode != TextureWrapMode.Repeat)
+                    {
+                        importer.wrapMode = TextureWrapMode.Repeat;
+                        changed = true;
+                    }
+
+                    TextureImporterSettings settings = new TextureImporterSettings();
+                    importer.ReadTextureSettings(settings);
+                    if (settings.spriteMeshType != SpriteMeshType.FullRect)
+                    {
+                        settings.spriteMeshType = SpriteMeshType.FullRect;
+                        importer.SetTextureSettings(settings);
+                        changed = true;
+                    }
                 }
-                if (importer.spriteImportMode != SpriteImportMode.Single)
-                {
-                    importer.spriteImportMode = SpriteImportMode.Single;
-                    changed = true;
-                }
+
                 if (Mathf.Abs(importer.spritePixelsPerUnit - 100f) > 0.1f)
                 {
                     importer.spritePixelsPerUnit = 100f;
                     changed = true;
                 }
-                if (importer.wrapMode != TextureWrapMode.Repeat)
+                if (pointFilter && importer.mipmapEnabled)
                 {
-                    importer.wrapMode = TextureWrapMode.Repeat;
+                    importer.mipmapEnabled = false;
                     changed = true;
                 }
                 if (pointFilter && importer.filterMode != FilterMode.Point)
@@ -1924,15 +1979,6 @@ namespace ShadowFlip.EditorTools
                 if (pointFilter && importer.textureCompression != TextureImporterCompression.Uncompressed)
                 {
                     importer.textureCompression = TextureImporterCompression.Uncompressed;
-                    changed = true;
-                }
-
-                TextureImporterSettings settings = new TextureImporterSettings();
-                importer.ReadTextureSettings(settings);
-                if (settings.spriteMeshType != SpriteMeshType.FullRect)
-                {
-                    settings.spriteMeshType = SpriteMeshType.FullRect;
-                    importer.SetTextureSettings(settings);
                     changed = true;
                 }
 

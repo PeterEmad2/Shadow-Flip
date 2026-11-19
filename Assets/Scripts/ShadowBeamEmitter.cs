@@ -40,7 +40,8 @@ public class ShadowBeamEmitter : MonoBehaviour
         lineRenderer.useWorldSpace = true;
         lineRenderer.startWidth = beamWidth;
         lineRenderer.endWidth = beamWidth;
-        lineRenderer.numCapVertices = 4;
+        lineRenderer.numCapVertices = 0;
+        lineRenderer.numCornerVertices = 0;
 
         if (lineRenderer.sharedMaterial == null)
         {

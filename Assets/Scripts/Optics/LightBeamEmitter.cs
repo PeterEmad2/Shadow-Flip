@@ -198,7 +198,8 @@ namespace ShadowFlip.Optics
                 outerGo.transform.SetParent(transform, false);
                 LineRenderer outer = outerGo.AddComponent<LineRenderer>();
                 outer.useWorldSpace = true;
-                outer.numCapVertices = 4;
+                outer.numCapVertices = 0;
+                outer.numCornerVertices = 0;
                 outer.sortingOrder = sortingOrder;
                 outer.material = mat;
 
@@ -206,7 +207,8 @@ namespace ShadowFlip.Optics
                 coreGo.transform.SetParent(transform, false);
                 LineRenderer core = coreGo.AddComponent<LineRenderer>();
                 core.useWorldSpace = true;
-                core.numCapVertices = 4;
+                core.numCapVertices = 0;
+                core.numCornerVertices = 0;
                 core.sortingOrder = sortingOrder + 1;
                 core.material = mat;
 

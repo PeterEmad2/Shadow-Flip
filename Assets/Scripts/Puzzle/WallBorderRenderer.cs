@@ -210,7 +210,8 @@ namespace ShadowFlip.Puzzle
             lr.useWorldSpace = false;
             lr.loop = true;
             lr.positionCount = 4;
-            lr.numCornerVertices = 2;
+            lr.numCornerVertices = 0;
+            lr.numCapVertices = 0;
             lr.sortingOrder = order;
             lr.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
             lr.receiveShadows = false;

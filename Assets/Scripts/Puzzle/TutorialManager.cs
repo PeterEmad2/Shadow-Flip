@@ -136,7 +136,7 @@ namespace ShadowFlip.Puzzle
             float guiY = Screen.height - screenPos.y;
             float width = 165f;
             float height = 28f;
-            Rect r = new Rect(screenPos.x - width * 0.5f, guiY - height, width, height);
+            Rect r = new Rect(Mathf.Round(screenPos.x - width * 0.5f), Mathf.Round(guiY - height), width, height);
 
             GUI.color = new Color(0.08f, 0.06f, 0.11f, 0.95f);
             GUI.DrawTexture(r, boxTex);
@@ -164,6 +164,7 @@ namespace ShadowFlip.Puzzle
             if (boxTex == null)
             {
                 boxTex = new Texture2D(1, 1);
+                boxTex.filterMode = FilterMode.Point;
                 boxTex.SetPixel(0, 0, Color.white);
                 boxTex.Apply();
             }

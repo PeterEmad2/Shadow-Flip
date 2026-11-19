@@ -215,8 +215,8 @@ namespace ShadowFlip.Puzzle
 
             float boxW = 340f;
             float boxH = 82f;
-            float x = Mathf.Clamp(guiX - boxW * 0.5f, 12f, Screen.width - boxW - 12f);
-            float y = Mathf.Clamp(guiY - boxH, 12f, Screen.height - boxH - 12f);
+            float x = Mathf.Round(Mathf.Clamp(guiX - boxW * 0.5f, 12f, Screen.width - boxW - 12f));
+            float y = Mathf.Round(Mathf.Clamp(guiY - boxH, 12f, Screen.height - boxH - 12f));
 
             logic l = logic.Instance != null ? logic.Instance : FindFirstObjectByType<logic>();
             bool isDark = l != null && l.isDarkActive;
@@ -224,15 +224,20 @@ namespace ShadowFlip.Puzzle
             Color fill = isDark ? new Color(0.15f, 0.11f, 0.28f, 0.96f) : new Color(0.14f, 0.20f, 0.30f, 0.96f);
             Color accent = isDark ? new Color(0.75f, 0.48f, 1f, 1f) : new Color(0.45f, 0.88f, 1f, 1f);
 
+            const float pxStep = 3f;
             Rect box = new Rect(x, y, boxW, boxH);
             GUI.color = new Color(0f, 0f, 0f, 0.45f);
-            GUI.DrawTexture(new Rect(box.x + 3f, box.y + 3f, box.width, box.height), whiteTex);
+            GUI.DrawTexture(new Rect(box.x + pxStep, box.y + pxStep, box.width - pxStep * 2f, box.height), whiteTex);
+            GUI.DrawTexture(new Rect(box.x, box.y + pxStep * 2f, box.width + pxStep, box.height - pxStep * 3f), whiteTex);
+
             GUI.color = ink;
-            GUI.DrawTexture(box, whiteTex);
+            GUI.DrawTexture(new Rect(box.x + pxStep, box.y, box.width - pxStep * 2f, box.height), whiteTex);
+            GUI.DrawTexture(new Rect(box.x, box.y + pxStep, box.width, box.height - pxStep * 2f), whiteTex);
+
             GUI.color = fill;
-            GUI.DrawTexture(new Rect(box.x + 3f, box.y + 3f, box.width - 6f, box.height - 6f), whiteTex);
+            GUI.DrawTexture(new Rect(box.x + pxStep, box.y + pxStep, box.width - pxStep * 2f, box.height - pxStep * 2f), whiteTex);
             GUI.color = accent;
-            GUI.DrawTexture(new Rect(box.x + 3f, box.y + 3f, box.width - 6f, 3f), whiteTex);
+            GUI.DrawTexture(new Rect(box.x + pxStep * 2f, box.y + pxStep, box.width - pxStep * 4f, pxStep), whiteTex);
 
             GUI.Label(new Rect(box.x + 10f, box.y + 8f, box.width - 20f, 20f), npcName, nameStyle);
             GUI.color = Color.white;
@@ -244,6 +249,7 @@ namespace ShadowFlip.Puzzle
             if (whiteTex == null)
             {
                 whiteTex = new Texture2D(1, 1);
+                whiteTex.filterMode = FilterMode.Point;
                 whiteTex.SetPixel(0, 0, Color.white);
                 whiteTex.Apply();
             }

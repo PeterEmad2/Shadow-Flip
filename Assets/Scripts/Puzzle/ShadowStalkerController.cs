@@ -394,6 +394,7 @@ namespace ShadowFlip.Puzzle
         private static Sprite CreateFallbackSprite()
         {
             Texture2D tex = new Texture2D(16, 16);
+            tex.filterMode = FilterMode.Point;
             Color c = new Color(0.55f, 0.2f, 0.85f, 1f);
             for (int y = 0; y < 16; y++)
             {

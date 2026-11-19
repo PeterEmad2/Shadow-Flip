@@ -343,7 +343,7 @@ namespace ShadowFlip.Puzzle
             GUI.Label(new Rect(modal.x, modal.y + 18f, modal.width, 40f), "SHADOW FLIP", titleStyle);
             GUI.color = Color.white;
             GUI.Label(new Rect(modal.x, modal.y + 56f, modal.width, 24f),
-                $"CEL-SHADED LIGHT & UMBRA OPTICS PUZZLE   |   ★ {totalStars} / {LevelScenes.Length * 3}", bannerStyle);
+                $"PIXEL-ART LIGHT & UMBRA OPTICS PUZZLE   |   ★ {totalStars} / {LevelScenes.Length * 3}", bannerStyle);
 
             // Top Action Buttons
             string currentScene = SceneManager.GetActiveScene().name;
@@ -464,7 +464,7 @@ namespace ShadowFlip.Puzzle
             GUI.DrawTexture(new Rect(track.x + 2f, track.y + 2f, track.width - 4f, track.height - 4f), whiteTex);
 
             float fillRatio = stalker.IsMonsterActive ? (stalker.IsSlowedByLaser ? stalker.PetrifyProgress : 1f) : progress;
-            float fillWidth = (track.width - 4f) * fillRatio;
+            float fillWidth = Mathf.Floor(((track.width - 4f) * fillRatio) / 4f) * 4f;
             if (fillWidth > 0.5f)
             {
                 GUI.color = barColor;
@@ -497,17 +497,33 @@ namespace ShadowFlip.Puzzle
 
         private void DrawCelPanel(Rect rect, Color fill, Color border, Color topStripe, float borderWidth)
         {
+            float px = Mathf.Round(rect.x);
+            float py = Mathf.Round(rect.y);
+            float pw = Mathf.Round(rect.width);
+            float ph = Mathf.Round(rect.height);
+            float b = Mathf.Max(4f, Mathf.Round(borderWidth));
+
+            // Stepped pixel-art drop shadow (notched corners)
             GUI.color = new Color(0f, 0f, 0f, 0.45f);
-            GUI.DrawTexture(new Rect(rect.x + 4f, rect.y + 4f, rect.width, rect.height), whiteTex);
+            GUI.DrawTexture(new Rect(px + b * 2f, py + b, pw - b * 2f, ph), whiteTex);
+            GUI.DrawTexture(new Rect(px + b, py + b * 2f, pw, ph - b * 2f), whiteTex);
 
+            // Pixel-beveled outer ink frame (missing 4 outer corner squares)
             GUI.color = border;
-            GUI.DrawTexture(rect, whiteTex);
+            GUI.DrawTexture(new Rect(px + b, py, pw - b * 2f, ph), whiteTex);
+            GUI.DrawTexture(new Rect(px, py + b, pw, ph - b * 2f), whiteTex);
 
+            // Inner panel fill
             GUI.color = fill;
-            GUI.DrawTexture(new Rect(rect.x + borderWidth, rect.y + borderWidth, rect.width - borderWidth * 2f, rect.height - borderWidth * 2f), whiteTex);
+            GUI.DrawTexture(new Rect(px + b, py + b, pw - b * 2f, ph - b * 2f), whiteTex);
 
+            // Crisp 4px accent header stripe + 4x4 corner rivets
             GUI.color = topStripe;
-            GUI.DrawTexture(new Rect(rect.x + borderWidth, rect.y + borderWidth, rect.width - borderWidth * 2f, 4f), whiteTex);
+            GUI.DrawTexture(new Rect(px + b * 2f, py + b, pw - b * 4f, 4f), whiteTex);
+            GUI.DrawTexture(new Rect(px + b, py + b, 4f, 4f), whiteTex);
+            GUI.DrawTexture(new Rect(px + pw - b - 4f, py + b, 4f, 4f), whiteTex);
+            GUI.DrawTexture(new Rect(px + b, py + ph - b - 4f, 4f, 4f), whiteTex);
+            GUI.DrawTexture(new Rect(px + pw - b - 4f, py + ph - b - 4f, 4f, 4f), whiteTex);
 
             GUI.color = Color.white;
         }
@@ -517,6 +533,7 @@ namespace ShadowFlip.Puzzle
             if (whiteTex == null)
             {
                 whiteTex = new Texture2D(1, 1);
+                whiteTex.filterMode = FilterMode.Point;
                 whiteTex.SetPixel(0, 0, Color.white);
                 whiteTex.Apply();
             }

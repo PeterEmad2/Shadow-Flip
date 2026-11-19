@@ -71,8 +71,10 @@ namespace ShadowFlip.Puzzle
             ringRenderer = ringGo.AddComponent<LineRenderer>();
             ringRenderer.useWorldSpace = false;
             ringRenderer.loop = true;
-            ringRenderer.startWidth = 0.08f;
-            ringRenderer.endWidth = 0.08f;
+            ringRenderer.numCornerVertices = 0;
+            ringRenderer.numCapVertices = 0;
+            ringRenderer.startWidth = 0.09f;
+            ringRenderer.endWidth = 0.09f;
             ringRenderer.sortingOrder = 0;
             ringRenderer.startColor = ringColor;
             ringRenderer.endColor = ringColor;
@@ -80,12 +82,14 @@ namespace ShadowFlip.Puzzle
             Shader shader = Shader.Find("Sprites/Default");
             if (shader != null) ringRenderer.material = new Material(shader);
 
-            const int segments = 40;
+            const int segments = 16;
             ringRenderer.positionCount = segments;
             for (int i = 0; i < segments; i++)
             {
                 float angle = i * Mathf.PI * 2f / segments;
-                ringRenderer.SetPosition(i, new Vector3(Mathf.Cos(angle) * sanctuaryRadius, Mathf.Sin(angle) * sanctuaryRadius, 0f));
+                float px = Mathf.Round(Mathf.Cos(angle) * sanctuaryRadius * 16f) / 16f;
+                float py = Mathf.Round(Mathf.Sin(angle) * sanctuaryRadius * 16f) / 16f;
+                ringRenderer.SetPosition(i, new Vector3(px, py, 0f));
             }
         }
     }

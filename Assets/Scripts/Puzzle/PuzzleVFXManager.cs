@@ -79,6 +79,7 @@ namespace ShadowFlip.Puzzle
             if (whiteTex == null)
             {
                 whiteTex = new Texture2D(1, 1);
+                whiteTex.filterMode = FilterMode.Point;
                 whiteTex.SetPixel(0, 0, Color.white);
                 whiteTex.Apply();
             }
