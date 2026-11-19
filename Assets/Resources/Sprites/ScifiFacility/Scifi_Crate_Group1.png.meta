@@ -1,13 +1,7 @@
 fileFormatVersion: 2
 guid: 077078f91ca26bd4db83a5c91ba4cdf8
 TextureImporter:
-  internalIDToNameTable:
-  - first:
-      213: -4202637979274025294
-    second: Scifi_Crate_Group1_0
-  - first:
-      213: -6594205200435483941
-    second: Scifi_Crate_Group1_1
+  internalIDToNameTable: []
   externalObjects: {}
   serializedVersion: 13
   mipmaps:
@@ -49,7 +43,7 @@ TextureImporter:
   nPOTScale: 0
   lightmap: 0
   compressionQuality: 50
-  spriteMode: 2
+  spriteMode: 1
   spriteExtrude: 1
   spriteMeshType: 0
   alignment: 0
@@ -101,20 +95,8 @@ TextureImporter:
     forceMaximumCompressionQuality_BC6H_BC7: 0
   spriteSheet:
     serializedVersion: 2
-    sprites:
-    - serializedVersion: 2
-      name: Scifi_Crate_Group1_0
-      rect:
-        serializedVersion: 2
-        x: 0
-        y: 34
-        width: 107
-        height: 87
-      alignment: 0
-      pivot: {x: 0, y: 0}
-      border: {x: 0, y: 0, z: 0, w: 0}
-      customData: 
-      outline: []
+    sprites: []
+    outline: []
       physicsShape: []
       tessellationDetail: -1
       bones: []
@@ -159,9 +141,7 @@ TextureImporter:
     secondaryTextures: []
     spriteCustomMetadata:
       entries: []
-    nameFileIdTable:
-      Scifi_Crate_Group1_0: -4202637979274025294
-      Scifi_Crate_Group1_1: -6594205200435483941
+    nameFileIdTable: {}
   mipmapLimitGroupName: 
   pSDRemoveMatte: 0
   userData: 

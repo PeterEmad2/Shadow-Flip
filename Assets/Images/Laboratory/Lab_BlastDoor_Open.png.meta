@@ -1,13 +1,7 @@
 fileFormatVersion: 2
 guid: 606fd2fb7b7bdfc42a5c095d5cb45997
 TextureImporter:
-  internalIDToNameTable:
-  - first:
-      213: -7962836631512628524
-    second: Lab_BlastDoor_Open_0
-  - first:
-      213: -3155104131746776626
-    second: Lab_BlastDoor_Open_1
+  internalIDToNameTable: []
   externalObjects: {}
   serializedVersion: 13
   mipmaps:
@@ -49,7 +43,7 @@ TextureImporter:
   nPOTScale: 0
   lightmap: 0
   compressionQuality: 50
-  spriteMode: 2
+  spriteMode: 1
   spriteExtrude: 1
   spriteMeshType: 0
   alignment: 0
@@ -101,20 +95,8 @@ TextureImporter:
     forceMaximumCompressionQuality_BC6H_BC7: 0
   spriteSheet:
     serializedVersion: 2
-    sprites:
-    - serializedVersion: 2
-      name: Lab_BlastDoor_Open_0
-      rect:
-        serializedVersion: 2
-        x: 0
-        y: 0
-        width: 34
-        height: 129
-      alignment: 0
-      pivot: {x: 0, y: 0}
-      border: {x: 0, y: 0, z: 0, w: 0}
-      customData: 
-      outline: []
+    sprites: []
+    outline: []
       physicsShape: []
       tessellationDetail: -1
       bones: []
@@ -159,9 +141,7 @@ TextureImporter:
     secondaryTextures: []
     spriteCustomMetadata:
       entries: []
-    nameFileIdTable:
-      Lab_BlastDoor_Open_0: -7962836631512628524
-      Lab_BlastDoor_Open_1: -3155104131746776626
+    nameFileIdTable: {}
   mipmapLimitGroupName: 
   pSDRemoveMatte: 0
   userData: 

@@ -1,13 +1,7 @@
 fileFormatVersion: 2
 guid: ef85d604f3d30554fae131a40935d838
 TextureImporter:
-  internalIDToNameTable:
-  - first:
-      213: -4898058416758677534
-    second: Obelisk_05_0
-  - first:
-      213: 3384476662781139056
-    second: Obelisk_05_1
+  internalIDToNameTable: []
   externalObjects: {}
   serializedVersion: 13
   mipmaps:
@@ -49,7 +43,7 @@ TextureImporter:
   nPOTScale: 0
   lightmap: 0
   compressionQuality: 50
-  spriteMode: 2
+  spriteMode: 1
   spriteExtrude: 1
   spriteMeshType: 0
   alignment: 0
@@ -101,20 +95,8 @@ TextureImporter:
     forceMaximumCompressionQuality_BC6H_BC7: 0
   spriteSheet:
     serializedVersion: 2
-    sprites:
-    - serializedVersion: 2
-      name: Obelisk_05_0
-      rect:
-        serializedVersion: 2
-        x: 11
-        y: 19
-        width: 75
-        height: 144
-      alignment: 0
-      pivot: {x: 0, y: 0}
-      border: {x: 0, y: 0, z: 0, w: 0}
-      customData: 
-      outline: []
+    sprites: []
+    outline: []
       physicsShape: []
       tessellationDetail: -1
       bones: []
@@ -159,9 +141,7 @@ TextureImporter:
     secondaryTextures: []
     spriteCustomMetadata:
       entries: []
-    nameFileIdTable:
-      Obelisk_05_0: -4898058416758677534
-      Obelisk_05_1: 3384476662781139056
+    nameFileIdTable: {}
   mipmapLimitGroupName: 
   pSDRemoveMatte: 0
   userData: 

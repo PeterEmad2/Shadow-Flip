@@ -1,16 +1,7 @@
 fileFormatVersion: 2
 guid: e09f841bf48c2c84289ee8b6a80f2fd9
 TextureImporter:
-  internalIDToNameTable:
-  - first:
-      213: -3539021868033081525
-    second: Lab_Bulb_4_0
-  - first:
-      213: 6997334987721702424
-    second: Lab_Bulb_4_1
-  - first:
-      213: -3229501063822055625
-    second: Lab_Bulb_4_2
+  internalIDToNameTable: []
   externalObjects: {}
   serializedVersion: 13
   mipmaps:
@@ -52,7 +43,7 @@ TextureImporter:
   nPOTScale: 0
   lightmap: 0
   compressionQuality: 50
-  spriteMode: 2
+  spriteMode: 1
   spriteExtrude: 1
   spriteMeshType: 0
   alignment: 0
@@ -104,20 +95,8 @@ TextureImporter:
     forceMaximumCompressionQuality_BC6H_BC7: 0
   spriteSheet:
     serializedVersion: 2
-    sprites:
-    - serializedVersion: 2
-      name: Lab_Bulb_4_0
-      rect:
-        serializedVersion: 2
-        x: 29
-        y: 83
-        width: 8
-        height: 8
-      alignment: 0
-      pivot: {x: 0, y: 0}
-      border: {x: 0, y: 0, z: 0, w: 0}
-      customData: 
-      outline: []
+    sprites: []
+    outline: []
       physicsShape: []
       tessellationDetail: -1
       bones: []
@@ -184,10 +163,7 @@ TextureImporter:
     secondaryTextures: []
     spriteCustomMetadata:
       entries: []
-    nameFileIdTable:
-      Lab_Bulb_4_0: -3539021868033081525
-      Lab_Bulb_4_1: 6997334987721702424
-      Lab_Bulb_4_2: -3229501063822055625
+    nameFileIdTable: {}
   mipmapLimitGroupName: 
   pSDRemoveMatte: 0
   userData: 

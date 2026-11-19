@@ -1,58 +1,7 @@
 fileFormatVersion: 2
 guid: 8518e81ac3bc124439eec6feb21e7b22
 TextureImporter:
-  internalIDToNameTable:
-  - first:
-      213: 3523400459760365094
-    second: Scifi_Blood_2_0
-  - first:
-      213: 5175534224745866857
-    second: Scifi_Blood_2_1
-  - first:
-      213: -2176071012720427194
-    second: Scifi_Blood_2_2
-  - first:
-      213: -2745923820765241590
-    second: Scifi_Blood_2_3
-  - first:
-      213: 6866422003412394764
-    second: Scifi_Blood_2_4
-  - first:
-      213: -7592953203664725312
-    second: Scifi_Blood_2_5
-  - first:
-      213: -7566682184557645773
-    second: Scifi_Blood_2_6
-  - first:
-      213: -9100792824487059744
-    second: Scifi_Blood_2_7
-  - first:
-      213: 3040541713254194430
-    second: Scifi_Blood_2_8
-  - first:
-      213: -5845141114114703442
-    second: Scifi_Blood_2_9
-  - first:
-      213: 807220374828116515
-    second: Scifi_Blood_2_10
-  - first:
-      213: 6841421427211625770
-    second: Scifi_Blood_2_11
-  - first:
-      213: -730505215882960352
-    second: Scifi_Blood_2_12
-  - first:
-      213: -584681380070518406
-    second: Scifi_Blood_2_13
-  - first:
-      213: 8025686835482943708
-    second: Scifi_Blood_2_14
-  - first:
-      213: 6515025524670876203
-    second: Scifi_Blood_2_15
-  - first:
-      213: -2924125450811956117
-    second: Scifi_Blood_2_16
+  internalIDToNameTable: []
   externalObjects: {}
   serializedVersion: 13
   mipmaps:
@@ -94,7 +43,7 @@ TextureImporter:
   nPOTScale: 0
   lightmap: 0
   compressionQuality: 50
-  spriteMode: 2
+  spriteMode: 1
   spriteExtrude: 1
   spriteMeshType: 0
   alignment: 0
@@ -146,20 +95,8 @@ TextureImporter:
     forceMaximumCompressionQuality_BC6H_BC7: 0
   spriteSheet:
     serializedVersion: 2
-    sprites:
-    - serializedVersion: 2
-      name: Scifi_Blood_2_0
-      rect:
-        serializedVersion: 2
-        x: 0
-        y: 36
-        width: 46
-        height: 40
-      alignment: 0
-      pivot: {x: 0, y: 0}
-      border: {x: 0, y: 0, z: 0, w: 0}
-      customData: 
-      outline: []
+    sprites: []
+    outline: []
       physicsShape: []
       tessellationDetail: -1
       bones: []
@@ -534,24 +471,7 @@ TextureImporter:
     secondaryTextures: []
     spriteCustomMetadata:
       entries: []
-    nameFileIdTable:
-      Scifi_Blood_2_0: 3523400459760365094
-      Scifi_Blood_2_1: 5175534224745866857
-      Scifi_Blood_2_10: 807220374828116515
-      Scifi_Blood_2_11: 6841421427211625770
-      Scifi_Blood_2_12: -730505215882960352
-      Scifi_Blood_2_13: -584681380070518406
-      Scifi_Blood_2_14: 8025686835482943708
-      Scifi_Blood_2_15: 6515025524670876203
-      Scifi_Blood_2_16: -2924125450811956117
-      Scifi_Blood_2_2: -2176071012720427194
-      Scifi_Blood_2_3: -2745923820765241590
-      Scifi_Blood_2_4: 6866422003412394764
-      Scifi_Blood_2_5: -7592953203664725312
-      Scifi_Blood_2_6: -7566682184557645773
-      Scifi_Blood_2_7: -9100792824487059744
-      Scifi_Blood_2_8: 3040541713254194430
-      Scifi_Blood_2_9: -5845141114114703442
+    nameFileIdTable: {}
   mipmapLimitGroupName: 
   pSDRemoveMatte: 0
   userData: 

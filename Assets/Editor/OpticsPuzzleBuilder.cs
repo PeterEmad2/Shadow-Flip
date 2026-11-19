@@ -1056,10 +1056,10 @@ namespace ShadowFlip.EditorTools
 
         private static void CreateArenaWalls(CelAssets assets)
         {
-            CreateWall("Wall_Top", new Vector3(0f, 6.1f, 0f), new Vector2(22f, 1.05f), assets, WorldAffinity.Both, WallTileStyle.Long);
-            CreateWall("Wall_Bottom", new Vector3(0f, -6.1f, 0f), new Vector2(22f, 1.05f), assets, WorldAffinity.Both, WallTileStyle.Long);
-            CreateWall("Wall_Left", new Vector3(-10.5f, 0f, 0f), new Vector2(1.0f, 13.2f), assets, WorldAffinity.Both, WallTileStyle.Pillar);
-            CreateWall("Wall_Right", new Vector3(10.5f, 0f, 0f), new Vector2(1.0f, 13.2f), assets, WorldAffinity.Both, WallTileStyle.Pillar);
+            CreateWall("Wall_Top", new Vector3(0f, 5.95f, 0f), new Vector2(21.8f, 1.1f), assets, WorldAffinity.Both, WallTileStyle.Long);
+            CreateWall("Wall_Bottom", new Vector3(0f, -5.95f, 0f), new Vector2(21.8f, 1.1f), assets, WorldAffinity.Both, WallTileStyle.Long);
+            CreateWall("Wall_Left", new Vector3(-10.35f, 0f, 0f), new Vector2(1.1f, 13.0f), assets, WorldAffinity.Both, WallTileStyle.Pillar);
+            CreateWall("Wall_Right", new Vector3(10.35f, 0f, 0f), new Vector2(1.1f, 13.0f), assets, WorldAffinity.Both, WallTileStyle.Pillar);
         }
 
         private static GameObject CreatePlayerForm(string name, Transform parent, Vector3 pos, string spritePath, Color fallbackColor)
@@ -1125,6 +1125,11 @@ namespace ShadowFlip.EditorTools
                 phase.lightWorldSprite = lightSprite;
                 phase.shadowWorldSprite = shadowSprite;
             }
+
+            WallBorderRenderer border = go.AddComponent<WallBorderRenderer>();
+            border.wallSize = size;
+            border.affinity = affinity;
+            border.RefreshBorders(force: true);
             return go;
         }
 
@@ -1527,7 +1532,7 @@ namespace ShadowFlip.EditorTools
 
             SpriteRenderer plateSr = plateGo.AddComponent<SpriteRenderer>();
             plateSr.sprite = assets.ButtonUp;
-            plateSr.sortingOrder = -1;
+            plateSr.sortingOrder = 1;
 
             bool isSmallButton = assets.ButtonUp != null && assets.ButtonUp.bounds.size.x < 1.0f;
             if (isSmallButton) plateGo.transform.localScale = new Vector3(1.45f, 1.45f, 1f);
@@ -1873,7 +1878,8 @@ namespace ShadowFlip.EditorTools
             ConfigureSpriteFolder("Assets/Resources/Sprites/NewData/", pointFilter: true);
             ConfigureSpriteFolder("Assets/New data/", pointFilter: true, recursive: true);
             ConfigureSpriteFolder("Assets/Scifi_Facility_Buider_Pack_1_ver 2.0/", pointFilter: false, recursive: true, skipPreview: true);
-            AssetDatabase.Refresh();
+            AssetDatabase.SaveAssets();
+            AssetDatabase.Refresh(ImportAssetOptions.ForceSynchronousImport);
         }
 
         private static void ConfigureSpriteFolder(string folderPath, bool pointFilter = false, bool recursive = false, bool skipPreview = false)
@@ -1893,6 +1899,11 @@ namespace ShadowFlip.EditorTools
                 if (importer.textureType != TextureImporterType.Sprite)
                 {
                     importer.textureType = TextureImporterType.Sprite;
+                    changed = true;
+                }
+                if (importer.spriteImportMode != SpriteImportMode.Single)
+                {
+                    importer.spriteImportMode = SpriteImportMode.Single;
                     changed = true;
                 }
                 if (Mathf.Abs(importer.spritePixelsPerUnit - 100f) > 0.1f)
@@ -2156,7 +2167,23 @@ namespace ShadowFlip.EditorTools
             scenes.Add(new EditorBuildSettingsScene(path, true));
         }
 
-        private static Sprite LoadSprite(string path) => AssetDatabase.LoadAssetAtPath<Sprite>(path);
+        private static Sprite LoadSprite(string path)
+        {
+            Sprite s = AssetDatabase.LoadAssetAtPath<Sprite>(path);
+            if (s != null) return s;
+
+            Object[] subAssets = AssetDatabase.LoadAllAssetsAtPath(path);
+            if (subAssets != null)
+            {
+                foreach (Object obj in subAssets)
+                {
+                    if (obj is Sprite subSprite) return subSprite;
+                }
+            }
+
+            Debug.LogError($"OpticsPuzzleBuilder: Failed to load Sprite at '{path}'.");
+            return null;
+        }
         private static AudioClip LoadAudio(string path) => AssetDatabase.LoadAssetAtPath<AudioClip>(path);
     }
 }

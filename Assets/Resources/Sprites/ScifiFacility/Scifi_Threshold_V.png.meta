@@ -1,40 +1,7 @@
 fileFormatVersion: 2
 guid: 60d734cd49ba994438185ece7af1499f
 TextureImporter:
-  internalIDToNameTable:
-  - first:
-      213: -5295887163345350256
-    second: Scifi_Threshold_V_0
-  - first:
-      213: -2730833702680090972
-    second: Scifi_Threshold_V_1
-  - first:
-      213: -7728498188936799067
-    second: Scifi_Threshold_V_2
-  - first:
-      213: 5048486115307788814
-    second: Scifi_Threshold_V_3
-  - first:
-      213: 6934337608344274619
-    second: Scifi_Threshold_V_4
-  - first:
-      213: -6579610018079229012
-    second: Scifi_Threshold_V_5
-  - first:
-      213: 4488517130688685792
-    second: Scifi_Threshold_V_6
-  - first:
-      213: 1638885291539834395
-    second: Scifi_Threshold_V_7
-  - first:
-      213: 1322287223603953908
-    second: Scifi_Threshold_V_8
-  - first:
-      213: 5695493396998535263
-    second: Scifi_Threshold_V_9
-  - first:
-      213: -7620739186028548174
-    second: Scifi_Threshold_V_10
+  internalIDToNameTable: []
   externalObjects: {}
   serializedVersion: 13
   mipmaps:
@@ -76,7 +43,7 @@ TextureImporter:
   nPOTScale: 0
   lightmap: 0
   compressionQuality: 50
-  spriteMode: 2
+  spriteMode: 1
   spriteExtrude: 1
   spriteMeshType: 0
   alignment: 0
@@ -128,20 +95,8 @@ TextureImporter:
     forceMaximumCompressionQuality_BC6H_BC7: 0
   spriteSheet:
     serializedVersion: 2
-    sprites:
-    - serializedVersion: 2
-      name: Scifi_Threshold_V_0
-      rect:
-        serializedVersion: 2
-        x: 0
-        y: 163
-        width: 7
-        height: 13
-      alignment: 0
-      pivot: {x: 0, y: 0}
-      border: {x: 0, y: 0, z: 0, w: 0}
-      customData: 
-      outline: []
+    sprites: []
+    outline: []
       physicsShape: []
       tessellationDetail: -1
       bones: []
@@ -384,18 +339,7 @@ TextureImporter:
     secondaryTextures: []
     spriteCustomMetadata:
       entries: []
-    nameFileIdTable:
-      Scifi_Threshold_V_0: -5295887163345350256
-      Scifi_Threshold_V_1: -2730833702680090972
-      Scifi_Threshold_V_10: -7620739186028548174
-      Scifi_Threshold_V_2: -7728498188936799067
-      Scifi_Threshold_V_3: 5048486115307788814
-      Scifi_Threshold_V_4: 6934337608344274619
-      Scifi_Threshold_V_5: -6579610018079229012
-      Scifi_Threshold_V_6: 4488517130688685792
-      Scifi_Threshold_V_7: 1638885291539834395
-      Scifi_Threshold_V_8: 1322287223603953908
-      Scifi_Threshold_V_9: 5695493396998535263
+    nameFileIdTable: {}
   mipmapLimitGroupName: 
   pSDRemoveMatte: 0
   userData: 

@@ -1,13 +1,7 @@
 fileFormatVersion: 2
 guid: c156ea4f78ed7b848a8a06e496e1f1d9
 TextureImporter:
-  internalIDToNameTable:
-  - first:
-      213: 3195984733815772038
-    second: Emitter_Idle_0
-  - first:
-      213: -3673632502180362961
-    second: Emitter_Idle_1
+  internalIDToNameTable: []
   externalObjects: {}
   serializedVersion: 13
   mipmaps:
@@ -49,7 +43,7 @@ TextureImporter:
   nPOTScale: 0
   lightmap: 0
   compressionQuality: 50
-  spriteMode: 2
+  spriteMode: 1
   spriteExtrude: 1
   spriteMeshType: 0
   alignment: 0
@@ -101,20 +95,8 @@ TextureImporter:
     forceMaximumCompressionQuality_BC6H_BC7: 0
   spriteSheet:
     serializedVersion: 2
-    sprites:
-    - serializedVersion: 2
-      name: Emitter_Idle_0
-      rect:
-        serializedVersion: 2
-        x: 11
-        y: 12
-        width: 75
-        height: 144
-      alignment: 0
-      pivot: {x: 0, y: 0}
-      border: {x: 0, y: 0, z: 0, w: 0}
-      customData: 
-      outline: []
+    sprites: []
+    outline: []
       physicsShape: []
       tessellationDetail: -1
       bones: []
@@ -159,9 +141,7 @@ TextureImporter:
     secondaryTextures: []
     spriteCustomMetadata:
       entries: []
-    nameFileIdTable:
-      Emitter_Idle_0: 3195984733815772038
-      Emitter_Idle_1: -3673632502180362961
+    nameFileIdTable: {}
   mipmapLimitGroupName: 
   pSDRemoveMatte: 0
   userData: 

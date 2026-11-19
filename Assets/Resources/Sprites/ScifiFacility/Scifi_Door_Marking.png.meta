@@ -1,22 +1,7 @@
 fileFormatVersion: 2
 guid: 684967fc858213445b98faeee69a4556
 TextureImporter:
-  internalIDToNameTable:
-  - first:
-      213: 6675821742374269811
-    second: Scifi_Door_Marking_0
-  - first:
-      213: -4577355210992911768
-    second: Scifi_Door_Marking_1
-  - first:
-      213: 7899703796751829262
-    second: Scifi_Door_Marking_2
-  - first:
-      213: -7135782191842863888
-    second: Scifi_Door_Marking_3
-  - first:
-      213: -2305654926552551537
-    second: Scifi_Door_Marking_4
+  internalIDToNameTable: []
   externalObjects: {}
   serializedVersion: 13
   mipmaps:
@@ -58,7 +43,7 @@ TextureImporter:
   nPOTScale: 0
   lightmap: 0
   compressionQuality: 50
-  spriteMode: 2
+  spriteMode: 1
   spriteExtrude: 1
   spriteMeshType: 0
   alignment: 0
@@ -110,20 +95,8 @@ TextureImporter:
     forceMaximumCompressionQuality_BC6H_BC7: 0
   spriteSheet:
     serializedVersion: 2
-    sprites:
-    - serializedVersion: 2
-      name: Scifi_Door_Marking_0
-      rect:
-        serializedVersion: 2
-        x: 0
-        y: 11
-        width: 7
-        height: 13
-      alignment: 0
-      pivot: {x: 0, y: 0}
-      border: {x: 0, y: 0, z: 0, w: 0}
-      customData: 
-      outline: []
+    sprites: []
+    outline: []
       physicsShape: []
       tessellationDetail: -1
       bones: []
@@ -234,12 +207,7 @@ TextureImporter:
     secondaryTextures: []
     spriteCustomMetadata:
       entries: []
-    nameFileIdTable:
-      Scifi_Door_Marking_0: 6675821742374269811
-      Scifi_Door_Marking_1: -4577355210992911768
-      Scifi_Door_Marking_2: 7899703796751829262
-      Scifi_Door_Marking_3: -7135782191842863888
-      Scifi_Door_Marking_4: -2305654926552551537
+    nameFileIdTable: {}
   mipmapLimitGroupName: 
   pSDRemoveMatte: 0
   userData: 
