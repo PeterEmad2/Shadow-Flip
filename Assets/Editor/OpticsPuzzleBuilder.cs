@@ -40,7 +40,7 @@ namespace ShadowFlip.EditorTools
             public Sprite FloorLight, FloorShadow, PrismCrystal;
             public Sprite UmbraMonster1, UmbraMonster2, MonsterPetrified;
             public Sprite PortalMirrorA, PortalMirrorB, CombinerCrystal, LanternSanctuary, EchoPedestal;
-            public Sprite RelayCrystal, LaserBarrier, PhasePad;
+            public Sprite RelayCrystal, LaserBarrier, PhasePad, ColorFilterLens, ExitPortal;
 
             // LandOfPixels Laboratory Assets
             public Sprite LabFloorLight, LabFloorShadow, LabFloorGrating, LabFloorHazard;
@@ -1387,13 +1387,36 @@ namespace ShadowFlip.EditorTools
             filterGo.transform.position = pos;
 
             SpriteRenderer sr = filterGo.AddComponent<SpriteRenderer>();
-            sr.sprite = assets.FloorLight;
-            sr.drawMode = SpriteDrawMode.Tiled;
-            sr.size = size;
-            sr.sortingOrder = 3;
+            if (assets.ColorFilterLens != null)
+            {
+                sr.sprite = assets.ColorFilterLens;
+                sr.drawMode = SpriteDrawMode.Simple;
+                Vector2 lensBounds = assets.ColorFilterLens.bounds.size;
+                bool horizontal = size.x > size.y;
+                if (horizontal)
+                {
+                    filterGo.transform.rotation = Quaternion.Euler(0f, 0f, 90f);
+                    filterGo.transform.localScale = new Vector3(size.y / lensBounds.x, size.x / lensBounds.y, 1f);
+                }
+                else
+                {
+                    filterGo.transform.localScale = new Vector3(size.x / lensBounds.x, size.y / lensBounds.y, 1f);
+                }
+                sr.sortingOrder = 3;
 
-            BoxCollider2D col = filterGo.AddComponent<BoxCollider2D>();
-            col.size = size;
+                BoxCollider2D col = filterGo.AddComponent<BoxCollider2D>();
+                col.size = lensBounds;
+            }
+            else
+            {
+                sr.sprite = assets.FloorLight;
+                sr.drawMode = SpriteDrawMode.Tiled;
+                sr.size = size;
+                sr.sortingOrder = 3;
+
+                BoxCollider2D col = filterGo.AddComponent<BoxCollider2D>();
+                col.size = size;
+            }
 
             ColorFilter filter = filterGo.AddComponent<ColorFilter>();
             filter.filterColor = color;
@@ -1456,15 +1479,17 @@ namespace ShadowFlip.EditorTools
         {
             GameObject doorGo = new GameObject(name);
             doorGo.transform.position = pos;
-            doorGo.transform.localScale = new Vector3(size.x / 1.28f, size.y / 1.60f, 1f);
 
             SpriteRenderer doorSr = doorGo.AddComponent<SpriteRenderer>();
             doorSr.sprite = assets.DoorClosed;
             doorSr.color = Color.white;
             doorSr.sortingOrder = 3;
 
+            Vector2 spriteSize = doorSr.sprite != null ? (Vector2)doorSr.sprite.bounds.size : new Vector2(1.28f, 1.60f);
+            doorGo.transform.localScale = new Vector3(size.x / spriteSize.x, size.y / spriteSize.y, 1f);
+
             BoxCollider2D col = doorGo.AddComponent<BoxCollider2D>();
-            col.size = new Vector2(1.15f, 1.5f);
+            col.size = new Vector2(spriteSize.x * 0.94f, spriteSize.y * 0.94f);
 
             PuzzleDoor door = doorGo.AddComponent<PuzzleDoor>();
             door.requiredSensors = sensors;
@@ -1814,8 +1839,9 @@ namespace ShadowFlip.EditorTools
             exitGo.transform.localScale = new Vector3(1.05f, 1.05f, 1f);
 
             SpriteRenderer exitSr = exitGo.AddComponent<SpriteRenderer>();
-            exitSr.sprite = assets.ReceiverActiveWhite;
-            exitSr.color = new Color(0.45f, 1f, 0.72f, 1f);
+            bool hasCustomExit = assets.ExitPortal != null;
+            exitSr.sprite = hasCustomExit ? assets.ExitPortal : assets.ReceiverActiveWhite;
+            exitSr.color = hasCustomExit ? Color.white : new Color(0.45f, 1f, 0.72f, 1f);
             exitSr.sortingOrder = 1;
 
             BoxCollider2D col = exitGo.AddComponent<BoxCollider2D>();
@@ -1951,6 +1977,8 @@ namespace ShadowFlip.EditorTools
                 RelayCrystal = LoadSprite(CelDir + "Relay_Crystal.png"),
                 LaserBarrier = LoadSprite(CelDir + "Laser_Barrier.png"),
                 PhasePad = LoadSprite(CelDir + "Phase_Pad.png"),
+                ColorFilterLens = LoadSprite(CelDir + "ColorFilter_Lens.png"),
+                ExitPortal = LoadSprite(CelDir + "Exit_Portal.png"),
 
                 // LandOfPixels Laboratory Assets
                 LabFloorLight = LoadSprite(LabDir + "Lab_Floor_Light.png"),
