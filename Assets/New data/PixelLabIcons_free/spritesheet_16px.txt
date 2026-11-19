@@ -1,0 +1,10 @@
+Pixel Lab Icons v1.0 — spritesheet_16px.png
+Each cell is 16x16 px. 6 columns, 1 rows. Order = alphabetical by file name.
+name, column, row, x, y  (x = column*16, y = row*16; top-left origin)
+
+atom, 0, 0, 0, 0
+battery, 1, 0, 16, 0
+bulb, 2, 0, 32, 0
+flask, 3, 0, 48, 0
+magnet, 4, 0, 64, 0
+test_tube, 5, 0, 80, 0

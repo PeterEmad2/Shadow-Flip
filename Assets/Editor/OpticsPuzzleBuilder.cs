@@ -14,6 +14,7 @@ namespace ShadowFlip.EditorTools
         private const string CelDir = "Assets/Images/CelShaded/";
         private const string LabDir = "Assets/Images/Laboratory/";
         private const string ScifiDir = "Assets/Images/ScifiFacility/";
+        private const string NewDataDir = "Assets/Images/NewData/";
         private const string SfxDir = "Assets/Sounds/SFX/";
         private const string MainMenuPath = "Assets/Scenes/MainMenu.unity";
         private const string TutorialPath = "Assets/Scenes/OpticsPuzzle_Tutorial.unity";
@@ -67,6 +68,10 @@ namespace ShadowFlip.EditorTools
             public Sprite ScifiLabelLab, ScifiLabelCtrl, ScifiLabelMed, ScifiLabelExit;
             public Sprite ScifiArrowR, ScifiArrowL, ScifiArrowUp, ScifiArrowDown;
             public Sprite ScifiBlood1, ScifiBlood2, ScifiHorrorDoorGlow;
+
+            // New data (Animated Flying Obelisk + PixelLabIcons)
+            public Sprite[] ObeliskFrames;
+            public Sprite IconAtom, IconBattery, IconBulb, IconFlask, IconMagnet, IconTestTube;
         }
 
         [MenuItem("Shadow Flip/Create All Levels (Main Menu + Tutorial + Levels 1-8)")]
@@ -1127,19 +1132,28 @@ namespace ShadowFlip.EditorTools
         {
             GameObject go = new GameObject(name);
             go.transform.position = pos;
-            go.transform.localScale = new Vector3(0.95f, 0.95f, 1f);
+            go.transform.localScale = new Vector3(0.85f, 0.85f, 1f);
 
             SpriteRenderer sr = go.AddComponent<SpriteRenderer>();
             sr.sprite = assets.EmitterActive;
             sr.color = Color.Lerp(Color.white, LightColorUtility.ToUnityColor(color), 0.25f);
             sr.sortingOrder = 4;
 
+            if (assets.ObeliskFrames != null && assets.ObeliskFrames.Length > 0)
+            {
+                LabAnimatedProp anim = go.AddComponent<LabAnimatedProp>();
+                anim.frames = assets.ObeliskFrames;
+                anim.framesPerSecond = 10f;
+            }
+
             LightBeamEmitter emitter = go.AddComponent<LightBeamEmitter>();
             emitter.beamColor = color;
             emitter.activeInWorld = world;
             emitter.localEmitDirection = dir;
             emitter.emitterRenderer = sr;
-            emitter.activeEmitterSprite = assets.EmitterActive;
+            // Leave activeEmitterSprite null so LabAnimatedProp cycles all 13 Obelisk frames while active,
+            // while inactiveEmitterSprite shows the dimmed offline Obelisk in the opposite realm.
+            emitter.activeEmitterSprite = (assets.ObeliskFrames != null && assets.ObeliskFrames.Length > 0) ? null : assets.EmitterActive;
             emitter.inactiveEmitterSprite = assets.EmitterIdle;
             return emitter;
         }
@@ -1242,11 +1256,19 @@ namespace ShadowFlip.EditorTools
         {
             GameObject go = new GameObject(name);
             go.transform.position = pos;
-            go.transform.localScale = new Vector3(0.95f, 0.95f, 1f);
+            go.transform.localScale = new Vector3(0.85f, 0.85f, 1f);
 
             SpriteRenderer sr = go.AddComponent<SpriteRenderer>();
             sr.sprite = assets.LanternSanctuary;
+            sr.color = new Color(1f, 0.94f, 0.72f, 1f);
             sr.sortingOrder = 3;
+
+            if (assets.ObeliskFrames != null && assets.ObeliskFrames.Length > 0)
+            {
+                LabAnimatedProp anim = go.AddComponent<LabAnimatedProp>();
+                anim.frames = assets.ObeliskFrames;
+                anim.framesPerSecond = 10f;
+            }
 
             LightSanctuary sanc = go.AddComponent<LightSanctuary>();
             sanc.sanctuaryRadius = radius;
@@ -1274,11 +1296,19 @@ namespace ShadowFlip.EditorTools
         {
             GameObject go = new GameObject(name);
             go.transform.position = pos;
-            go.transform.localScale = new Vector3(0.95f, 0.95f, 1f);
+            go.transform.localScale = new Vector3(0.85f, 0.85f, 1f);
 
             SpriteRenderer sr = go.AddComponent<SpriteRenderer>();
             sr.sprite = assets.RelayCrystal;
+            sr.color = new Color(0.88f, 0.76f, 1f, 1f);
             sr.sortingOrder = 4;
+
+            if (assets.ObeliskFrames != null && assets.ObeliskFrames.Length > 0)
+            {
+                LabAnimatedProp anim = go.AddComponent<LabAnimatedProp>();
+                anim.frames = assets.ObeliskFrames;
+                anim.framesPerSecond = 10f;
+            }
 
             BoxCollider2D col = go.AddComponent<BoxCollider2D>();
             col.size = new Vector2(1.0f, 1.0f);
@@ -1810,9 +1840,12 @@ namespace ShadowFlip.EditorTools
             ConfigureSpriteFolder(CelDir, pointFilter: false);
             ConfigureSpriteFolder(LabDir, pointFilter: true);
             ConfigureSpriteFolder(ScifiDir, pointFilter: false);
+            ConfigureSpriteFolder(NewDataDir, pointFilter: true);
             ConfigureSpriteFolder("Assets/Resources/Sprites/", pointFilter: false);
             ConfigureSpriteFolder("Assets/Resources/Sprites/Laboratory/", pointFilter: true);
             ConfigureSpriteFolder("Assets/Resources/Sprites/ScifiFacility/", pointFilter: false);
+            ConfigureSpriteFolder("Assets/Resources/Sprites/NewData/", pointFilter: true);
+            ConfigureSpriteFolder("Assets/New data/", pointFilter: true, recursive: true);
             ConfigureSpriteFolder("Assets/Scifi_Facility_Buider_Pack_1_ver 2.0/", pointFilter: false, recursive: true, skipPreview: true);
             AssetDatabase.Refresh();
         }
@@ -2042,7 +2075,31 @@ namespace ShadowFlip.EditorTools
                 ScifiArrowDown = LoadSprite(ScifiDir + "Scifi_Arrow_Down.png"),
                 ScifiBlood1 = LoadSprite(ScifiDir + "Scifi_Blood_1.png"),
                 ScifiBlood2 = LoadSprite(ScifiDir + "Scifi_Blood_2.png"),
-                ScifiHorrorDoorGlow = LoadSprite(ScifiDir + "Scifi_Horror_DoorGlow.png")
+                ScifiHorrorDoorGlow = LoadSprite(ScifiDir + "Scifi_Horror_DoorGlow.png"),
+
+                // New data (Animated Flying Obelisk + PixelLabIcons)
+                ObeliskFrames = new[]
+                {
+                    LoadSprite(NewDataDir + "Obelisk_01.png"),
+                    LoadSprite(NewDataDir + "Obelisk_02.png"),
+                    LoadSprite(NewDataDir + "Obelisk_03.png"),
+                    LoadSprite(NewDataDir + "Obelisk_04.png"),
+                    LoadSprite(NewDataDir + "Obelisk_05.png"),
+                    LoadSprite(NewDataDir + "Obelisk_06.png"),
+                    LoadSprite(NewDataDir + "Obelisk_07.png"),
+                    LoadSprite(NewDataDir + "Obelisk_08.png"),
+                    LoadSprite(NewDataDir + "Obelisk_09.png"),
+                    LoadSprite(NewDataDir + "Obelisk_10.png"),
+                    LoadSprite(NewDataDir + "Obelisk_11.png"),
+                    LoadSprite(NewDataDir + "Obelisk_12.png"),
+                    LoadSprite(NewDataDir + "Obelisk_13.png")
+                },
+                IconAtom = LoadSprite(NewDataDir + "atom.png"),
+                IconBattery = LoadSprite(NewDataDir + "battery.png"),
+                IconBulb = LoadSprite(NewDataDir + "bulb.png"),
+                IconFlask = LoadSprite(NewDataDir + "flask.png"),
+                IconMagnet = LoadSprite(NewDataDir + "magnet.png"),
+                IconTestTube = LoadSprite(NewDataDir + "test_tube.png")
             };
         }
 

@@ -1,0 +1,102 @@
+Pixel Lab Icons — License / ライセンス
+Version 1.0
+
+=====================================================================
+ENGLISH
+=====================================================================
+
+Copyright (c) 2026 the author of "Pixel Lab Icons" (sold on itch.io).
+All rights reserved except as granted below.
+
+1. WHAT YOU MAY DO
+   You may use the icons in this pack (the PNG files and the spritesheet,
+   together "the Icons") in your own projects, free of charge beyond the
+   purchase price, for example:
+     - video games, apps, tools and websites;
+     - videos, streams, slides, documents, worksheets and printed materials;
+     - prototypes, game jams, school projects and portfolios;
+     - personal and COMMERCIAL projects alike.
+   You may resize, recolor, crop, animate, combine and otherwise modify the
+   Icons for use in your project. You may ship the Icons inside your
+   project's files (for example as part of a game build or an app bundle).
+   There is no limit on the number of projects or copies.
+
+2. CREDIT
+   Credit is NOT required. If you want to give credit, you can write
+   "Icons: Pixel Lab Icons (itch.io)" — thank you.
+
+3. WHAT YOU MAY NOT DO
+   You may not redistribute, resell, sublicense, share or give away the
+   Icons themselves, as-is or modified, in a way that lets others use them
+   as assets. In particular you may not:
+     - sell or share this pack, or a part of it, as an asset pack, icon set,
+       sprite sheet, texture pack, template, font, NFT or similar;
+     - upload the Icons to an asset library, stock site, or a public
+       repository as reusable assets;
+     - use the Icons as the main content of a product (for example a
+       "sticker pack" that is mostly these Icons);
+     - claim that you drew the Icons.
+   Including the Icons in a game or app is fine; the files only need to be
+   there for that project to work.
+
+4. AI DISCLOSURE
+   The Icons were drawn by a computer program (Python) that was written
+   with the help of an AI assistant (Claude, made by Anthropic). The pixel
+   data of every icon is stored as plain text inside that program. On
+   itch.io this pack is marked as AI-generated. No third party's artwork
+   was copied or used as training data by the author.
+
+5. NO WARRANTY
+   The Icons are provided "as is", without warranty of any kind. The
+   author is not liable for any damage arising from their use.
+
+6. TERMINATION
+   If you break these terms, your permission to use the Icons ends. The
+   terms otherwise last for as long as you keep using the Icons.
+
+=====================================================================
+日本語(英語版の内容と同じです。食い違いがある場合は英語版が優先します)
+=====================================================================
+
+Copyright (c) 2026 「Pixel Lab Icons」の作者(itch.io で販売)。
+下に書いた範囲以外の権利は留保します。
+
+1. できること
+   このパックのアイコン(PNG とスプライトシート。以下「アイコン」)を、
+   購入代金のほかに費用なく、ご自分のプロジェクトに使えます。たとえば:
+     - ゲーム・アプリ・ツール・Web サイト
+     - 動画・配信・スライド・資料・プリント・印刷物
+     - 試作・ゲームジャム・学校の課題・ポートフォリオ
+     - 個人の制作も、商用の制作も可
+   拡大縮小・色の変更・切り抜き・アニメーション・組み合わせなどの加工も、
+   ご自分のプロジェクトで使うためなら自由です。ゲームのビルドやアプリの中に
+   アイコンのファイルを同梱して配布できます。プロジェクト数・本数の制限はありません。
+
+2. クレジット
+   クレジットの表記は不要です。書いていただける場合は
+   「Icons: Pixel Lab Icons (itch.io)」などとしてください。ありがとうございます。
+
+3. できないこと
+   アイコンそのもの(そのまま・加工後を問わず)を、ほかの人が素材として使える形で
+   再配布・再販売・再許諾・共有・無償配布することはできません。たとえば:
+     - このパックやその一部を、素材集・アイコンセット・スプライトシート・
+       テクスチャパック・テンプレート・フォント・NFT などとして売る・配る
+     - 素材ライブラリ・ストックサイト・公開リポジトリに、再利用できる素材として上げる
+     - アイコンが主な中身になる商品(たとえばアイコンだけのステッカーパック)を作る
+     - 自分が描いたと名乗る
+   ゲームやアプリにアイコンを含めて配布するのは問題ありません(そのプロジェクトを
+   動かすためにファイルが入っている形)。
+
+4. AI に関する表示
+   このアイコンは、AI アシスタント(Anthropic の Claude)の助けを借りて書いた
+   プログラム(Python)で描きました。各アイコンのドットの並びは、そのプログラムの中に
+   文字として入っています。itch.io ではこのパックを「AI 生成」として表示しています。
+   第三者の作品を複製したり、学習データに使ったりはしていません。
+
+5. 無保証
+   アイコンは現状のまま提供し、いかなる保証もしません。使用によって生じた損害に
+   ついて、作者は責任を負いません。
+
+6. 終了
+   この条件に違反した場合、アイコンを使う許可は終わります。それ以外は、アイコンを
+   使い続ける限り有効です。
