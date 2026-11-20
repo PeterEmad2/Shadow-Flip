@@ -37,7 +37,7 @@ namespace ShadowFlip.Puzzle
 
         private static readonly string[] LevelDisplayNames =
         {
-            "Tutorial: Basics of Shadow & Light",
+            "Level 0 (Tutorial): Basics of Shadow & Light",
             "Level 1: Chromatic Vault",
             "Level 2: Eclipse Temple",
             "Level 3: The Prism Sanctum",
@@ -47,6 +47,16 @@ namespace ShadowFlip.Puzzle
             "Level 7: Quantum Laboratory",
             "Level 8: Omega Containment Facility"
         };
+
+        private static int GetCurrentLevelIndex()
+        {
+            string active = SceneManager.GetActiveScene().name;
+            for (int i = 0; i < LevelScenes.Length; i++)
+            {
+                if (LevelScenes[i] == active) return i;
+            }
+            return -1;
+        }
 
         private static bool hasShownInitialMainMenu = false;
 
@@ -236,12 +246,14 @@ namespace ShadowFlip.Puzzle
                 }
             }
 
-            // Top-Left Cel-Shaded Panel + [MENU] Button
+            // Top-Left Pixel Panel + [MENU] Button
+            int currentLevelIdx = GetCurrentLevelIndex();
+            string levelPrefix = currentLevelIdx >= 0 ? $"LEVEL {currentLevelIdx}  |  " : "";
             Rect topPanel = new Rect(16, 14, 620, 94);
             DrawCelPanel(topPanel, panelColor, inkColor, accentColor, 4f);
 
             GUI.color = accentColor;
-            GUI.Label(new Rect(30, 22, 320, 28), worldLabel, badgeStyle);
+            GUI.Label(new Rect(30, 22, 475, 28), levelPrefix + worldLabel, badgeStyle);
             GUI.color = Color.white;
 
             if (GUI.Button(new Rect(520, 22, 102, 26), "MENU [Esc]"))
@@ -299,7 +311,8 @@ namespace ShadowFlip.Puzzle
                 Rect modalRect = new Rect(Screen.width * 0.5f - 220f, Screen.height * 0.5f - 82f, 440f, 164f);
                 DrawCelPanel(modalRect, panelColor, inkColor, accentColor, 5f);
                 GUI.color = accentColor;
-                GUI.Label(new Rect(modalRect.x, modalRect.y + 16f, modalRect.width, 36f), "PUZZLE SOLVED!", bannerStyle);
+                string solvedHeader = currentLevelIdx >= 0 ? $"LEVEL {currentLevelIdx} SOLVED!" : "PUZZLE SOLVED!";
+                GUI.Label(new Rect(modalRect.x, modalRect.y + 16f, modalRect.width, 36f), solvedHeader, bannerStyle);
 
                 string starStr = new string('★', earnedStars) + new string('☆', 3 - earnedStars);
                 GUI.color = new Color(1f, 0.88f, 0.25f, 1f);
@@ -347,7 +360,7 @@ namespace ShadowFlip.Puzzle
 
             // Top Action Buttons
             string currentScene = SceneManager.GetActiveScene().name;
-            string primaryLabel = isDedicatedMenuScene ? "▶ START TUTORIAL" : "▶ RESUME LEVEL";
+            string primaryLabel = isDedicatedMenuScene ? "▶ PLAY LEVEL 0 (TUTORIAL)" : "▶ RESUME LEVEL";
 
             if (GUI.Button(new Rect(modal.x + 28f, modal.y + 92f, 284f, 40f), primaryLabel))
             {
@@ -373,7 +386,7 @@ namespace ShadowFlip.Puzzle
 
             // 9-Level Select List
             GUI.color = accentColor;
-            GUI.Label(new Rect(modal.x + 28f, modal.y + 142f, 400f, 24f), "SELECT LEVEL:", statusStyle);
+            GUI.Label(new Rect(modal.x + 28f, modal.y + 142f, 400f, 24f), "SELECT LEVEL (0 - 8):", statusStyle);
             GUI.color = Color.white;
 
             for (int i = 0; i < LevelScenes.Length; i++)

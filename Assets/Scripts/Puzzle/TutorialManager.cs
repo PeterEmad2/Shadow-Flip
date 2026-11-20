@@ -88,23 +88,23 @@ namespace ShadowFlip.Puzzle
             switch (currentStage)
             {
                 case 0:
-                    hud.lessonTitle = "Lesson 1/4: Crystal Optics & Levers";
+                    hud.lessonTitle = "Level 0 (Tutorial) - Lesson 1/4: Crystal Optics & Levers";
                     hud.levelHint = "Rotate the Angled Mirror Block [E] to light the Crystal, then pull the Dungeon Lever [E] to open the Gate.";
                     break;
                 case 1:
-                    hud.lessonTitle = "Lesson 2/4: Realm Flipping";
+                    hud.lessonTitle = "Level 0 (Tutorial) - Lesson 2/4: Realm Flipping";
                     hud.levelHint = "A Light-Realm Stone Wall blocks the path! Press [F] to flip into the Shadow Realm and phase right through it.";
                     break;
                 case 2:
-                    hud.lessonTitle = "Lesson 3/4: Shadow Realm Mirrors";
+                    hud.lessonTitle = "Level 0 (Tutorial) - Lesson 3/4: Shadow Realm Mirrors";
                     hud.levelHint = "Some mirrors only exist in the Shadow Realm. Walk to the Shadow Mirror and press [E] to power the second Receiver Crystal.";
                     break;
                 case 3:
-                    hud.lessonTitle = "Lesson 4/4: Ruin Blocks & Vaults";
+                    hud.lessonTitle = "Level 0 (Tutorial) - Lesson 4/4: Ruin Blocks & Vaults";
                     hud.levelHint = "Push the Ruined Pedestal Block onto the Floor Receiver Plate to unlock the Final Dungeon Gate!";
                     break;
                 default:
-                    hud.lessonTitle = "Tutorial Complete!";
+                    hud.lessonTitle = "Level 0 (Tutorial) Complete!";
                     hud.levelHint = "The Final Dungeon Gate is open! Step into the glowing Exit Portal to begin Level 1.";
                     break;
             }

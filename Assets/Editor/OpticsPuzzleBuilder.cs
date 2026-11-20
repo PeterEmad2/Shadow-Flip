@@ -74,7 +74,7 @@ namespace ShadowFlip.EditorTools
             public Sprite IconAtom, IconBattery, IconBulb, IconFlask, IconMagnet, IconTestTube;
         }
 
-        [MenuItem("Shadow Flip/Create All Levels (Main Menu + Tutorial + Levels 1-8)")]
+        [MenuItem("Shadow Flip/Create All Levels (Main Menu + Levels 0-8)")]
         public static void CreateAllLevels()
         {
             if (IsInPlayModeGuard()) return;
@@ -90,7 +90,7 @@ namespace ShadowFlip.EditorTools
             CreateOpticsPuzzleLevel8();
             CreateMainMenuScene();
             RegisterScenesInBuildSettings();
-            Debug.Log("Created Main Menu, Tutorial, and Levels 1-8 and registered all 10 in Build Settings.");
+            Debug.Log("Created Main Menu and Levels 0-8 and registered all 10 in Build Settings.");
         }
 
         [MenuItem("Shadow Flip/Create Main Menu Scene")]
@@ -162,7 +162,7 @@ namespace ShadowFlip.EditorTools
             Debug.Log("Created Main Menu scene at " + MainMenuPath);
         }
 
-        [MenuItem("Shadow Flip/Create Tutorial Level")]
+        [MenuItem("Shadow Flip/Create Level 0 (Tutorial)")]
         public static void CreateTutorialLevel()
         {
             if (IsInPlayModeGuard()) return;
@@ -181,6 +181,7 @@ namespace ShadowFlip.EditorTools
                 new Vector3(-8.0f, -2.5f, 0f));
 
             hud.parFlips = 3;
+            hud.lessonTitle = "Level 0 (Tutorial): Basics of Shadow & Light";
             CreateArenaWalls(assets);
             CreateWall("RuinedDecor_Tut1", new Vector3(-8.7f, -4.8f, 0f), new Vector2(1.24f, 1.14f), assets, WorldAffinity.Both, WallTileStyle.Ruined);
             CreateWall("RuinedDecor_Tut2", new Vector3(8.7f, 4.7f, 0f), new Vector2(1.24f, 1.14f), assets, WorldAffinity.Both, WallTileStyle.Ruined);
@@ -248,7 +249,7 @@ namespace ShadowFlip.EditorTools
             Debug.Log("Created Tutorial Level at " + TutorialPath);
         }
 
-        [MenuItem("Shadow Flip/Create Optics Puzzle Level")]
+        [MenuItem("Shadow Flip/Create Level 1 (Chromatic Vault)")]
         public static void CreateOpticsPuzzleLevel()
         {
             if (IsInPlayModeGuard()) return;
@@ -323,7 +324,7 @@ namespace ShadowFlip.EditorTools
             Debug.Log("Created Optics Puzzle Level 1 at " + Level1Path);
         }
 
-        [MenuItem("Shadow Flip/Create Optics Puzzle Level 2 (Eclipse Temple)")]
+        [MenuItem("Shadow Flip/Create Level 2 (Eclipse Temple)")]
         public static void CreateOpticsPuzzleLevel2()
         {
             if (IsInPlayModeGuard()) return;
@@ -1067,6 +1068,7 @@ namespace ShadowFlip.EditorTools
             GameObject go = new GameObject(name);
             go.transform.SetParent(parent, false);
             go.transform.position = pos;
+            go.transform.localScale = new Vector3(0.45f, 0.45f, 1f);
 
             SpriteRenderer sr = go.AddComponent<SpriteRenderer>();
             sr.sprite = LoadSprite(spritePath);
@@ -1078,7 +1080,7 @@ namespace ShadowFlip.EditorTools
             rb.freezeRotation = true;
 
             CircleCollider2D col = go.AddComponent<CircleCollider2D>();
-            col.radius = 0.38f;
+            col.radius = 0.66f;
 
             return go;
         }

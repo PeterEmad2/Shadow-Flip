@@ -122,6 +122,14 @@ namespace ShadowFlip.Puzzle
             if (echoClone != null) return;
 
             echoClone = new GameObject("ShadowEchoClone");
+            Vector3 cloneScale = new Vector3(0.45f, 0.45f, 1f);
+            if (recordingPlayer != null)
+            {
+                Transform form = recordingPlayer.GetActiveFormTransform();
+                if (form != null && form.localScale.x > 0.05f) cloneScale = form.localScale;
+            }
+            echoClone.transform.localScale = cloneScale;
+
             echoRenderer = echoClone.AddComponent<SpriteRenderer>();
             if (echoSprite == null && recordingPlayer != null)
             {
@@ -135,7 +143,7 @@ namespace ShadowFlip.Puzzle
             rb.bodyType = RigidbodyType2D.Kinematic;
 
             CircleCollider2D col = echoClone.AddComponent<CircleCollider2D>();
-            col.radius = 0.38f;
+            col.radius = 0.66f;
             col.isTrigger = true;
 
             // Attach Light component (with Jimmy=null) so PressurePlate treats the Echo as a Light form.

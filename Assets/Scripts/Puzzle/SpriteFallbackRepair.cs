@@ -284,6 +284,28 @@ namespace ShadowFlip.Puzzle
                     phase.RefreshState();
                 }
             }
+
+            // 7. Resize Jimmy (Light & Dark forms) to match Lab NPC height (~1.05 world units)
+            foreach (PlayerMovement pm in Object.FindObjectsByType<PlayerMovement>(FindObjectsSortMode.None))
+            {
+                if (pm == null) continue;
+                NormalizeJimmyFormScale(pm.LightspriteRenderer != null ? pm.LightspriteRenderer.transform : null);
+                NormalizeJimmyFormScale(pm.DarkspriteRenderer != null ? pm.DarkspriteRenderer.transform : null);
+            }
+        }
+
+        private static void NormalizeJimmyFormScale(Transform form)
+        {
+            if (form == null) return;
+            if (form.localScale.x > 0.6f)
+            {
+                form.localScale = new Vector3(0.45f, 0.45f, 1f);
+            }
+            CircleCollider2D col = form.GetComponent<CircleCollider2D>();
+            if (col != null && col.radius < 0.55f)
+            {
+                col.radius = 0.66f;
+            }
         }
 
         private static void RemoveWallBorders(GameObject wallGo)
