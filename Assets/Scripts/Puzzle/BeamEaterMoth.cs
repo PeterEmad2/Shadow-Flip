@@ -116,20 +116,24 @@ namespace ShadowFlip.Puzzle
                     LineRenderer lr = lines[j];
                     if (lr == null || !lr.enabled || lr.positionCount < 2) continue;
 
-                    Vector2 a = lr.GetPosition(0);
-                    Vector2 b = lr.GetPosition(1);
-                    Vector2 ab = b - a;
-                    float lenSq = ab.sqrMagnitude;
-                    if (lenSq < 0.04f) continue;
-
-                    float t = Mathf.Clamp01(Vector2.Dot(pos - a, ab) / lenSq);
-                    Vector2 closest = a + ab * t;
-                    float dSq = (pos - closest).sqrMagnitude;
-                    if (dSq < bestDistSq)
+                    int segCount = lr.positionCount - 1;
+                    for (int k = 0; k < segCount; k++)
                     {
-                        bestDistSq = dSq;
-                        bestPos = new Vector3(closest.x, closest.y, 0f);
-                        found = true;
+                        Vector2 a = lr.GetPosition(k);
+                        Vector2 b = lr.GetPosition(k + 1);
+                        Vector2 ab = b - a;
+                        float lenSq = ab.sqrMagnitude;
+                        if (lenSq < 0.0025f) continue;
+
+                        float t = Mathf.Clamp01(Vector2.Dot(pos - a, ab) / lenSq);
+                        Vector2 closest = a + ab * t;
+                        float dSq = (pos - closest).sqrMagnitude;
+                        if (dSq < bestDistSq)
+                        {
+                            bestDistSq = dSq;
+                            bestPos = new Vector3(closest.x, closest.y, 0f);
+                            found = true;
+                        }
                     }
                 }
             }

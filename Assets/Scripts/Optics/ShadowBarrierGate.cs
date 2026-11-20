@@ -11,6 +11,7 @@ namespace ShadowFlip.Optics
     public class ShadowBarrierGate : MonoBehaviour, IOpticalElement
     {
         public bool openWhenLit = true;
+        public bool stayOpenOnceLit = false;
         public LightColor requiredColor = LightColor.White;
         public bool acceptAnyColor = true;
         public float fadeSpeed = 10f;
@@ -18,6 +19,7 @@ namespace ShadowFlip.Optics
         public bool IsOpen { get; private set; }
 
         private int lastLitFrame = -100;
+        private bool hasOpened = false;
         private BoxCollider2D blockerCollider;
         private SpriteRenderer gateRenderer;
         private Color baseColor = Color.white;
@@ -44,7 +46,11 @@ namespace ShadowFlip.Optics
         void Update()
         {
             bool isLit = (Time.frameCount - lastLitFrame) <= 1;
-            bool nextOpen = openWhenLit ? isLit : !isLit;
+            if (stayOpenOnceLit && isLit)
+            {
+                hasOpened = true;
+            }
+            bool nextOpen = (stayOpenOnceLit && hasOpened) || (openWhenLit ? isLit : !isLit);
 
             if (nextOpen != IsOpen)
             {

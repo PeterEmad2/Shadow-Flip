@@ -345,11 +345,15 @@ namespace ShadowFlip.Puzzle
                     LineRenderer lr = lines[j];
                     if (lr == null || !lr.enabled || lr.positionCount < 2) continue;
 
-                    Vector2 a = lr.GetPosition(0);
-                    Vector2 b = lr.GetPosition(1);
-                    if (DistanceToSegmentSq(point, a, b) <= slowRadiusSq)
+                    int segCount = lr.positionCount - 1;
+                    for (int k = 0; k < segCount; k++)
                     {
-                        return true;
+                        Vector2 a = lr.GetPosition(k);
+                        Vector2 b = lr.GetPosition(k + 1);
+                        if (DistanceToSegmentSq(point, a, b) <= slowRadiusSq)
+                        {
+                            return true;
+                        }
                     }
                 }
             }

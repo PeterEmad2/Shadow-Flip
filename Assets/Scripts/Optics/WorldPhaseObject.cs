@@ -68,21 +68,34 @@ namespace ShadowFlip.Optics
 
         public bool WouldBlockPosition(Vector2 worldPos, float radius, bool targetDarkWorld)
         {
-            bool activeInTarget = affinity == WorldAffinity.Both
-                || (affinity == WorldAffinity.LightOnly && !targetDarkWorld)
-                || (affinity == WorldAffinity.ShadowOnly && targetDarkWorld);
+            if (affinity == WorldAffinity.Both || IsActiveInCurrentWorld) return false;
 
+            bool activeInTarget = (affinity == WorldAffinity.LightOnly && !targetDarkWorld)
+                || (affinity == WorldAffinity.ShadowOnly && targetDarkWorld);
             if (!activeInTarget) return false;
 
             bool hasSolidCollider = false;
+            float expandedRadius = radius * 0.78f;
             if (colliders != null)
             {
                 foreach (Collider2D col in colliders)
                 {
-                    if (col != null && !col.isTrigger)
+                    if (col == null || col.isTrigger) continue;
+                    hasSolidCollider = true;
+
+                    bool prevEnabled = col.enabled;
+                    col.enabled = true;
+                    Bounds cb = col.bounds;
+                    col.enabled = prevEnabled;
+
+                    if (cb.size.sqrMagnitude > 0.001f)
                     {
-                        hasSolidCollider = true;
-                        break;
+                        cb.Expand(expandedRadius * 2f);
+                        Vector3 probe = new Vector3(worldPos.x, worldPos.y, cb.center.z);
+                        if (cb.Contains(probe))
+                        {
+                            return true;
+                        }
                     }
                 }
             }
@@ -92,7 +105,7 @@ namespace ShadowFlip.Optics
             {
                 if (sr == null) continue;
                 Bounds expanded = sr.bounds;
-                expanded.Expand(radius * 2f);
+                expanded.Expand(expandedRadius * 2f);
                 Vector3 probe = new Vector3(worldPos.x, worldPos.y, expanded.center.z);
                 if (expanded.Contains(probe))
                 {

@@ -27,8 +27,20 @@ namespace ShadowFlip.Puzzle
 
         void OnTriggerEnter2D(Collider2D other)
         {
+            TryCompleteLevel(other);
+        }
+
+        void OnTriggerStay2D(Collider2D other)
+        {
+            TryCompleteLevel(other);
+        }
+
+        private void TryCompleteLevel(Collider2D other)
+        {
             if (IsCompleted) return;
-            if (other.GetComponent<Light>() == null && other.GetComponent<Dark>() == null) return;
+            Light lightComp = other.GetComponent<Light>();
+            bool isRealPlayer = (lightComp != null && lightComp.Jimmy != null) || other.GetComponent<Dark>() != null;
+            if (!isRealPlayer) return;
             if (!AreRequirementsMet()) return;
 
             IsCompleted = true;

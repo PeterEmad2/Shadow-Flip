@@ -23,7 +23,9 @@ namespace ShadowFlip.Puzzle
         {
             if (Time.timeScale == 0f) return;
             if (Time.unscaledTime - lastTriggerTime < cooldown) return;
-            if (other.GetComponent<Light>() == null && other.GetComponent<Dark>() == null) return;
+            Light lightComp = other.GetComponent<Light>();
+            bool isRealPlayer = (lightComp != null && lightComp.Jimmy != null) || other.GetComponent<Dark>() != null;
+            if (!isRealPlayer) return;
 
             lastTriggerTime = Time.unscaledTime;
 

@@ -23,7 +23,8 @@ namespace ShadowFlip.Puzzle
             Button = 6,
             Crate = 7,
             Door = 8,
-            Eraser = 9
+            BlackHole = 9,
+            Eraser = 10
         }
 
         [Serializable]
@@ -54,6 +55,7 @@ namespace ShadowFlip.Puzzle
             "[7] Button",
             "[8] Crate",
             "[9] Door",
+            "[B] Black Hole",
             "[0] Erase"
         };
 
@@ -74,6 +76,7 @@ namespace ShadowFlip.Puzzle
         private string statusNotice = "Click map to place pixel props! Press [Q] to rotate, [P] to Play Test.";
 
         private Sprite wallSprite, wallShadowSprite, emitterSprite, prismSprite, receiverSprite, btnUp, btnDown, crateSprite, doorClosed, doorOpen;
+        private Sprite blackHoleFrame1, blackHoleFrame2;
         private Sprite[] mirrorDirs;
         private Texture2D whiteTex;
         private GUIStyle labelStyle;
@@ -102,8 +105,13 @@ namespace ShadowFlip.Puzzle
 
             if (Input.GetMouseButtonDown(0))
             {
-                float guiY = Screen.height - Input.mousePosition.y;
-                if (guiY < 118f || guiY > Screen.height - 96f) return;
+                Vector2 guiMouse = new Vector2(Input.mousePosition.x, Screen.height - Input.mousePosition.y);
+                Rect hudRect = new Rect(16f, 14f, 620f, 94f);
+                Rect toolbarRect = GetToolbarRect();
+                if (hudRect.Contains(guiMouse) || toolbarRect.Contains(guiMouse) || guiMouse.y > Screen.height - 96f)
+                {
+                    return;
+                }
 
                 Camera cam = Camera.main;
                 if (cam == null) return;
@@ -136,6 +144,7 @@ namespace ShadowFlip.Puzzle
             {
                 if (Input.GetKeyDown(KeyCode.Alpha1 + i)) selectedTool = (ToolType)i;
             }
+            if (Input.GetKeyDown(KeyCode.B)) selectedTool = ToolType.BlackHole;
             if (Input.GetKeyDown(KeyCode.Alpha0)) selectedTool = ToolType.Eraser;
         }
 
@@ -154,7 +163,7 @@ namespace ShadowFlip.Puzzle
 
             if (RealmCameraController.Instance != null)
             {
-                RealmCameraController.Instance.lightOrthoSize = buildMode ? 7.0f : 4.2f;
+                RealmCameraController.Instance.forceFullMapView = buildMode;
             }
         }
 
@@ -284,6 +293,23 @@ namespace ShadowFlip.Puzzle
                         door.requireAll = true;
                         break;
                     }
+                case ToolType.BlackHole:
+                    {
+                        go.transform.localScale = new Vector3(0.85f, 0.85f, 1f);
+                        SpriteRenderer sr = go.AddComponent<SpriteRenderer>();
+                        sr.sprite = blackHoleFrame1 != null ? blackHoleFrame1 : prismSprite;
+                        sr.sortingOrder = 5;
+                        go.AddComponent<CircleCollider2D>().radius = 0.52f;
+                        BlackHoleLens bh = go.AddComponent<BlackHoleLens>();
+                        bh.frame1 = blackHoleFrame1;
+                        bh.frame2 = blackHoleFrame2 != null ? blackHoleFrame2 : blackHoleFrame1;
+                        bh.gravityRadius = 3.3f;
+                        bh.eventHorizonRadius = 0.48f;
+                        bh.canAdjustStrength = true;
+                        bh.currentPresetIndex = 1; // LENS (Bend); [E] tunes Overdrive / Lens / White Hole
+                        bh.gravityStrength = 2.8f;
+                        break;
+                    }
             }
 
             placedObjects[cell] = go;
@@ -359,15 +385,23 @@ namespace ShadowFlip.Puzzle
             }
         }
 
+        private Rect GetToolbarRect()
+        {
+            if (Screen.width < 1140f)
+            {
+                return new Rect(16f, 114f, Mathf.Max(460f, Screen.width - 32f), 96f);
+            }
+            float xStart = 650f;
+            float panelW = Mathf.Max(460f, Screen.width - xStart - 16f);
+            return new Rect(xStart, 14f, panelW, 96f);
+        }
+
         void OnGUI()
         {
             if (Time.timeScale == 0f) return;
             EnsureStyles();
 
-            // Palette bar across top-right (leaves top-left HUD clear)
-            float xStart = 650f;
-            float panelW = Mathf.Max(460f, Screen.width - xStart - 16f);
-            Rect bar = new Rect(xStart, 14f, panelW, 94f);
+            Rect bar = GetToolbarRect();
 
             GUI.color = new Color(0.06f, 0.05f, 0.10f, 0.94f);
             GUI.DrawTexture(bar, whiteTex);
@@ -376,7 +410,8 @@ namespace ShadowFlip.Puzzle
             GUI.color = Color.white;
 
             string dirStr = new[] { "→", "↑", "←", "↓" }[rotationStep % 4];
-            GUI.Label(new Rect(bar.x + 10f, bar.y + 6f, 300f, 20f),
+            float statusW = Mathf.Max(140f, bar.width - 310f);
+            GUI.Label(new Rect(bar.x + 10f, bar.y + 6f, statusW, 20f),
                 $"SANDBOX EDITOR | Dir:{dirStr} | {statusNotice}", labelStyle);
 
             if (GUI.Button(new Rect(bar.x + bar.width - 285f, bar.y + 5f, 92f, 22f), buildMode ? "▶ TEST [P]" : "✎ EDIT [P]"))
@@ -388,11 +423,12 @@ namespace ShadowFlip.Puzzle
             if (GUI.Button(new Rect(bar.x + bar.width - 125f, bar.y + 5f, 60f, 22f), "LOAD")) LoadJson();
             if (GUI.Button(new Rect(bar.x + bar.width - 61f, bar.y + 5f, 52f, 22f), "CLR")) ClearAllPlaced();
 
-            float btnW = Mathf.Floor((bar.width - 24f) / 5f);
+            const int cols = 6;
+            float btnW = Mathf.Floor((bar.width - 24f) / cols);
             for (int i = 0; i < ToolLabels.Length; i++)
             {
-                int row = i / 5;
-                int col = i % 5;
+                int row = i / cols;
+                int col = i % cols;
                 Rect tb = new Rect(bar.x + 10f + col * (btnW + 2f), bar.y + 32f + row * 28f, btnW - 2f, 24f);
                 GUI.backgroundColor = selectedTool == (ToolType)i ? new Color(0.45f, 0.95f, 1f, 1f) : Color.white;
                 if (GUI.Button(tb, ToolLabels[i]))
@@ -415,6 +451,8 @@ namespace ShadowFlip.Puzzle
             crateSprite = Resources.Load<Sprite>("Sprites/Emitter_Broken");
             doorClosed = Resources.Load<Sprite>("Sprites/Door_Closed");
             doorOpen = Resources.Load<Sprite>("Sprites/Door_Open");
+            blackHoleFrame1 = Resources.Load<Sprite>("Sprites/PixelNew/BlackHole_1");
+            blackHoleFrame2 = Resources.Load<Sprite>("Sprites/PixelNew/BlackHole_2");
             mirrorDirs = new[]
             {
                 Resources.Load<Sprite>("Sprites/Mirror_45"),

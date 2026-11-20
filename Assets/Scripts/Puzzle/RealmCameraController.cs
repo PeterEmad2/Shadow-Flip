@@ -23,6 +23,7 @@ namespace ShadowFlip.Puzzle
         public Vector2 arenaHalfExtents = new Vector2(10.9f, 6.5f);
         public float positionLerpSpeed = 8.0f;
         public float zoomLerpSpeed = 6.5f;
+        public bool forceFullMapView = false;
 
         private Camera cam;
         private Vector3 basePosition;
@@ -74,12 +75,14 @@ namespace ShadowFlip.Puzzle
             if (gameLogic == null) gameLogic = logic.Instance != null ? logic.Instance : FindFirstObjectByType<logic>();
 
             bool isDark = gameLogic != null && gameLogic.isDarkActive;
-            float targetOrtho = (player == null || isDark) ? umbraOrthoSize : lightOrthoSize;
+            bool showFullMap = player == null || isDark || forceFullMapView;
+            float fullMapOrtho = Mathf.Max(umbraOrthoSize, (arenaHalfExtents.x + 0.35f) / Mathf.Max(0.5f, cam.aspect));
+            float targetOrtho = showFullMap ? fullMapOrtho : lightOrthoSize;
 
             float zoomT = 1f - Mathf.Exp(-zoomLerpSpeed * Time.unscaledDeltaTime);
             cam.orthographicSize = Mathf.Lerp(cam.orthographicSize, targetOrtho, zoomT);
 
-            Vector3 targetPos = ComputeTargetPosition(isDark, cam.orthographicSize);
+            Vector3 targetPos = ComputeTargetPosition(showFullMap, cam.orthographicSize);
             float posT = 1f - Mathf.Exp(-positionLerpSpeed * Time.unscaledDeltaTime);
             basePosition = Vector3.Lerp(basePosition, targetPos, posT);
 
@@ -104,14 +107,16 @@ namespace ShadowFlip.Puzzle
             if (cam == null) return;
 
             bool isDark = gameLogic != null && gameLogic.isDarkActive;
-            cam.orthographicSize = (player == null || isDark) ? umbraOrthoSize : lightOrthoSize;
-            basePosition = ComputeTargetPosition(isDark, cam.orthographicSize);
+            bool showFullMap = player == null || isDark || forceFullMapView;
+            float fullMapOrtho = Mathf.Max(umbraOrthoSize, (arenaHalfExtents.x + 0.35f) / Mathf.Max(0.5f, cam.aspect));
+            cam.orthographicSize = showFullMap ? fullMapOrtho : lightOrthoSize;
+            basePosition = ComputeTargetPosition(showFullMap, cam.orthographicSize);
             transform.position = basePosition;
         }
 
-        private Vector3 ComputeTargetPosition(bool isDark, float currentOrtho)
+        private Vector3 ComputeTargetPosition(bool showFullMap, float currentOrtho)
         {
-            if (player == null || isDark)
+            if (showFullMap || player == null)
             {
                 return new Vector3(0f, 0f, -10f);
             }

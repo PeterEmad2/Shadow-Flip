@@ -43,19 +43,21 @@ namespace ShadowFlip.Puzzle
             {
                 if (mirror != null) mirror.ApplyIsometricVisual();
                 if (sr != null) sr.color = Color.white;
+                transform.position = Vector3.MoveTowards(transform.position, homePos, creepSpeed * 1.8f * Time.deltaTime);
+                return;
+            }
+
+            bool pinned = IsPinnedByBeam(transform.position);
+            if (pinned)
+            {
+                if (mirror != null) mirror.ApplyIsometricVisual();
+                if (sr != null) sr.color = new Color(0.75f, 0.95f, 1f, 1f);
                 return;
             }
 
             if (sr != null && awakeSprite != null)
             {
                 sr.sprite = awakeSprite;
-            }
-
-            bool pinned = IsPinnedByBeam(transform.position);
-            if (pinned)
-            {
-                if (sr != null) sr.color = new Color(0.75f, 0.95f, 1f, 1f);
-                return;
             }
 
             if (sr != null) sr.color = Color.white;
@@ -78,9 +80,13 @@ namespace ShadowFlip.Puzzle
                     LineRenderer lr = lines[j];
                     if (lr == null || !lr.enabled || lr.positionCount < 2) continue;
 
-                    Vector2 a = lr.GetPosition(0);
-                    Vector2 b = lr.GetPosition(1);
-                    if (DistSq(point, a, b) <= rSq) return true;
+                    int segCount = lr.positionCount - 1;
+                    for (int k = 0; k < segCount; k++)
+                    {
+                        Vector2 a = lr.GetPosition(k);
+                        Vector2 b = lr.GetPosition(k + 1);
+                        if (DistSq(point, a, b) <= rSq) return true;
+                    }
                 }
             }
             return false;

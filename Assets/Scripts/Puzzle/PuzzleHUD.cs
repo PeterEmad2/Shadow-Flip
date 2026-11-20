@@ -36,7 +36,8 @@ namespace ShadowFlip.Puzzle
             "OpticsPuzzle_Level9",
             "OpticsPuzzle_Level10",
             "OpticsPuzzle_Level11",
-            "OpticsPuzzle_Level12"
+            "OpticsPuzzle_Level12",
+            "OpticsPuzzle_Level13"
         };
 
         private static readonly string[] LevelDisplayNames =
@@ -53,7 +54,8 @@ namespace ShadowFlip.Puzzle
             "Lv 9: Twin Observatory",
             "Lv 10: Polarized Rail",
             "Lv 11: Reality Anchor Rift",
-            "Lv 12: Eclipse Paradox [BOSS]"
+            "Lv 12: Eclipse Paradox [BOSS]",
+            "Lv 13: Event Horizon [BLACK HOLE]"
         };
 
         private static int GetCurrentLevelIndex()
@@ -367,8 +369,8 @@ namespace ShadowFlip.Puzzle
             GUI.DrawTexture(new Rect(0, 0, Screen.width, Screen.height), whiteTex);
             GUI.color = Color.white;
 
-            float w = 780f;
-            float h = 560f;
+            float w = Mathf.Min(780f, Screen.width - 20f);
+            float h = Mathf.Min(548f, Screen.height - 16f);
             Rect modal = new Rect((Screen.width - w) * 0.5f, (Screen.height - h) * 0.5f, w, h);
             DrawCelPanel(modal, panelColor, inkColor, accentColor, 5f);
 
@@ -379,23 +381,24 @@ namespace ShadowFlip.Puzzle
             }
 
             GUI.color = accentColor;
-            GUI.Label(new Rect(modal.x, modal.y + 14f, modal.width, 38f), "SHADOW FLIP", titleStyle);
+            GUI.Label(new Rect(modal.x, modal.y + 12f, modal.width, 34f), "SHADOW FLIP", titleStyle);
             GUI.color = Color.white;
-            GUI.Label(new Rect(modal.x, modal.y + 52f, modal.width, 24f),
+            GUI.Label(new Rect(modal.x, modal.y + 46f, modal.width, 22f),
                 $"PIXEL-ART LIGHT & UMBRA OPTICS PUZZLE   |   ★ {totalStars} / {LevelScenes.Length * 3}", bannerStyle);
 
             // Top Action Buttons
             string currentScene = SceneManager.GetActiveScene().name;
             string primaryLabel = isDedicatedMenuScene ? "▶ PLAY LEVEL 0 (TUTORIAL)" : "▶ RESUME LEVEL";
+            float halfW = (modal.width - 64f) * 0.5f;
 
-            if (GUI.Button(new Rect(modal.x + 24f, modal.y + 86f, 358f, 38f), primaryLabel))
+            if (GUI.Button(new Rect(modal.x + 24f, modal.y + 76f, halfW, 34f), primaryLabel))
             {
                 PuzzleAudioManager.Instance?.PlayButtonClick();
                 if (isDedicatedMenuScene) TryLoadLevel("OpticsPuzzle_Tutorial");
                 else CloseMainMenu();
             }
 
-            if (GUI.Button(new Rect(modal.x + 398f, modal.y + 86f, 358f, 38f), isDedicatedMenuScene ? "▶ PLAY LEVEL 1" : "↻ RESTART LEVEL"))
+            if (GUI.Button(new Rect(modal.x + modal.width - 24f - halfW, modal.y + 76f, halfW, 34f), isDedicatedMenuScene ? "▶ PLAY LEVEL 1" : "↻ RESTART LEVEL"))
             {
                 PuzzleAudioManager.Instance?.PlayButtonClick();
                 if (isDedicatedMenuScene)
@@ -410,10 +413,14 @@ namespace ShadowFlip.Puzzle
                 }
             }
 
-            // 13-Level (0-12) 2-Column Select Grid + Sandbox Button
+            // 14-Level (0-13) + Sandbox 2-Column Select Grid (8 left, 7 right)
             GUI.color = accentColor;
-            GUI.Label(new Rect(modal.x + 24f, modal.y + 132f, 500f, 22f), "SELECT LEVEL (0 - 12) OR SANDBOX:", statusStyle);
+            GUI.Label(new Rect(modal.x + 24f, modal.y + 118f, modal.width - 48f, 20f), "SELECT LEVEL (0 - 13) OR SANDBOX:", statusStyle);
             GUI.color = Color.white;
+
+            float gridTop = modal.y + 142f;
+            float rowStep = Mathf.Min(36f, (modal.height - 196f) / 8f);
+            float btnH = Mathf.Max(26f, rowStep - 5f);
 
             for (int i = 0; i < LevelScenes.Length; i++)
             {
@@ -424,11 +431,11 @@ namespace ShadowFlip.Puzzle
                 string timeTag = bestTime > 0f ? $" {FormatTime(bestTime)}" : "";
                 string activeTag = sceneName == currentScene ? " *" : "";
 
-                int col = i < 7 ? 0 : 1;
-                int row = i < 7 ? i : i - 7;
-                float bx = modal.x + (col == 0 ? 24f : 398f);
-                float by = modal.y + 158f + row * 41f;
-                Rect btnRect = new Rect(bx, by, 358f, 35f);
+                int col = i < 8 ? 0 : 1;
+                int row = i < 8 ? i : i - 8;
+                float bx = col == 0 ? modal.x + 24f : modal.x + modal.width - 24f - halfW;
+                float by = gridTop + row * rowStep;
+                Rect btnRect = new Rect(bx, by, halfW, btnH);
                 if (GUI.Button(btnRect, $" {LevelDisplayNames[i]}{activeTag}  [{starStr}]{timeTag}"))
                 {
                     PuzzleAudioManager.Instance?.PlayButtonClick();
@@ -436,8 +443,8 @@ namespace ShadowFlip.Puzzle
                 }
             }
 
-            // 7th slot in right column: Sandbox Level Editor
-            Rect sandboxRect = new Rect(modal.x + 398f, modal.y + 158f + 6 * 41f, 358f, 35f);
+            // Right column slot 7 (row 6): Sandbox Level Editor
+            Rect sandboxRect = new Rect(modal.x + modal.width - 24f - halfW, gridTop + 6 * rowStep, halfW, btnH);
             string sandboxTag = currentScene == "OpticsPuzzle_Sandbox" ? " [ACTIVE]" : "";
             if (GUI.Button(sandboxRect, $" ⚙ SANDBOX LEVEL EDITOR{sandboxTag}"))
             {
@@ -448,7 +455,7 @@ namespace ShadowFlip.Puzzle
             if (!string.IsNullOrEmpty(menuNotice))
             {
                 GUI.color = new Color(1f, 0.55f, 0.45f, 1f);
-                GUI.Label(new Rect(modal.x + 24f, modal.y + 458f, modal.width - 48f, 26f), menuNotice, statusStyle);
+                GUI.Label(new Rect(modal.x + 24f, modal.y + h - 72f, modal.width - 48f, 24f), menuNotice, statusStyle);
                 GUI.color = Color.white;
             }
 

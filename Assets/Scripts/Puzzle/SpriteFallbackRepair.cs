@@ -119,6 +119,7 @@ namespace ShadowFlip.Puzzle
             foreach (LightBeamEmitter emitter in Object.FindObjectsByType<LightBeamEmitter>(FindObjectsSortMode.None))
             {
                 if (emitter == null) continue;
+                if (emitter.gameObject.name == "MemoryBeamEmitter") continue;
                 SpriteRenderer sr = emitter.emitterRenderer != null ? emitter.emitterRenderer : emitter.GetComponent<SpriteRenderer>();
                 if (emitter.inactiveEmitterSprite == null) emitter.inactiveEmitterSprite = emitIdle;
 
@@ -232,7 +233,11 @@ namespace ShadowFlip.Puzzle
                     && phase.GetComponent<OpticalMirror>() == null && phase.GetComponent<OpticalPrism>() == null
                     && phase.GetComponent<LightSensor>() == null && phase.GetComponent<PuzzleDoor>() == null
                     && phase.GetComponent<ColorFilter>() == null && phase.GetComponent<PortalMirror>() == null
-                    && phase.GetComponent<ColorCombiner>() == null && phase.GetComponent<BeamRelayCrystal>() == null)
+                    && phase.GetComponent<ColorCombiner>() == null && phase.GetComponent<BeamRelayCrystal>() == null
+                    && phase.GetComponent<OneWayPolarizer>() == null && phase.GetComponent<OpticalMemoryPrism>() == null
+                    && phase.GetComponent<RealityAnchorLantern>() == null && phase.GetComponent<BeamMagneticRail>() == null
+                    && phase.GetComponent<BeamEaterMoth>() == null && phase.GetComponent<UmbraWardenBoss>() == null
+                    && phase.GetComponent<BlackHoleLens>() == null)
                 {
                     RemoveWallBorders(phase.gameObject);
 

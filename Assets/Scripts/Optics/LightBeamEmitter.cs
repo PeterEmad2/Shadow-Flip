@@ -37,6 +37,7 @@ namespace ShadowFlip.Optics
         }
 
         private readonly List<BeamLinePair> linePool = new List<BeamLinePair>();
+        private readonly List<Vector3> curvedPathBuffer = new List<Vector3>(128);
         private int activeLineCount = 0;
         private Material fallbackMaterial;
 
@@ -67,7 +68,7 @@ namespace ShadowFlip.Optics
             if (active)
             {
                 Vector2 dir = transform.TransformDirection(localEmitDirection.normalized);
-                CastSegment(transform.position, dir, beamColor, maxBounces, selfIgnoreCollider);
+                CastBeam(transform.position, dir, beamColor, maxBounces, selfIgnoreCollider);
             }
 
             HideUnusedLines(activeLineCount);
@@ -76,7 +77,19 @@ namespace ShadowFlip.Optics
         public void EmitChildBeam(Vector2 origin, Vector2 direction, LightColor color, int remainingBounces, Collider2D ignoreCollider = null)
         {
             if (remainingBounces <= 0 || direction.sqrMagnitude < 0.0001f) return;
-            CastSegment(origin, direction.normalized, color, remainingBounces, ignoreCollider);
+            CastBeam(origin, direction.normalized, color, remainingBounces, ignoreCollider);
+        }
+
+        private void CastBeam(Vector2 origin, Vector2 direction, LightColor color, int remainingBounces, Collider2D ignoreCollider)
+        {
+            if (BlackHoleLens.HasAnyActiveBlackHoles())
+            {
+                CastCurvedSegment(origin, direction, color, remainingBounces, ignoreCollider);
+            }
+            else
+            {
+                CastSegment(origin, direction, color, remainingBounces, ignoreCollider);
+            }
         }
 
         internal void RegisterSensorHit(LightSensor sensor, LightColor color)
@@ -111,26 +124,22 @@ namespace ShadowFlip.Optics
                 || (activeInWorld == WorldAffinity.LightOnly && !isDark);
         }
 
-        private void CastSegment(Vector2 origin, Vector2 direction, LightColor color, int remainingBounces, Collider2D ignoreCollider = null)
+        private bool TryPickFirstHit(RaycastHit2D[] hits, Collider2D ignoreCollider, out RaycastHit2D chosenHit, out IOpticalElement chosenOptical)
         {
-            if (remainingBounces < 0) return;
-
-            RaycastHit2D[] hits = Physics2D.RaycastAll(origin, direction, maxDistance, hitMask);
-            Array.Sort(hits, (a, b) => a.distance.CompareTo(b.distance));
-
-            RaycastHit2D chosenHit = default;
-            IOpticalElement chosenOptical = null;
-            bool foundHit = false;
+            chosenHit = default;
+            chosenOptical = null;
 
             for (int i = 0; i < hits.Length; i++)
             {
                 RaycastHit2D h = hits[i];
-                if (h.collider == null || h.collider == ignoreCollider) continue;
+                if (h.collider == null || h.collider == ignoreCollider || h.collider == selfIgnoreCollider) continue;
 
-                // Player & Mirror Twin bodies do not block light beams.
+                // Player, Mirror Twin, & Black Hole core colliders do not block optical beams directly.
                 if (h.collider.GetComponent<Light>() != null
                     || h.collider.GetComponent<Dark>() != null
-                    || h.collider.GetComponent<MirrorTwinBody>() != null) continue;
+                    || h.collider.GetComponent<MirrorTwinBody>() != null
+                    || h.collider.GetComponent<BlackHoleLens>() != null
+                    || h.collider.GetComponentInParent<BlackHoleLens>() != null) continue;
 
                 IOpticalElement optical = h.collider.GetComponent<IOpticalElement>();
                 if (optical == null) optical = h.collider.GetComponentInParent<IOpticalElement>();
@@ -140,11 +149,20 @@ namespace ShadowFlip.Optics
 
                 chosenHit = h;
                 chosenOptical = optical;
-                foundHit = true;
-                break;
+                return true;
             }
 
-            if (!foundHit)
+            return false;
+        }
+
+        private void CastSegment(Vector2 origin, Vector2 direction, LightColor color, int remainingBounces, Collider2D ignoreCollider = null)
+        {
+            if (remainingBounces < 0) return;
+
+            RaycastHit2D[] hits = Physics2D.RaycastAll(origin, direction, maxDistance, hitMask);
+            Array.Sort(hits, (a, b) => a.distance.CompareTo(b.distance));
+
+            if (!TryPickFirstHit(hits, ignoreCollider, out RaycastHit2D chosenHit, out IOpticalElement chosenOptical))
             {
                 DrawSegment(origin, origin + direction * maxDistance, color);
                 return;
@@ -169,6 +187,97 @@ namespace ShadowFlip.Optics
             chosenOptical.OnBeamHit(beamHit, this, remainingBounces - 1);
         }
 
+        private void CastCurvedSegment(Vector2 origin, Vector2 direction, LightColor color, int remainingBounces, Collider2D ignoreCollider = null)
+        {
+            if (remainingBounces < 0 || direction.sqrMagnitude < 0.0001f) return;
+
+            const float ds = 0.14f;
+            Vector2 pos = origin;
+            Vector2 dir = direction.normalized;
+            float traveled = 0f;
+            Collider2D activeIgnore = ignoreCollider;
+
+            curvedPathBuffer.Clear();
+            curvedPathBuffer.Add(new Vector3(pos.x, pos.y, 0f));
+            Vector2 lastAddedPos = pos;
+            Vector2 lastAddedDir = dir;
+
+            while (traveled < maxDistance)
+            {
+                // Apply gravitational bending / event-horizon capture from every active Black Hole.
+                for (int i = 0; i < BlackHoleLens.ActiveBlackHoles.Count; i++)
+                {
+                    BlackHoleLens bh = BlackHoleLens.ActiveBlackHoles[i];
+                    if (bh == null || !bh.IsFieldActive) continue;
+
+                    Vector2 toCenter = (Vector2)bh.transform.position - pos;
+                    float dist = toCenter.magnitude;
+                    if (dist <= bh.eventHorizonRadius)
+                    {
+                        curvedPathBuffer.Add(new Vector3(pos.x, pos.y, 0f));
+                        bh.NotifyBeamAbsorbed(color, pos);
+                        DrawPolyline(curvedPathBuffer, color);
+                        return;
+                    }
+
+                    if (dist < bh.gravityRadius && dist > 0.0001f)
+                    {
+                        Vector2 radial = toCenter / dist;
+                        Vector2 perp = radial - dir * Vector2.Dot(radial, dir);
+                        float fade = 1f - (dist / bh.gravityRadius);
+                        float pull = (bh.EffectiveGravityStrength / Mathf.Max(dist * dist, 0.35f)) * (fade * fade);
+                        dir = (dir + perp * (pull * ds)).normalized;
+                    }
+                }
+
+                float step = Mathf.Min(ds, maxDistance - traveled);
+                if (traveled > 1.15f) activeIgnore = null;
+
+                RaycastHit2D[] hits = Physics2D.RaycastAll(pos, dir, step, hitMask);
+                Array.Sort(hits, (a, b) => a.distance.CompareTo(b.distance));
+
+                if (TryPickFirstHit(hits, activeIgnore, out RaycastHit2D chosenHit, out IOpticalElement chosenOptical))
+                {
+                    Vector2 endPoint = chosenOptical != null
+                        ? (Vector2)chosenHit.collider.transform.position
+                        : chosenHit.point;
+
+                    curvedPathBuffer.Add(new Vector3(endPoint.x, endPoint.y, 0f));
+                    DrawPolyline(curvedPathBuffer, color);
+
+                    if (chosenOptical == null || remainingBounces <= 0) return;
+
+                    LightBeamHit beamHit = new LightBeamHit
+                    {
+                        Point = endPoint,
+                        Normal = chosenHit.normal,
+                        IncomingDirection = dir,
+                        Color = color,
+                        Collider = chosenHit.collider
+                    };
+                    chosenOptical.OnBeamHit(beamHit, this, remainingBounces - 1);
+                    return;
+                }
+
+                pos += dir * step;
+                traveled += step;
+
+                if (Vector2.Dot(dir, lastAddedDir) < 0.9994f || (pos - lastAddedPos).sqrMagnitude >= 0.20f)
+                {
+                    curvedPathBuffer.Add(new Vector3(pos.x, pos.y, 0f));
+                    lastAddedPos = pos;
+                    lastAddedDir = dir;
+                }
+            }
+
+            Vector3 finalPt = new Vector3(pos.x, pos.y, 0f);
+            if ((curvedPathBuffer[curvedPathBuffer.Count - 1] - finalPt).sqrMagnitude > 0.0001f)
+            {
+                curvedPathBuffer.Add(finalPt);
+            }
+            DrawPolyline(curvedPathBuffer, color);
+        }
+
         private void DrawSegment(Vector2 start, Vector2 end, LightColor color)
         {
             BeamLinePair pair = GetOrCreateLinePair(activeLineCount++);
@@ -176,24 +285,41 @@ namespace ShadowFlip.Optics
             Vector3 p0 = new Vector3(start.x, start.y, 0f);
             Vector3 p1 = new Vector3(end.x, end.y, 0f);
 
-            pair.OuterGlow.enabled = true;
-            pair.OuterGlow.positionCount = 2;
+            ConfigureBeamLine(pair.OuterGlow, beamWidth, outerColor, 2);
             pair.OuterGlow.SetPosition(0, p0);
             pair.OuterGlow.SetPosition(1, p1);
-            pair.OuterGlow.startWidth = beamWidth;
-            pair.OuterGlow.endWidth = beamWidth;
-            pair.OuterGlow.startColor = outerColor;
-            pair.OuterGlow.endColor = outerColor;
 
-            float coreWidth = beamWidth * 0.41f;
-            pair.InnerCore.enabled = true;
-            pair.InnerCore.positionCount = 2;
+            ConfigureBeamLine(pair.InnerCore, beamWidth * 0.41f, Color.white, 2);
             pair.InnerCore.SetPosition(0, p0);
             pair.InnerCore.SetPosition(1, p1);
-            pair.InnerCore.startWidth = coreWidth;
-            pair.InnerCore.endWidth = coreWidth;
-            pair.InnerCore.startColor = Color.white;
-            pair.InnerCore.endColor = Color.white;
+        }
+
+        private void DrawPolyline(List<Vector3> points, LightColor color)
+        {
+            if (points == null || points.Count < 2) return;
+
+            BeamLinePair pair = GetOrCreateLinePair(activeLineCount++);
+            Color outerColor = LightColorUtility.ToUnityColor(color);
+            int count = points.Count;
+
+            ConfigureBeamLine(pair.OuterGlow, beamWidth, outerColor, count);
+            ConfigureBeamLine(pair.InnerCore, beamWidth * 0.41f, Color.white, count);
+
+            for (int i = 0; i < count; i++)
+            {
+                pair.OuterGlow.SetPosition(i, points[i]);
+                pair.InnerCore.SetPosition(i, points[i]);
+            }
+        }
+
+        private static void ConfigureBeamLine(LineRenderer lr, float width, Color color, int vertexCount)
+        {
+            lr.enabled = true;
+            lr.positionCount = vertexCount;
+            lr.startWidth = width;
+            lr.endWidth = width;
+            lr.startColor = color;
+            lr.endColor = color;
         }
 
         private BeamLinePair GetOrCreateLinePair(int index)
