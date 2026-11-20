@@ -278,6 +278,8 @@ namespace ShadowFlip.Puzzle
             lastWarnSecond = -1;
 
             PuzzleAudioManager.Instance?.PlayMonsterPetrify();
+            PuzzleVFXManager.SpawnPixelBurst(basePosition, new Color(0.55f, 0.92f, 1f, 1f), 16, 4.0f);
+            RealmCameraController.TriggerShake(0.20f, 0.22f);
         }
 
         private void OnPlayerCaught()

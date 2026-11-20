@@ -15,6 +15,7 @@ namespace ShadowFlip.EditorTools
         private const string LabDir = "Assets/Images/Laboratory/";
         private const string ScifiDir = "Assets/Images/ScifiFacility/";
         private const string NewDataDir = "Assets/Images/NewData/";
+        private const string PixelNewDir = "Assets/Images/PixelNew/";
         private const string SfxDir = "Assets/Sounds/SFX/";
         private const string MainMenuPath = "Assets/Scenes/MainMenu.unity";
         private const string TutorialPath = "Assets/Scenes/OpticsPuzzle_Tutorial.unity";
@@ -26,6 +27,11 @@ namespace ShadowFlip.EditorTools
         private const string Level6Path = "Assets/Scenes/OpticsPuzzle_Level6.unity";
         private const string Level7Path = "Assets/Scenes/OpticsPuzzle_Level7.unity";
         private const string Level8Path = "Assets/Scenes/OpticsPuzzle_Level8.unity";
+        private const string Level9Path = "Assets/Scenes/OpticsPuzzle_Level9.unity";
+        private const string Level10Path = "Assets/Scenes/OpticsPuzzle_Level10.unity";
+        private const string Level11Path = "Assets/Scenes/OpticsPuzzle_Level11.unity";
+        private const string Level12Path = "Assets/Scenes/OpticsPuzzle_Level12.unity";
+        private const string SandboxPath = "Assets/Scenes/OpticsPuzzle_Sandbox.unity";
 
         private enum WallTileStyle { Long, Medium, Pillar, Ruined }
 
@@ -72,9 +78,14 @@ namespace ShadowFlip.EditorTools
             // New data (Animated Flying Obelisk + PixelLabIcons)
             public Sprite[] ObeliskFrames;
             public Sprite IconAtom, IconBattery, IconBulb, IconFlask, IconMagnet, IconTestTube;
+
+            // PixelNew expansion assets
+            public Sprite OneWayPolarizer, RealityAnchorOff, RealityAnchorOn, MagneticRailTrack, MagneticRailCart;
+            public Sprite SplitTotem, MemoryPrismIdle, MemoryPrismCharged, MimicMirrorIdle, MimicMirrorAwake;
+            public Sprite BeamMoth1, BeamMoth2, UmbraMoldTile, UmbraWarden1, UmbraWarden2;
         }
 
-        [MenuItem("Shadow Flip/Create All Levels (Main Menu + Levels 0-8)")]
+        [MenuItem("Shadow Flip/Create All Levels (Main Menu + Levels 0-12 + Sandbox)")]
         public static void CreateAllLevels()
         {
             if (IsInPlayModeGuard()) return;
@@ -88,9 +99,14 @@ namespace ShadowFlip.EditorTools
             CreateOpticsPuzzleLevel6();
             CreateOpticsPuzzleLevel7();
             CreateOpticsPuzzleLevel8();
+            CreateOpticsPuzzleLevel9();
+            CreateOpticsPuzzleLevel10();
+            CreateOpticsPuzzleLevel11();
+            CreateOpticsPuzzleLevel12();
+            CreateSandboxLevel();
             CreateMainMenuScene();
             RegisterScenesInBuildSettings();
-            Debug.Log("Created Main Menu and Levels 0-8 and registered all 10 in Build Settings.");
+            Debug.Log("Created Main Menu, Levels 0-12, and Sandbox Level and registered all 15 in Build Settings.");
         }
 
         [MenuItem("Shadow Flip/Create Main Menu Scene")]
@@ -917,12 +933,297 @@ namespace ShadowFlip.EditorTools
             PuzzleDoor labAirlock = CreateScifiDoor("ScifiDoor_Lab_L8", new Vector3(7.5f, 0.0f, 0f), new Vector2(1.05f, 2.8f), assets,
                 new[] { topSensor, botSensor }, new[] { hatchButton }, new[] { breakerLever }, requireAll: true, stayOpen: false, isLabDoor: true);
 
-            CreateExit("LevelExit", new Vector3(9.0f, 0.0f, 0f), assets, new[] { stdAirlock, labAirlock }, "");
+            CreateExit("LevelExit", new Vector3(9.0f, 0.0f, 0f), assets, new[] { stdAirlock, labAirlock }, "OpticsPuzzle_Level9");
 
             EditorSceneManager.SaveScene(scene, Level8Path);
             RegisterScenesInBuildSettings();
             AssetDatabase.Refresh();
             Debug.Log("Created Optics Puzzle Level 8 (Omega Containment Facility) at " + Level8Path);
+        }
+
+        [MenuItem("Shadow Flip/Create Level 9 (Twin-Mirror Observatory)")]
+        public static void CreateOpticsPuzzleLevel9()
+        {
+            if (IsInPlayModeGuard()) return;
+            CelAssets assets = WithLaboratoryTheme(LoadCelAssets());
+            var scene = EditorSceneManager.NewScene(NewSceneSetup.EmptyScene, NewSceneMode.Single);
+
+            SetupCoreScene(
+                assets,
+                out logic gameLogic,
+                out PlayerMovement playerMovement,
+                out PuzzleHUD hud,
+                out ShadowStalkerController stalker,
+                new Color(0.05f, 0.06f, 0.12f, 1f),
+                new Color(0.97f, 0.98f, 1.0f, 1f), 1.05f,
+                new Color(0.30f, 0.24f, 0.60f, 1f), 0.50f,
+                new Vector3(-8.0f, -3.5f, 0f));
+
+            stalker.umbraSafeDuration = 12.0f;
+            hud.parFlips = 3;
+            hud.lessonTitle = "Level 9: Twin-Mirror Observatory";
+            hud.levelHint = "Rotate the Linked West Mirror [E] to align BOTH twins, charge the Memory Prism, then flip [F] to pin & aim the Awakened Mimic Mirror!";
+
+            CreateArenaWalls(assets);
+
+            // Center observatory divider (walkable at bottom only in Shadow Realm)
+            CreateWall("Observatory_Div_Top", new Vector3(0.0f, 2.8f, 0f), new Vector2(0.85f, 5.4f), assets, WorldAffinity.Both, WallTileStyle.Long);
+            CreateWall("Observatory_PhaseGate", new Vector3(0.0f, -2.6f, 0f), new Vector2(0.85f, 5.6f), assets, WorldAffinity.LightOnly, WallTileStyle.Long);
+
+            // West Wing: White Emitter -> Linked Twin Mirror A -> Memory Delay Prism -> West Sensor
+            CreateEmitter("Emitter_Obs_Light", new Vector3(-8.5f, 3.5f, 0f), LightColor.White, WorldAffinity.Both, Vector2.right, assets);
+            GameObject twinAGo = CreateIsometricMirror("Mirror_Twin_Light", new Vector3(-4.5f, 3.5f, 0f), 45f, 90f, WorldAffinity.Both, assets);
+            CreateMemoryPrism("MemoryPrism_Obs", new Vector3(-4.5f, 0.5f, 0f), 9.0f, Vector2.down, false, assets);
+            LightSensor westSensor = CreateSensor("Sensor_Obs_West", new Vector3(-4.5f, -2.6f, 0f), LightColor.White, WorldAffinity.Both, assets);
+
+            // East Wing: Shadow Emitter -> Linked Twin Mirror B -> Mimic Mirror -> East Shadow Sensor
+            CreateEmitter("Emitter_Obs_Shadow", new Vector3(1.5f, 3.5f, 0f), LightColor.Shadow, WorldAffinity.ShadowOnly, Vector2.right, assets);
+            GameObject twinBGo = CreateIsometricMirror("Mirror_Twin_Shadow", new Vector3(4.5f, 3.5f, 0f), 45f, 90f, WorldAffinity.ShadowOnly, assets, canRotate: false);
+            twinAGo.GetComponent<OpticalMirror>().linkedTwinMirror = twinBGo.GetComponent<OpticalMirror>();
+
+            CreateUmbraMimicMirror("MimicMirror_Obs", new Vector3(4.5f, -1.5f, 0f), 45f, new Vector3(0f, -2.5f, 0f), assets);
+            LightSensor eastSensor = CreateSensor("Sensor_Obs_East", new Vector3(5.6f, -1.5f, 0f), LightColor.Shadow, WorldAffinity.ShadowOnly, assets);
+
+            CreateLabNPC("Dr_Vance_L9", new Vector3(-7.6f, 1.0f, 0f), "Dr. Vance",
+                new[]
+                {
+                    "Linked Twin Mirrors synchronize rotations across worlds! Rotating Mirror_Twin_Light steers Mirror_Twin_Shadow too.",
+                    "That Shadow Beam pins the Umbra Mimic Mirror in place so it can't run away!"
+                },
+                assets.LabNpcMale, assets.LabNpcHazmat, assets);
+
+            CreateWall("VaultWall_Top_L9", new Vector3(7.0f, 3.8f, 0f), new Vector2(0.85f, 4.8f), assets, WorldAffinity.Both, WallTileStyle.Long);
+            CreateWall("VaultWall_Bot_L9", new Vector3(7.0f, -3.8f, 0f), new Vector2(0.85f, 4.8f), assets, WorldAffinity.Both, WallTileStyle.Long);
+            PuzzleDoor obsDoor = CreateLabBlastDoor("Door_Observatory", new Vector3(7.0f, 0.0f, 0f), new Vector2(1.05f, 2.8f), assets,
+                new[] { westSensor, eastSensor }, null, null, requireAll: true, stayOpen: false, vertical: true, redVariant: false);
+
+            CreateExit("LevelExit", new Vector3(8.9f, 0.0f, 0f), assets, new[] { obsDoor }, "OpticsPuzzle_Level10");
+
+            EditorSceneManager.SaveScene(scene, Level9Path);
+            RegisterScenesInBuildSettings();
+            AssetDatabase.Refresh();
+            Debug.Log("Created Optics Puzzle Level 9 at " + Level9Path);
+        }
+
+        [MenuItem("Shadow Flip/Create Level 10 (Polarized Rail Foundry)")]
+        public static void CreateOpticsPuzzleLevel10()
+        {
+            if (IsInPlayModeGuard()) return;
+            CelAssets assets = WithScifiFacilityTheme(LoadCelAssets());
+            var scene = EditorSceneManager.NewScene(NewSceneSetup.EmptyScene, NewSceneMode.Single);
+
+            SetupCoreScene(
+                assets,
+                out logic gameLogic,
+                out PlayerMovement playerMovement,
+                out PuzzleHUD hud,
+                out ShadowStalkerController stalker,
+                new Color(0.04f, 0.04f, 0.09f, 1f),
+                new Color(0.96f, 0.98f, 1.0f, 1f), 1.05f,
+                new Color(0.28f, 0.18f, 0.44f, 1f), 0.46f,
+                new Vector3(-8.0f, -4.0f, 0f));
+
+            stalker.umbraSafeDuration = 12.0f;
+            hud.parFlips = 4;
+            hud.lessonTitle = "Level 10: Polarized Rail Foundry";
+            hud.levelHint = "Aim the Red Stun Mirror [E] onto the Beam-Eater Moth, open the Blue One-Way Polarizer [E] to glide the Rail Mirror into place, then flip [F] for the Inverted Shadow Sensor!";
+
+            CreateArenaWalls(assets);
+            CreateLabSanctuary("Sanctuary_Foundry", new Vector3(-8.2f, 1.2f, 0f), 2.1f, assets);
+
+            // Creeping Umbra Mold patches cleared by lasers
+            CreateUmbraMold("UmbraMold_Walkway", new Vector3(-2.5f, 4.0f, 0f), 1.0f, assets);
+            CreateUmbraMold("UmbraMold_Center", new Vector3(1.0f, -2.5f, 0f), 1.05f, assets);
+
+            // Upper Rail Power Line: Blue Emitter -> One-Way Polarizer -> Rail Terminal
+            CreateEmitter("Emitter_Blue_Rail", new Vector3(-8.5f, 4.0f, 0f), LightColor.Blue, WorldAffinity.Both, Vector2.right, assets);
+            CreateOneWayPolarizer("Polarizer_Rail", new Vector3(-5.5f, 4.0f, 0f), Vector2.up, false, true, assets);
+
+            GameObject railCart = CreateMagneticRail("Rail_System", new Vector3(3.5f, 4.0f, 0f),
+                new Vector3(2.2f, 1.0f, 0f), new Vector3(4.5f, 1.0f, 0f), LightColor.Blue, assets);
+            // Attach 135 deg mirror on the moving cart to bounce vertical bottom emitter LEFT
+            BoxCollider2D cartCol = railCart.AddComponent<BoxCollider2D>();
+            cartCol.size = new Vector2(1.0f, 1.0f);
+            OpticalMirror cartMirror = railCart.AddComponent<OpticalMirror>();
+            cartMirror.isTwoSided = true;
+            cartMirror.canRotate = false;
+            cartMirror.directionalSprites = assets.MirrorDirections;
+            cartMirror.logicalAngle = 135f;
+            cartMirror.ApplyIsometricVisual();
+
+            // Vertical White Emitter -> Cart Mirror at (4.5, 1.0) -> One-Way Inverter Diode -> Shadow Sensor
+            CreateEmitter("Emitter_Vert_Foundry", new Vector3(4.5f, -4.5f, 0f), LightColor.White, WorldAffinity.Both, Vector2.up, assets);
+            CreateOneWayPolarizer("Diode_Inverter", new Vector3(0.2f, 1.0f, 0f), Vector2.left, true, false, assets);
+            LightSensor shadowSensor = CreateSensor("Sensor_Shadow_Foundry", new Vector3(-2.5f, 1.0f, 0f), LightColor.Shadow, WorldAffinity.ShadowOnly, assets);
+
+            // Bottom Moth Gauntlet: Red Emitter -> Mirror -> Stun Beam-Eater Moth -> Bottom White Beam -> Light Sensor
+            CreateEmitter("Emitter_Red_MothStun", new Vector3(-8.5f, 2.0f, 0f), LightColor.Red, WorldAffinity.Both, Vector2.right, assets);
+            CreateIsometricMirror("Mirror_StunAim", new Vector3(-5.0f, 2.0f, 0f), 45f, 90f, WorldAffinity.Both, assets);
+
+            CreateEmitter("Emitter_Bot_White", new Vector3(-8.5f, -2.5f, 0f), LightColor.White, WorldAffinity.Both, Vector2.right, assets);
+            CreateBeamEaterMoth("BeamMoth_Foundry", new Vector3(-5.0f, -2.5f, 0f), LightColor.Red, assets);
+            LightSensor lightSensor = CreateSensor("Sensor_Light_Foundry", new Vector3(-2.5f, -2.5f, 0f), LightColor.White, WorldAffinity.Both, assets);
+            lightSensor.holdDuration = 1.0f;
+
+            CreateWall("VaultWall_Upper_L10", new Vector3(6.8f, 3.8f, 0f), new Vector2(0.85f, 4.8f), assets, WorldAffinity.Both, WallTileStyle.Long);
+            CreateWall("VaultWall_Lower_L10", new Vector3(6.8f, -3.8f, 0f), new Vector2(0.85f, 4.8f), assets, WorldAffinity.Both, WallTileStyle.Long);
+            PuzzleDoor foundryDoor = CreateScifiDoor("ScifiDoor_Foundry", new Vector3(6.8f, 0.0f, 0f), new Vector2(1.05f, 2.8f), assets,
+                new[] { lightSensor, shadowSensor }, null, null, requireAll: true, stayOpen: false, isLabDoor: true);
+
+            CreateExit("LevelExit", new Vector3(8.8f, 0.0f, 0f), assets, new[] { foundryDoor }, "OpticsPuzzle_Level11");
+
+            EditorSceneManager.SaveScene(scene, Level10Path);
+            RegisterScenesInBuildSettings();
+            AssetDatabase.Refresh();
+            Debug.Log("Created Optics Puzzle Level 10 at " + Level10Path);
+        }
+
+        [MenuItem("Shadow Flip/Create Level 11 (The Reality Anchor Rift)")]
+        public static void CreateOpticsPuzzleLevel11()
+        {
+            if (IsInPlayModeGuard()) return;
+            CelAssets assets = WithLaboratoryTheme(LoadCelAssets());
+            var scene = EditorSceneManager.NewScene(NewSceneSetup.EmptyScene, NewSceneMode.Single);
+
+            SetupCoreScene(
+                assets,
+                out logic gameLogic,
+                out PlayerMovement playerMovement,
+                out PuzzleHUD hud,
+                out ShadowStalkerController stalker,
+                new Color(0.05f, 0.04f, 0.10f, 1f),
+                new Color(1f, 0.96f, 0.88f, 1f), 1.05f,
+                new Color(0.28f, 0.22f, 0.56f, 1f), 0.48f,
+                new Vector3(-8.0f, -3.2f, 0f));
+
+            stalker.umbraSafeDuration = 12.0f;
+            hud.parFlips = 4;
+            hud.lessonTitle = "Level 11: The Reality Anchor Rift";
+            hud.levelHint = "Summon your Mirror Twin [E] to step onto the East Button, feed the Memory Prism, then flip [F] so it powers the Reality Anchor Bubble for Light-Realm devices in Shadow!";
+
+            CreateArenaWalls(assets);
+
+            // Mirror Symmetry Axis at x = 0
+            CreateWall("Div_Top_L11", new Vector3(0.0f, 4.75f, 0f), new Vector2(0.9f, 1.3f), assets, WorldAffinity.Both, WallTileStyle.Long);
+            CreateWall("Div_Window_LightOnly", new Vector3(0.0f, 3.0f, 0f), new Vector2(0.9f, 2.2f), assets, WorldAffinity.LightOnly, WallTileStyle.Long);
+            CreateWall("Div_Mid_L11", new Vector3(0.0f, -0.4f, 0f), new Vector2(0.9f, 4.6f), assets, WorldAffinity.Both, WallTileStyle.Long);
+
+            // West Chamber: Twin Totem + White Emitter -> Memory Prism (8s delay across x=0 when flipped to Shadow!)
+            CreateMirrorTwinTotem("Totem_MirrorTwin", new Vector3(-4.5f, 1.5f, 0f), 0f, playerMovement.DarkspriteDown, assets);
+            PressurePlate twinEastButton = CreatePressurePlate("Button_Twin_East", new Vector3(4.5f, -2.0f, 0f), assets, WorldAffinity.Both, latch: true);
+
+            CreateEmitter("Emitter_Rift_West", new Vector3(-8.5f, 3.0f, 0f), LightColor.White, WorldAffinity.Both, Vector2.right, assets);
+            CreateMemoryPrism("MemoryPrism_Rift", new Vector3(-2.2f, 3.0f, 0f), 9.0f, Vector2.right, false, assets);
+
+            // East Chamber: Reality Anchor Lantern + LightOnly Sensor + LightOnly Bubble Button
+            CreateRealityAnchor("RealityAnchor_East", new Vector3(3.2f, 3.0f, 0f), 3.9f, 7.5f, assets);
+            LightSensor riftSensor = CreateSensor("Sensor_Rift_LightOnly", new Vector3(5.2f, 3.0f, 0f), LightColor.White, WorldAffinity.LightOnly, assets);
+            PressurePlate bubbleButton = CreatePressurePlate("Button_Bubble_LightOnly", new Vector3(3.2f, 0.8f, 0f), assets, WorldAffinity.LightOnly, latch: true);
+
+            PuzzleDoor midDoor = CreateLabBlastDoor("Door_Rift_Mid", new Vector3(0.0f, -4.0f, 0f), new Vector2(0.9f, 2.6f), assets,
+                new[] { riftSensor }, new[] { twinEastButton }, null, requireAll: true, stayOpen: true, vertical: true, redVariant: false);
+
+            // Exit Airlock at x = 6.8
+            CreateWall("ExitWall_Top_L11", new Vector3(6.8f, 3.8f, 0f), new Vector2(0.85f, 4.8f), assets, WorldAffinity.Both, WallTileStyle.Long);
+            CreateWall("ExitWall_Bot_L11", new Vector3(6.8f, -3.8f, 0f), new Vector2(0.85f, 4.8f), assets, WorldAffinity.Both, WallTileStyle.Long);
+            PuzzleDoor finalDoor = CreateLabBlastDoor("Door_Rift_Exit", new Vector3(6.8f, 0.0f, 0f), new Vector2(1.05f, 2.8f), assets,
+                null, new[] { twinEastButton, bubbleButton }, null, requireAll: true, stayOpen: false, vertical: true, redVariant: true);
+
+            CreateExit("LevelExit", new Vector3(8.8f, 0.0f, 0f), assets, new[] { midDoor, finalDoor }, "OpticsPuzzle_Level12");
+
+            EditorSceneManager.SaveScene(scene, Level11Path);
+            RegisterScenesInBuildSettings();
+            AssetDatabase.Refresh();
+            Debug.Log("Created Optics Puzzle Level 11 at " + Level11Path);
+        }
+
+        [MenuItem("Shadow Flip/Create Level 12 (Eclipse Paradox Boss)")]
+        public static void CreateOpticsPuzzleLevel12()
+        {
+            if (IsInPlayModeGuard()) return;
+            CelAssets assets = WithScifiFacilityTheme(LoadCelAssets());
+            var scene = EditorSceneManager.NewScene(NewSceneSetup.EmptyScene, NewSceneMode.Single);
+
+            SetupCoreScene(
+                assets,
+                out logic gameLogic,
+                out PlayerMovement playerMovement,
+                out PuzzleHUD hud,
+                out ShadowStalkerController stalker,
+                new Color(0.03f, 0.02f, 0.07f, 1f),
+                new Color(0.96f, 0.98f, 1.0f, 1f), 1.05f,
+                new Color(0.24f, 0.14f, 0.42f, 1f), 0.44f,
+                new Vector3(-8.0f, -3.8f, 0f));
+
+            stalker.umbraSafeDuration = 12.0f;
+            hud.parFlips = 4;
+            hud.lessonTitle = "Level 12: Eclipse Paradox [BOSS]";
+            hud.levelHint = "Shatter the Umbra Warden's 3 Shields in order (RED -> GREEN -> BLUE)! Open Red Polarizer [E], flip [F] for the Shadow Green Mirror, and aim the Blue Mirror [E]!";
+
+            CreateArenaWalls(assets);
+            CreateLabSanctuary("Sanctuary_Boss", new Vector3(-7.8f, 3.8f, 0f), 2.3f, assets);
+
+            UmbraWardenBoss warden = CreateUmbraWardenBoss("UmbraWarden_Boss", new Vector3(0.0f, 0.5f, 0f), assets);
+
+            // 1. RED Beam (West -> Boss)
+            CreateEmitter("Emitter_Boss_Red", new Vector3(-8.5f, 0.5f, 0f), LightColor.Red, WorldAffinity.Both, Vector2.right, assets);
+            CreateOneWayPolarizer("Polarizer_Boss_Red", new Vector3(-5.0f, 0.5f, 0f), Vector2.up, false, true, assets);
+
+            // 2. GREEN Beam (Top ShadowMirror -> Green Filter -> Boss)
+            CreateEmitter("Emitter_Boss_Green", new Vector3(-3.5f, 4.2f, 0f), LightColor.White, WorldAffinity.Both, Vector2.right, assets);
+            CreateIsometricMirror("Mirror_Boss_Green", new Vector3(0.0f, 4.2f, 0f), 45f, 90f, WorldAffinity.ShadowOnly, assets);
+            CreateColorFilter("Filter_Boss_Green", new Vector3(0.0f, 2.5f, 0f), new Vector2(1.1f, 0.45f), LightColor.Green, assets);
+
+            // 3. BLUE Beam (South -> East Mirror -> Boss)
+            CreateEmitter("Emitter_Boss_Blue", new Vector3(4.2f, -4.5f, 0f), LightColor.Blue, WorldAffinity.Both, Vector2.up, assets);
+            CreateIsometricMirror("Mirror_Boss_Blue", new Vector3(4.2f, 0.5f, 0f), 45f, 90f, WorldAffinity.Both, assets);
+
+            // Boss Vault Exit
+            CreateWall("BossVault_Top", new Vector3(6.8f, 3.8f, 0f), new Vector2(0.85f, 4.8f), assets, WorldAffinity.Both, WallTileStyle.Long);
+            CreateWall("BossVault_Bot", new Vector3(6.8f, -3.8f, 0f), new Vector2(0.85f, 4.8f), assets, WorldAffinity.Both, WallTileStyle.Long);
+            PuzzleDoor bossDoor = CreateScifiDoor("Door_BossVault", new Vector3(6.8f, 0.0f, 0f), new Vector2(1.05f, 2.8f), assets,
+                null, null, null, requireAll: true, stayOpen: false, isLabDoor: true);
+            bossDoor.requiredBoss = warden;
+
+            CreateExit("LevelExit", new Vector3(8.8f, 0.0f, 0f), assets, new[] { bossDoor }, "MainMenu");
+
+            EditorSceneManager.SaveScene(scene, Level12Path);
+            RegisterScenesInBuildSettings();
+            AssetDatabase.Refresh();
+            Debug.Log("Created Optics Puzzle Level 12 Boss at " + Level12Path);
+        }
+
+        [MenuItem("Shadow Flip/Create Sandbox Level Editor Scene")]
+        public static void CreateSandboxLevel()
+        {
+            if (IsInPlayModeGuard()) return;
+            CelAssets assets = LoadCelAssets();
+            var scene = EditorSceneManager.NewScene(NewSceneSetup.EmptyScene, NewSceneMode.Single);
+
+            SetupCoreScene(
+                assets,
+                out logic gameLogic,
+                out PlayerMovement playerMovement,
+                out PuzzleHUD hud,
+                out ShadowStalkerController stalker,
+                new Color(0.07f, 0.06f, 0.12f, 1f),
+                new Color(1f, 0.96f, 0.88f, 1f), 1.05f,
+                new Color(0.36f, 0.28f, 0.68f, 1f), 0.52f,
+                new Vector3(-8.5f, -4.0f, 0f));
+
+            stalker.enabled = false;
+            hud.parFlips = 99;
+            hud.lessonTitle = "Sandbox Level Editor";
+            hud.levelHint = "Click grid tiles to place/erase props. Press [1-9, 0] to pick tool, [Q]/Right-Click to rotate, [P] to toggle Build vs Play Test!";
+
+            CreateArenaWalls(assets);
+            PixelSandboxEditor sandbox = gameLogic.gameObject.AddComponent<PixelSandboxEditor>();
+            sandbox.player = playerMovement;
+
+            EditorSceneManager.SaveScene(scene, SandboxPath);
+            RegisterScenesInBuildSettings();
+            AssetDatabase.Refresh();
+            Debug.Log("Created Sandbox Level Editor scene at " + SandboxPath);
         }
 
         private static void SetupCoreScene(
@@ -1053,6 +1354,12 @@ namespace ShadowFlip.EditorTools
             playerMovement.DarkspriteDown = LoadSprite("Assets/Images/Jimmy/Dark/dark_down.PNG");
             playerMovement.DarkspriteLeft = LoadSprite("Assets/Images/Jimmy/Dark/dark_left.PNG");
             playerMovement.DarkspriteRight = LoadSprite("Assets/Images/Jimmy/Dark/dark_right.PNG");
+
+            RealmCameraController camCtrl = camGo.AddComponent<RealmCameraController>();
+            camCtrl.player = playerMovement;
+            camCtrl.gameLogic = gameLogic;
+            camCtrl.lightOrthoSize = 4.0f;
+            camCtrl.umbraOrthoSize = 7.0f;
         }
 
         private static void CreateArenaWalls(CelAssets assets)
@@ -1830,6 +2137,219 @@ namespace ShadowFlip.EditorTools
             return go;
         }
 
+        private static GameObject CreateOneWayPolarizer(string name, Vector3 pos, Vector2 allowedDir, bool invertColor, bool canRotate, CelAssets assets)
+        {
+            GameObject go = new GameObject(name);
+            go.transform.position = pos;
+            go.transform.localScale = new Vector3(1.1f, 0.9f, 1f);
+            Vector2 d = allowedDir.sqrMagnitude > 0.001f ? allowedDir.normalized : Vector2.right;
+            go.transform.rotation = Quaternion.Euler(0f, 0f, Mathf.Atan2(d.y, d.x) * Mathf.Rad2Deg);
+
+            SpriteRenderer sr = go.AddComponent<SpriteRenderer>();
+            sr.sprite = assets.OneWayPolarizer != null ? assets.OneWayPolarizer : assets.ColorFilterLens;
+            sr.sortingOrder = 4;
+
+            BoxCollider2D col = go.AddComponent<BoxCollider2D>();
+            col.size = new Vector2(0.7f, 1.15f);
+
+            OneWayPolarizer p = go.AddComponent<OneWayPolarizer>();
+            p.allowedDirection = d;
+            p.invertRealmColorOnPass = invertColor;
+            p.canRotate = canRotate;
+            return go;
+        }
+
+        private static GameObject CreateMemoryPrism(string name, Vector3 pos, float holdSeconds, Vector2 outDir, bool canRotate, CelAssets assets)
+        {
+            GameObject go = new GameObject(name);
+            go.transform.position = pos;
+            go.transform.localScale = new Vector3(0.95f, 0.95f, 1f);
+
+            SpriteRenderer sr = go.AddComponent<SpriteRenderer>();
+            sr.sprite = assets.MemoryPrismIdle != null ? assets.MemoryPrismIdle : assets.EchoPedestal;
+            sr.sortingOrder = 4;
+
+            BoxCollider2D col = go.AddComponent<BoxCollider2D>();
+            col.size = new Vector2(1.0f, 1.0f);
+
+            OpticalMemoryPrism mp = go.AddComponent<OpticalMemoryPrism>();
+            mp.holdSeconds = holdSeconds;
+            mp.useFixedOutputDir = true;
+            mp.localOutputDirection = outDir;
+            mp.canRotate = canRotate;
+            mp.idleSprite = assets.MemoryPrismIdle;
+            mp.chargedSprite = assets.MemoryPrismCharged;
+            return go;
+        }
+
+        private static GameObject CreateRealityAnchor(string name, Vector3 pos, float radius, float holdDuration, CelAssets assets)
+        {
+            GameObject go = new GameObject(name);
+            go.transform.position = pos;
+            go.transform.localScale = new Vector3(0.95f, 0.95f, 1f);
+
+            SpriteRenderer sr = go.AddComponent<SpriteRenderer>();
+            sr.sprite = assets.RealityAnchorOff != null ? assets.RealityAnchorOff : assets.LanternSanctuary;
+            sr.sortingOrder = 4;
+
+            BoxCollider2D col = go.AddComponent<BoxCollider2D>();
+            col.size = new Vector2(1.0f, 1.0f);
+
+            RealityAnchorLantern ral = go.AddComponent<RealityAnchorLantern>();
+            ral.anchorRadius = radius;
+            ral.holdDuration = holdDuration;
+            ral.offSprite = assets.RealityAnchorOff;
+            ral.onSprite = assets.RealityAnchorOn;
+            return go;
+        }
+
+        private static GameObject CreateMagneticRail(string name, Vector3 terminalPos, Vector3 pointA, Vector3 pointB, LightColor reqColor, CelAssets assets)
+        {
+            // Track visual spans pointA -> pointB
+            GameObject trackGo = new GameObject(name + "_Track");
+            Vector3 mid = (pointA + pointB) * 0.5f;
+            Vector3 diff = pointB - pointA;
+            float dist = diff.magnitude + 1.0f;
+            trackGo.transform.position = mid;
+            trackGo.transform.rotation = Quaternion.Euler(0f, 0f, Mathf.Atan2(diff.y, diff.x) * Mathf.Rad2Deg);
+            SpriteRenderer trackSr = trackGo.AddComponent<SpriteRenderer>();
+            trackSr.sprite = assets.MagneticRailTrack != null ? assets.MagneticRailTrack : assets.FloorLight;
+            trackSr.drawMode = SpriteDrawMode.Tiled;
+            trackSr.size = new Vector2(dist, 0.95f);
+            trackSr.sortingOrder = -12;
+
+            // Moving Cart rider
+            GameObject cartGo = new GameObject(name + "_Cart");
+            cartGo.transform.position = pointA;
+            cartGo.transform.localScale = new Vector3(0.95f, 0.95f, 1f);
+            SpriteRenderer cartSr = cartGo.AddComponent<SpriteRenderer>();
+            cartSr.sprite = assets.MagneticRailCart != null ? assets.MagneticRailCart : assets.MirrorDirections[0];
+            cartSr.sortingOrder = 4;
+
+            // Rail Power Terminal
+            GameObject termGo = new GameObject(name + "_Terminal");
+            termGo.transform.position = terminalPos;
+            termGo.transform.localScale = new Vector3(0.9f, 0.9f, 1f);
+            SpriteRenderer termSr = termGo.AddComponent<SpriteRenderer>();
+            termSr.sprite = assets.CombinerCrystal;
+            termSr.sortingOrder = 4;
+            BoxCollider2D termCol = termGo.AddComponent<BoxCollider2D>();
+            termCol.size = new Vector2(1.0f, 1.0f);
+
+            BeamMagneticRail rail = termGo.AddComponent<BeamMagneticRail>();
+            rail.pointA = pointA;
+            rail.pointB = pointB;
+            rail.riderTransform = cartGo.transform;
+            rail.requiredColor = reqColor;
+            rail.moveSpeed = 2.6f;
+
+            return cartGo;
+        }
+
+        private static GameObject CreateMirrorTwinTotem(string name, Vector3 pos, float axisX, Sprite twinSprite, CelAssets assets)
+        {
+            GameObject go = new GameObject(name);
+            go.transform.position = pos;
+            go.transform.localScale = new Vector3(0.95f, 0.95f, 1f);
+
+            SpriteRenderer sr = go.AddComponent<SpriteRenderer>();
+            sr.sprite = assets.SplitTotem != null ? assets.SplitTotem : assets.EchoPedestal;
+            sr.sortingOrder = 3;
+
+            BoxCollider2D col = go.AddComponent<BoxCollider2D>();
+            col.size = new Vector2(1.1f, 1.0f);
+            col.isTrigger = true;
+
+            MirrorTwinTotem totem = go.AddComponent<MirrorTwinTotem>();
+            totem.mirrorAxisX = axisX;
+            totem.twinSprite = twinSprite;
+            return go;
+        }
+
+        private static GameObject CreateUmbraMimicMirror(string name, Vector3 pos, float startAngle, Vector3 fleeOffset, CelAssets assets)
+        {
+            GameObject go = new GameObject(name);
+            go.transform.position = pos;
+            go.transform.localScale = new Vector3(0.95f, 0.95f, 1f);
+
+            SpriteRenderer sr = go.AddComponent<SpriteRenderer>();
+            sr.sprite = assets.MimicMirrorIdle != null ? assets.MimicMirrorIdle : assets.MirrorDirections[0];
+            sr.sortingOrder = 4;
+
+            BoxCollider2D col = go.AddComponent<BoxCollider2D>();
+            col.size = new Vector2(1.05f, 1.05f);
+
+            OpticalMirror mirror = go.AddComponent<OpticalMirror>();
+            mirror.isTwoSided = true;
+            mirror.canRotate = true;
+            mirror.rotationStepDegrees = 90f;
+            mirror.directionalSprites = assets.MirrorDirections;
+            mirror.logicalAngle = startAngle;
+            mirror.ApplyIsometricVisual();
+
+            UmbraMimicMirror mimic = go.AddComponent<UmbraMimicMirror>();
+            mimic.awakeSprite = assets.MimicMirrorAwake;
+            mimic.fleeTargetOffset = fleeOffset;
+            return go;
+        }
+
+        private static GameObject CreateBeamEaterMoth(string name, Vector3 pos, LightColor stunColor, CelAssets assets)
+        {
+            GameObject go = new GameObject(name);
+            go.transform.position = pos;
+            go.transform.localScale = new Vector3(0.95f, 0.95f, 1f);
+
+            SpriteRenderer sr = go.AddComponent<SpriteRenderer>();
+            sr.sprite = assets.BeamMoth1 != null ? assets.BeamMoth1 : assets.UmbraMonster1;
+            sr.sortingOrder = 11;
+
+            BoxCollider2D col = go.AddComponent<BoxCollider2D>();
+            col.size = new Vector2(0.95f, 0.95f);
+
+            BeamEaterMoth moth = go.AddComponent<BeamEaterMoth>();
+            moth.frame1 = assets.BeamMoth1;
+            moth.frame2 = assets.BeamMoth2;
+            moth.stunColor = stunColor;
+            return go;
+        }
+
+        private static GameObject CreateUmbraMold(string name, Vector3 pos, float startScale, CelAssets assets)
+        {
+            GameObject go = new GameObject(name);
+            go.transform.position = pos;
+            go.transform.localScale = new Vector3(startScale, startScale, 1f);
+
+            SpriteRenderer sr = go.AddComponent<SpriteRenderer>();
+            sr.sprite = assets.UmbraMoldTile != null ? assets.UmbraMoldTile : assets.FloorShadow;
+            sr.sortingOrder = -5;
+
+            CircleCollider2D col = go.AddComponent<CircleCollider2D>();
+            col.radius = 0.55f;
+            col.isTrigger = true;
+
+            go.AddComponent<UmbraMoldPatch>();
+            return go;
+        }
+
+        private static UmbraWardenBoss CreateUmbraWardenBoss(string name, Vector3 pos, CelAssets assets)
+        {
+            GameObject go = new GameObject(name);
+            go.transform.position = pos;
+
+            SpriteRenderer sr = go.AddComponent<SpriteRenderer>();
+            sr.sprite = assets.UmbraWarden1 != null ? assets.UmbraWarden1 : assets.UmbraMonster1;
+            sr.sortingOrder = 12;
+
+            BoxCollider2D col = go.AddComponent<BoxCollider2D>();
+            col.size = new Vector2(1.55f, 1.55f);
+
+            UmbraWardenBoss boss = go.AddComponent<UmbraWardenBoss>();
+            boss.frame1 = assets.UmbraWarden1;
+            boss.frame2 = assets.UmbraWarden2;
+            boss.petrifiedSprite = assets.MonsterPetrified;
+            return boss;
+        }
+
         private static GameObject CreateExit(string name, Vector3 pos, CelAssets assets, PuzzleDoor[] requiredDoors, string nextScene)
         {
             GameObject exitGo = new GameObject(name);
@@ -1865,10 +2385,14 @@ namespace ShadowFlip.EditorTools
             ConfigureSpriteFolder(LabDir, pointFilter: true, forceSingleMode: true);
             ConfigureSpriteFolder(ScifiDir, pointFilter: true, forceSingleMode: true);
             ConfigureSpriteFolder(NewDataDir, pointFilter: true, forceSingleMode: true);
+            ConfigureSpriteFolder(PixelNewDir, pointFilter: true, forceSingleMode: true);
+            ConfigureSpriteFolder("Assets/Images/Jimmy/Walk/", pointFilter: true, forceSingleMode: true);
             ConfigureSpriteFolder("Assets/Resources/Sprites/", pointFilter: true, forceSingleMode: true);
             ConfigureSpriteFolder("Assets/Resources/Sprites/Laboratory/", pointFilter: true, forceSingleMode: true);
             ConfigureSpriteFolder("Assets/Resources/Sprites/ScifiFacility/", pointFilter: true, forceSingleMode: true);
             ConfigureSpriteFolder("Assets/Resources/Sprites/NewData/", pointFilter: true, forceSingleMode: true);
+            ConfigureSpriteFolder("Assets/Resources/Sprites/PixelNew/", pointFilter: true, forceSingleMode: true);
+            ConfigureSpriteFolder("Assets/Resources/Sprites/JimmyWalk/", pointFilter: true, forceSingleMode: true);
             ConfigureSpriteFolder("Assets/Images/Jimmy/", pointFilter: true, recursive: true, forceSingleMode: false);
             ConfigureSpriteFolder("Assets/New data/", pointFilter: true, recursive: true, forceSingleMode: false);
             ConfigureSpriteFolder("Assets/tiles_laboratory_LandOfPixels/", pointFilter: true, recursive: true, forceSingleMode: false);
@@ -2177,13 +2701,35 @@ namespace ShadowFlip.EditorTools
                 IconBulb = LoadSprite(NewDataDir + "bulb.png"),
                 IconFlask = LoadSprite(NewDataDir + "flask.png"),
                 IconMagnet = LoadSprite(NewDataDir + "magnet.png"),
-                IconTestTube = LoadSprite(NewDataDir + "test_tube.png")
+                IconTestTube = LoadSprite(NewDataDir + "test_tube.png"),
+
+                // PixelNew expansion assets
+                OneWayPolarizer = LoadSprite(PixelNewDir + "OneWay_Polarizer.png"),
+                RealityAnchorOff = LoadSprite(PixelNewDir + "RealityAnchor_Off.png"),
+                RealityAnchorOn = LoadSprite(PixelNewDir + "RealityAnchor_On.png"),
+                MagneticRailTrack = LoadSprite(PixelNewDir + "MagneticRail_Track.png"),
+                MagneticRailCart = LoadSprite(PixelNewDir + "MagneticRail_Cart.png"),
+                SplitTotem = LoadSprite(PixelNewDir + "SplitTotem.png"),
+                MemoryPrismIdle = LoadSprite(PixelNewDir + "MemoryPrism_Idle.png"),
+                MemoryPrismCharged = LoadSprite(PixelNewDir + "MemoryPrism_Charged.png"),
+                MimicMirrorIdle = LoadSprite(PixelNewDir + "MimicMirror_Idle.png"),
+                MimicMirrorAwake = LoadSprite(PixelNewDir + "MimicMirror_Awake.png"),
+                BeamMoth1 = LoadSprite(PixelNewDir + "BeamMoth_1.png"),
+                BeamMoth2 = LoadSprite(PixelNewDir + "BeamMoth_2.png"),
+                UmbraMoldTile = LoadSprite(PixelNewDir + "UmbraMold_Tile.png"),
+                UmbraWarden1 = LoadSprite(PixelNewDir + "UmbraWarden_1.png"),
+                UmbraWarden2 = LoadSprite(PixelNewDir + "UmbraWarden_2.png")
             };
         }
 
         private static void RegisterScenesInBuildSettings()
         {
-            string[] managed = { MainMenuPath, TutorialPath, Level1Path, Level2Path, Level3Path, Level4Path, Level5Path, Level6Path, Level7Path, Level8Path };
+            string[] managed =
+            {
+                MainMenuPath, TutorialPath, Level1Path, Level2Path, Level3Path, Level4Path,
+                Level5Path, Level6Path, Level7Path, Level8Path, Level9Path, Level10Path,
+                Level11Path, Level12Path, SandboxPath
+            };
             var scenes = new List<EditorBuildSettingsScene>();
             foreach (string path in managed) AddSceneIfMissing(scenes, path);
             foreach (var existing in EditorBuildSettings.scenes)

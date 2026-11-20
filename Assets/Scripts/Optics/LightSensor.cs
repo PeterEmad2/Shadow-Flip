@@ -103,6 +103,10 @@ namespace ShadowFlip.Optics
             if (requiredWorld == WorldAffinity.Both) return true;
             logic l = logic.Instance != null ? logic.Instance : FindFirstObjectByType<logic>();
             bool isDark = l != null && l.isDarkActive;
+            if (requiredWorld == WorldAffinity.LightOnly && isDark && RealityAnchorLantern.IsPositionAnchoredInLight(transform.position))
+            {
+                return true;
+            }
             return (requiredWorld == WorldAffinity.ShadowOnly && isDark)
                 || (requiredWorld == WorldAffinity.LightOnly && !isDark);
         }
@@ -114,8 +118,16 @@ namespace ShadowFlip.Optics
             UpdateVisuals();
             PuzzleAudioManager.Instance?.PlaySensorState(active);
 
-            if (IsActivated) onActivated?.Invoke();
-            else onDeactivated?.Invoke();
+            if (IsActivated)
+            {
+                Color c = acceptAnyColor ? activeColor : LightColorUtility.ToUnityColor(requiredColor);
+                PuzzleVFXManager.SpawnPixelBurst(transform.position, c, 8, 2.8f);
+                onActivated?.Invoke();
+            }
+            else
+            {
+                onDeactivated?.Invoke();
+            }
         }
 
         private void UpdateVisuals()

@@ -14,7 +14,7 @@ public class Dark : MonoBehaviour
     void FixedUpdate()
     {
         if (rb == null || Jimmy == null) return;
-        rb.linearVelocity = Time.timeScale == 0f ? Vector2.zero : Jimmy.moveInput * moveSpeed;
+        rb.linearVelocity = Time.timeScale == 0f ? Vector2.zero : Jimmy.moveInput * (moveSpeed * Jimmy.CurrentSpeedMultiplier);
     }
 
     void OnDisable()

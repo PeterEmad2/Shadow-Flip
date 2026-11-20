@@ -55,6 +55,19 @@ namespace ShadowFlip.Puzzle
             }
         }
 
+        void OnTriggerStay2D(Collider2D other)
+        {
+            bool valid = IsValidOccupant(other);
+            if (valid)
+            {
+                if (occupants.Add(other)) SetPressed(occupants.Count > 0);
+            }
+            else if (!latchOncePressed || !hasLatched)
+            {
+                if (occupants.Remove(other)) SetPressed(occupants.Count > 0);
+            }
+        }
+
         void OnTriggerExit2D(Collider2D other)
         {
             if (latchOncePressed && hasLatched) return;
@@ -72,12 +85,22 @@ namespace ShadowFlip.Puzzle
                 return true;
             }
 
+            bool isMirrorTwin = other.GetComponent<MirrorTwinBody>() != null;
+            if (isMirrorTwin)
+            {
+                return acceptedForm != WorldAffinity.LightOnly
+                    || RealityAnchorLantern.IsPositionAnchoredInLight(transform.position);
+            }
+
             bool isLightForm = other.GetComponent<Light>() != null;
             bool isDarkForm = other.GetComponent<Dark>() != null;
             if (!isLightForm && !isDarkForm) return false;
 
             if (acceptedForm == WorldAffinity.Both) return true;
-            if (acceptedForm == WorldAffinity.LightOnly) return isLightForm;
+            if (acceptedForm == WorldAffinity.LightOnly)
+            {
+                return isLightForm || RealityAnchorLantern.IsPositionAnchoredInLight(transform.position);
+            }
             if (acceptedForm == WorldAffinity.ShadowOnly) return isDarkForm;
             return false;
         }

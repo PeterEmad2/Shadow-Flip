@@ -12,6 +12,7 @@ namespace ShadowFlip.Puzzle
         public LightSensor[] requiredSensors;
         public PressurePlate[] requiredPlates;
         public PuzzleLever[] requiredLevers;
+        public UmbraWardenBoss requiredBoss;
         public bool requireAll = true;
 
         [Header("Behavior & Cel-Shaded Visuals")]
@@ -52,7 +53,12 @@ namespace ShadowFlip.Puzzle
             {
                 isOpen = nextOpen;
                 if (doorCollider != null) doorCollider.enabled = !isOpen;
-                if (isOpen) PuzzleAudioManager.Instance?.PlayDoorOpen();
+                if (isOpen)
+                {
+                    PuzzleAudioManager.Instance?.PlayDoorOpen();
+                    PuzzleVFXManager.SpawnPixelBurst(transform.position, new Color(0.45f, 1f, 0.72f, 1f), 12, 3.5f);
+                    RealmCameraController.TriggerShake(0.12f, 0.15f);
+                }
             }
 
             if (doorRenderer != null)
@@ -75,7 +81,8 @@ namespace ShadowFlip.Puzzle
         {
             int totalInputs = (requiredSensors != null ? requiredSensors.Length : 0)
                             + (requiredPlates != null ? requiredPlates.Length : 0)
-                            + (requiredLevers != null ? requiredLevers.Length : 0);
+                            + (requiredLevers != null ? requiredLevers.Length : 0)
+                            + (requiredBoss != null ? 1 : 0);
             if (totalInputs == 0) return false;
 
             int activeCount = 0;
@@ -102,6 +109,11 @@ namespace ShadowFlip.Puzzle
                 {
                     if (lever != null && lever.isActivated) activeCount++;
                 }
+            }
+
+            if (requiredBoss != null && requiredBoss.IsDefeated)
+            {
+                activeCount++;
             }
 
             return requireAll ? activeCount == totalInputs : activeCount > 0;

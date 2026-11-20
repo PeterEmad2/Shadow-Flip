@@ -26,10 +26,23 @@ public class PlayerMovement : MonoBehaviour
     public float interactRadius = 1.6f;
 
     public IInteractable NearbyInteractable { get; private set; }
+    public float CurrentSpeedMultiplier => Time.time <= moldSlowUntil ? 0.42f : 1f;
+
+    private int facingIndex = 0; // 0=Down, 1=Up, 2=Left, 3=Right
+    private float walkAnimTimer = 0f;
+    private float moldSlowUntil = -1f;
+    private readonly Sprite[,] lightWalk = new Sprite[4, 2];
+    private readonly Sprite[,] darkWalk = new Sprite[4, 2];
+
+    public void ApplyMoldSlow(float duration = 0.15f)
+    {
+        moldSlowUntil = Mathf.Max(moldSlowUntil, Time.time + duration);
+    }
 
     void Start()
     {
         if (logic == null) logic = logic.Instance;
+        LoadWalkSprites();
     }
 
     void Update()
@@ -52,6 +65,23 @@ public class PlayerMovement : MonoBehaviour
         DarkisMoving = darkActive && isMoving;
         LightisMoving = !darkActive && isMoving;
 
+        if (isMoving)
+        {
+            walkAnimTimer += Time.deltaTime;
+            if (Mathf.Abs(moveInput.y) >= Mathf.Abs(moveInput.x))
+            {
+                facingIndex = moveInput.y >= 0f ? 1 : 0;
+            }
+            else
+            {
+                facingIndex = moveInput.x < 0f ? 2 : 3;
+            }
+        }
+        else
+        {
+            walkAnimTimer = 0f;
+        }
+
         UpdateDirectionalSprites();
         UpdateInteraction();
     }
@@ -64,27 +94,64 @@ public class PlayerMovement : MonoBehaviour
         return transform;
     }
 
+    private void LoadWalkSprites()
+    {
+        string[] dirs = { "down", "up", "left", "right" };
+        for (int d = 0; d < 4; d++)
+        {
+            lightWalk[d, 0] = Resources.Load<Sprite>($"Sprites/JimmyWalk/light_{dirs[d]}_walk1");
+            lightWalk[d, 1] = Resources.Load<Sprite>($"Sprites/JimmyWalk/light_{dirs[d]}_walk2");
+            darkWalk[d, 0] = Resources.Load<Sprite>($"Sprites/JimmyWalk/dark_{dirs[d]}_walk1");
+            darkWalk[d, 1] = Resources.Load<Sprite>($"Sprites/JimmyWalk/dark_{dirs[d]}_walk2");
+        }
+    }
+
     private void UpdateDirectionalSprites()
     {
-        if (moveInput.y > 0)
+        Sprite lightIdle = GetLightIdle(facingIndex);
+        Sprite darkIdle = GetDarkIdle(facingIndex);
+
+        Sprite chosenLight = lightIdle;
+        Sprite chosenDark = darkIdle;
+
+        if (isMoving)
         {
-            if (LightspriteRenderer != null && LightspriteUp != null) LightspriteRenderer.sprite = LightspriteUp;
-            if (DarkspriteRenderer != null && DarkspriteUp != null) DarkspriteRenderer.sprite = DarkspriteUp;
+            int step = Mathf.FloorToInt(walkAnimTimer * 8f) % 4; // [Idle, Walk1, Idle, Walk2]
+            if (step == 1)
+            {
+                if (lightWalk[facingIndex, 0] != null) chosenLight = lightWalk[facingIndex, 0];
+                if (darkWalk[facingIndex, 0] != null) chosenDark = darkWalk[facingIndex, 0];
+            }
+            else if (step == 3)
+            {
+                if (lightWalk[facingIndex, 1] != null) chosenLight = lightWalk[facingIndex, 1];
+                if (darkWalk[facingIndex, 1] != null) chosenDark = darkWalk[facingIndex, 1];
+            }
         }
-        else if (moveInput.y < 0)
+
+        if (LightspriteRenderer != null && chosenLight != null) LightspriteRenderer.sprite = chosenLight;
+        if (DarkspriteRenderer != null && chosenDark != null) DarkspriteRenderer.sprite = chosenDark;
+    }
+
+    private Sprite GetLightIdle(int dir)
+    {
+        switch (dir)
         {
-            if (LightspriteRenderer != null && LightspriteDown != null) LightspriteRenderer.sprite = LightspriteDown;
-            if (DarkspriteRenderer != null && DarkspriteDown != null) DarkspriteRenderer.sprite = DarkspriteDown;
+            case 1: return LightspriteUp;
+            case 2: return LightspriteLeft;
+            case 3: return LightspriteRight;
+            default: return LightspriteDown;
         }
-        else if (moveInput.x < 0)
+    }
+
+    private Sprite GetDarkIdle(int dir)
+    {
+        switch (dir)
         {
-            if (LightspriteRenderer != null && LightspriteLeft != null) LightspriteRenderer.sprite = LightspriteLeft;
-            if (DarkspriteRenderer != null && DarkspriteLeft != null) DarkspriteRenderer.sprite = DarkspriteLeft;
-        }
-        else if (moveInput.x > 0)
-        {
-            if (LightspriteRenderer != null && LightspriteRight != null) LightspriteRenderer.sprite = LightspriteRight;
-            if (DarkspriteRenderer != null && DarkspriteRight != null) DarkspriteRenderer.sprite = DarkspriteRight;
+            case 1: return DarkspriteUp;
+            case 2: return DarkspriteLeft;
+            case 3: return DarkspriteRight;
+            default: return DarkspriteDown;
         }
     }
 

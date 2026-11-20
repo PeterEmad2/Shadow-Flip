@@ -23,6 +23,10 @@ namespace ShadowFlip.Optics
         public bool requireLightWorldToRotate = false;
         public bool requireShadowWorldToRotate = false;
 
+        [Header("Quantum-Linked Twin (Optional)")]
+        public OpticalMirror linkedTwinMirror;
+        public bool invertTwinRotation = false;
+
         private SpriteRenderer spriteRenderer;
         private float targetAngle;
 
@@ -68,22 +72,36 @@ namespace ShadowFlip.Optics
         public void Interact(PlayerMovement player)
         {
             if (!CanPlayerRotate()) return;
-            RotateStep();
+            RotateStep(true);
             PuzzleAudioManager.Instance?.PlayMirrorRotate();
+            PuzzleVFXManager.SpawnPixelBurst(transform.position, Color.cyan, 6, 2.5f);
         }
 
         public void RotateStep()
         {
+            RotateStep(true);
+        }
+
+        public void RotateStep(bool propagate, float stepOverride = 0f)
+        {
+            float step = Mathf.Abs(stepOverride) > 0.01f ? stepOverride : rotationStepDegrees;
             if (HasIsometricSprites())
             {
-                logicalAngle = Mathf.Repeat(logicalAngle + rotationStepDegrees, 360f);
+                logicalAngle = Mathf.Repeat(logicalAngle + step, 360f);
                 transform.rotation = Quaternion.identity;
                 ApplyIsometricVisual();
             }
             else
             {
-                targetAngle = Mathf.Repeat(targetAngle + rotationStepDegrees, 360f);
+                targetAngle = Mathf.Repeat(targetAngle + step, 360f);
                 transform.rotation = Quaternion.Euler(0f, 0f, targetAngle);
+            }
+
+            if (propagate && linkedTwinMirror != null)
+            {
+                float twinStep = invertTwinRotation ? -step : step;
+                linkedTwinMirror.RotateStep(false, twinStep);
+                PuzzleVFXManager.SpawnPixelBurst(linkedTwinMirror.transform.position, new Color(0.68f, 0.42f, 1f, 1f), 8, 2.8f);
             }
         }
 
@@ -95,7 +113,7 @@ namespace ShadowFlip.Optics
                 if (canRotate && requireShadowWorldToRotate) return "Rotate in Shadow Realm only";
                 return string.Empty;
             }
-            return "[E] Rotate Mirror";
+            return linkedTwinMirror != null ? "[E] Rotate Mirror [LINKED]" : "[E] Rotate Mirror";
         }
 
         public void ApplyIsometricVisual()

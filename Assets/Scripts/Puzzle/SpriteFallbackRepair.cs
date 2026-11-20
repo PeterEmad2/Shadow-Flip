@@ -285,12 +285,24 @@ namespace ShadowFlip.Puzzle
                 }
             }
 
-            // 7. Resize Jimmy (Light & Dark forms) to match Lab NPC height (~1.05 world units)
+            // 7. Resize Jimmy (Light & Dark forms) to match Lab NPC height & wire dynamic camera
+            PlayerMovement foundPlayer = null;
             foreach (PlayerMovement pm in Object.FindObjectsByType<PlayerMovement>(FindObjectsSortMode.None))
             {
                 if (pm == null) continue;
+                foundPlayer = pm;
                 NormalizeJimmyFormScale(pm.LightspriteRenderer != null ? pm.LightspriteRenderer.transform : null);
                 NormalizeJimmyFormScale(pm.DarkspriteRenderer != null ? pm.DarkspriteRenderer.transform : null);
+            }
+
+            Camera mainCam = Camera.main;
+            if (mainCam != null && foundPlayer != null)
+            {
+                RealmCameraController rcc = mainCam.GetComponent<RealmCameraController>();
+                if (rcc == null) rcc = mainCam.gameObject.AddComponent<RealmCameraController>();
+                rcc.player = foundPlayer;
+                rcc.gameLogic = logic.Instance != null ? logic.Instance : Object.FindFirstObjectByType<logic>();
+                rcc.SnapToTargetImmediate();
             }
         }
 

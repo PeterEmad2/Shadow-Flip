@@ -32,20 +32,28 @@ namespace ShadowFlip.Puzzle
             "OpticsPuzzle_Level5",
             "OpticsPuzzle_Level6",
             "OpticsPuzzle_Level7",
-            "OpticsPuzzle_Level8"
+            "OpticsPuzzle_Level8",
+            "OpticsPuzzle_Level9",
+            "OpticsPuzzle_Level10",
+            "OpticsPuzzle_Level11",
+            "OpticsPuzzle_Level12"
         };
 
         private static readonly string[] LevelDisplayNames =
         {
-            "Level 0 (Tutorial): Basics of Shadow & Light",
-            "Level 1: Chromatic Vault",
-            "Level 2: Eclipse Temple",
-            "Level 3: The Prism Sanctum",
-            "Level 4: Umbra Labyrinth",
-            "Level 5: The Flip-Clock Matrix",
-            "Level 6: Grandmaster Facility",
-            "Level 7: Quantum Laboratory",
-            "Level 8: Omega Containment Facility"
+            "Lv 0 (Tutorial): Basics",
+            "Lv 1: Chromatic Vault",
+            "Lv 2: Eclipse Temple",
+            "Lv 3: Prism Sanctum",
+            "Lv 4: Umbra Labyrinth",
+            "Lv 5: Flip-Clock Matrix",
+            "Lv 6: Grandmaster Facility",
+            "Lv 7: Quantum Laboratory",
+            "Lv 8: Omega Containment",
+            "Lv 9: Twin Observatory",
+            "Lv 10: Polarized Rail",
+            "Lv 11: Reality Anchor Rift",
+            "Lv 12: Eclipse Paradox [BOSS]"
         };
 
         private static int GetCurrentLevelIndex()
@@ -65,6 +73,7 @@ namespace ShadowFlip.Puzzle
         private bool isDedicatedMenuScene = false;
         private int earnedStars = 1;
         private int finalFlips = 0;
+        private float levelElapsedSeconds = 0f;
         private string menuNotice = "";
 
         private LightSensor[] cachedSensors;
@@ -130,6 +139,10 @@ namespace ShadowFlip.Puzzle
             {
                 Time.timeScale = 0f;
             }
+            else if (!isDedicatedMenuScene && !levelComplete && Time.timeScale > 0f)
+            {
+                levelElapsedSeconds += Time.deltaTime;
+            }
 
             if (Input.GetKeyDown(KeyCode.Escape) || Input.GetKeyDown(KeyCode.Tab) || Input.GetKeyDown(KeyCode.M))
             {
@@ -176,13 +189,21 @@ namespace ShadowFlip.Puzzle
             bool safeFromMonster = stalker == null || !stalker.HasMonsterSpawnedThisRun || stalker.MonsterWasPetrified;
 
             earnedStars = 1 + (withinPar ? 1 : 0) + (safeFromMonster ? 1 : 0);
-            string key = GetStarsKey(SceneManager.GetActiveScene().name);
+            string sceneName = SceneManager.GetActiveScene().name;
+            string key = GetStarsKey(sceneName);
             int best = PlayerPrefs.GetInt(key, 0);
             if (earnedStars > best)
             {
                 PlayerPrefs.SetInt(key, earnedStars);
-                PlayerPrefs.Save();
             }
+
+            string timeKey = GetBestTimeKey(sceneName);
+            float prevTime = PlayerPrefs.GetFloat(timeKey, -1f);
+            if (prevTime < 0f || levelElapsedSeconds < prevTime)
+            {
+                PlayerPrefs.SetFloat(timeKey, levelElapsedSeconds);
+            }
+            PlayerPrefs.Save();
         }
 
         void OnGUI()
@@ -263,10 +284,13 @@ namespace ShadowFlip.Puzzle
             }
 
             string doorText = totalDoors == 0
-                ? "No Gates"
-                : (openDoors == totalDoors ? "All Open" : $"{openDoors}/{totalDoors} Open");
-            GUI.Label(new Rect(30, 52, 590, 22), $"Crystals: {activeSensors}/{totalSensors}   |   Levers/Buttons: {activeSwitches}/{totalSwitches}   |   Gates: {doorText}", statusStyle);
-            GUI.Label(new Rect(30, 76, 590, 22), "[WASD] Move   [F] Flip   [E] Interact   [R] Reset   [Esc/Tab] Main Menu", promptStyle);
+                ? "0/0"
+                : $"{openDoors}/{totalDoors}";
+            int curFlips = ShadowStalkerController.Instance != null ? ShadowStalkerController.Instance.FlipCount : 0;
+            GUI.Label(new Rect(30, 52, 595, 22),
+                $"Crystals: {activeSensors}/{totalSensors}  |  Gates: {doorText}  |  Time: {FormatTime(levelElapsedSeconds)}  |  Flips: {curFlips}/{parFlips}",
+                statusStyle);
+            GUI.Label(new Rect(30, 76, 595, 22), "[WASD] Move   [F] Flip   [E] Interact   [R] Reset   [Esc/Tab] Main Menu", promptStyle);
 
             DrawUmbraStalkerHUD(isDark, panelColor, inkColor);
             DrawEchoRecordingHUD(panelColor, inkColor);
@@ -305,21 +329,23 @@ namespace ShadowFlip.Puzzle
                 }
             }
 
-            // Level Complete 3-Star Modal
+            // Level Complete 3-Star + Speedrun Modal
             if (levelComplete)
             {
-                Rect modalRect = new Rect(Screen.width * 0.5f - 220f, Screen.height * 0.5f - 82f, 440f, 164f);
+                Rect modalRect = new Rect(Screen.width * 0.5f - 230f, Screen.height * 0.5f - 88f, 460f, 176f);
                 DrawCelPanel(modalRect, panelColor, inkColor, accentColor, 5f);
                 GUI.color = accentColor;
                 string solvedHeader = currentLevelIdx >= 0 ? $"LEVEL {currentLevelIdx} SOLVED!" : "PUZZLE SOLVED!";
-                GUI.Label(new Rect(modalRect.x, modalRect.y + 16f, modalRect.width, 36f), solvedHeader, bannerStyle);
+                GUI.Label(new Rect(modalRect.x, modalRect.y + 14f, modalRect.width, 34f), solvedHeader, bannerStyle);
 
                 string starStr = new string('★', earnedStars) + new string('☆', 3 - earnedStars);
                 GUI.color = new Color(1f, 0.88f, 0.25f, 1f);
-                GUI.Label(new Rect(modalRect.x, modalRect.y + 54f, modalRect.width, 34f), starStr, bannerStyle);
+                GUI.Label(new Rect(modalRect.x, modalRect.y + 50f, modalRect.width, 32f), starStr, bannerStyle);
                 GUI.color = Color.white;
-                GUI.Label(new Rect(modalRect.x, modalRect.y + 92f, modalRect.width, 28f), $"Flips: {finalFlips} (Par {parFlips})   |   [R] Replay", bannerStyle);
-                GUI.Label(new Rect(modalRect.x, modalRect.y + 124f, modalRect.width, 26f), "Advancing to next realm...", promptStyle);
+                GUI.Label(new Rect(modalRect.x, modalRect.y + 88f, modalRect.width, 28f),
+                    $"Time: {FormatTime(levelElapsedSeconds)}   |   Flips: {finalFlips} (Par {parFlips})", bannerStyle);
+                GUI.Label(new Rect(modalRect.x, modalRect.y + 124f, modalRect.width, 26f),
+                    "[R] Replay   |   Advancing to next realm...", promptStyle);
             }
 
             if (ShadowStalkerController.Instance != null && ShadowStalkerController.Instance.IsPlayerCaught)
@@ -341,8 +367,8 @@ namespace ShadowFlip.Puzzle
             GUI.DrawTexture(new Rect(0, 0, Screen.width, Screen.height), whiteTex);
             GUI.color = Color.white;
 
-            float w = 640f;
-            float h = 628f;
+            float w = 780f;
+            float h = 560f;
             Rect modal = new Rect((Screen.width - w) * 0.5f, (Screen.height - h) * 0.5f, w, h);
             DrawCelPanel(modal, panelColor, inkColor, accentColor, 5f);
 
@@ -353,23 +379,23 @@ namespace ShadowFlip.Puzzle
             }
 
             GUI.color = accentColor;
-            GUI.Label(new Rect(modal.x, modal.y + 18f, modal.width, 40f), "SHADOW FLIP", titleStyle);
+            GUI.Label(new Rect(modal.x, modal.y + 14f, modal.width, 38f), "SHADOW FLIP", titleStyle);
             GUI.color = Color.white;
-            GUI.Label(new Rect(modal.x, modal.y + 56f, modal.width, 24f),
+            GUI.Label(new Rect(modal.x, modal.y + 52f, modal.width, 24f),
                 $"PIXEL-ART LIGHT & UMBRA OPTICS PUZZLE   |   ★ {totalStars} / {LevelScenes.Length * 3}", bannerStyle);
 
             // Top Action Buttons
             string currentScene = SceneManager.GetActiveScene().name;
             string primaryLabel = isDedicatedMenuScene ? "▶ PLAY LEVEL 0 (TUTORIAL)" : "▶ RESUME LEVEL";
 
-            if (GUI.Button(new Rect(modal.x + 28f, modal.y + 92f, 284f, 40f), primaryLabel))
+            if (GUI.Button(new Rect(modal.x + 24f, modal.y + 86f, 358f, 38f), primaryLabel))
             {
                 PuzzleAudioManager.Instance?.PlayButtonClick();
                 if (isDedicatedMenuScene) TryLoadLevel("OpticsPuzzle_Tutorial");
                 else CloseMainMenu();
             }
 
-            if (GUI.Button(new Rect(modal.x + 328f, modal.y + 92f, 284f, 40f), isDedicatedMenuScene ? "▶ PLAY LEVEL 1" : "↻ RESTART LEVEL"))
+            if (GUI.Button(new Rect(modal.x + 398f, modal.y + 86f, 358f, 38f), isDedicatedMenuScene ? "▶ PLAY LEVEL 1" : "↻ RESTART LEVEL"))
             {
                 PuzzleAudioManager.Instance?.PlayButtonClick();
                 if (isDedicatedMenuScene)
@@ -384,46 +410,62 @@ namespace ShadowFlip.Puzzle
                 }
             }
 
-            // 9-Level Select List
+            // 13-Level (0-12) 2-Column Select Grid + Sandbox Button
             GUI.color = accentColor;
-            GUI.Label(new Rect(modal.x + 28f, modal.y + 142f, 400f, 24f), "SELECT LEVEL (0 - 8):", statusStyle);
+            GUI.Label(new Rect(modal.x + 24f, modal.y + 132f, 500f, 22f), "SELECT LEVEL (0 - 12) OR SANDBOX:", statusStyle);
             GUI.color = Color.white;
 
             for (int i = 0; i < LevelScenes.Length; i++)
             {
                 string sceneName = LevelScenes[i];
                 int stars = PlayerPrefs.GetInt(GetStarsKey(sceneName), 0);
+                float bestTime = PlayerPrefs.GetFloat(GetBestTimeKey(sceneName), -1f);
                 string starStr = new string('★', stars) + new string('☆', 3 - stars);
-                string activeTag = sceneName == currentScene ? " [CURRENT]" : "";
+                string timeTag = bestTime > 0f ? $" {FormatTime(bestTime)}" : "";
+                string activeTag = sceneName == currentScene ? " *" : "";
 
-                Rect btnRect = new Rect(modal.x + 28f, modal.y + 168f + i * 39f, modal.width - 56f, 33f);
-                if (GUI.Button(btnRect, $"  {LevelDisplayNames[i]}{activeTag}    [{starStr}]"))
+                int col = i < 7 ? 0 : 1;
+                int row = i < 7 ? i : i - 7;
+                float bx = modal.x + (col == 0 ? 24f : 398f);
+                float by = modal.y + 158f + row * 41f;
+                Rect btnRect = new Rect(bx, by, 358f, 35f);
+                if (GUI.Button(btnRect, $" {LevelDisplayNames[i]}{activeTag}  [{starStr}]{timeTag}"))
                 {
                     PuzzleAudioManager.Instance?.PlayButtonClick();
                     TryLoadLevel(sceneName);
                 }
             }
 
+            // 7th slot in right column: Sandbox Level Editor
+            Rect sandboxRect = new Rect(modal.x + 398f, modal.y + 158f + 6 * 41f, 358f, 35f);
+            string sandboxTag = currentScene == "OpticsPuzzle_Sandbox" ? " [ACTIVE]" : "";
+            if (GUI.Button(sandboxRect, $" ⚙ SANDBOX LEVEL EDITOR{sandboxTag}"))
+            {
+                PuzzleAudioManager.Instance?.PlayButtonClick();
+                TryLoadLevel("OpticsPuzzle_Sandbox");
+            }
+
             if (!string.IsNullOrEmpty(menuNotice))
             {
                 GUI.color = new Color(1f, 0.55f, 0.45f, 1f);
-                GUI.Label(new Rect(modal.x + 28f, modal.y + 528f, modal.width - 56f, 28f), menuNotice, statusStyle);
+                GUI.Label(new Rect(modal.x + 24f, modal.y + 458f, modal.width - 48f, 26f), menuNotice, statusStyle);
                 GUI.color = Color.white;
             }
 
             // Footer Buttons
-            if (GUI.Button(new Rect(modal.x + 28f, modal.y + h - 42f, 160f, 30f), "Reset Saved Stars"))
+            if (GUI.Button(new Rect(modal.x + 24f, modal.y + h - 42f, 200f, 30f), "Reset Saved Stars & Times"))
             {
                 PuzzleAudioManager.Instance?.PlayButtonClick();
                 for (int i = 0; i < LevelScenes.Length; i++)
                 {
                     PlayerPrefs.DeleteKey(GetStarsKey(LevelScenes[i]));
+                    PlayerPrefs.DeleteKey(GetBestTimeKey(LevelScenes[i]));
                 }
                 PlayerPrefs.Save();
-                menuNotice = "All saved stars cleared.";
+                menuNotice = "All saved stars & best times cleared.";
             }
 
-            if (GUI.Button(new Rect(modal.x + modal.width - 188f, modal.y + h - 42f, 160f, 30f), "Quit Game"))
+            if (GUI.Button(new Rect(modal.x + modal.width - 184f, modal.y + h - 42f, 160f, 30f), "Quit Game"))
             {
                 PuzzleAudioManager.Instance?.PlayButtonClick();
                 Application.Quit();
@@ -507,6 +549,15 @@ namespace ShadowFlip.Puzzle
         }
 
         private static string GetStarsKey(string sceneName) => "ShadowFlip_Stars_" + sceneName;
+        private static string GetBestTimeKey(string sceneName) => "ShadowFlip_Time_" + sceneName;
+
+        private static string FormatTime(float seconds)
+        {
+            float clamped = Mathf.Max(0f, seconds);
+            int mins = Mathf.FloorToInt(clamped / 60f);
+            float secs = clamped - mins * 60f;
+            return $"{mins:00}:{secs:00.0}";
+        }
 
         private void DrawCelPanel(Rect rect, Color fill, Color border, Color topStripe, float borderWidth)
         {

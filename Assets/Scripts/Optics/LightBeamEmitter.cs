@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using UnityEngine;
+using ShadowFlip.Puzzle;
 
 namespace ShadowFlip.Optics
 {
@@ -18,6 +19,7 @@ namespace ShadowFlip.Optics
         public float beamWidth = 0.22f;
         public LayerMask hitMask = ~0;
         public Vector2 localEmitDirection = Vector2.right;
+        public Collider2D selfIgnoreCollider;
 
         [Header("Cel-Shaded Pedestal Visuals")]
         public SpriteRenderer emitterRenderer;
@@ -65,7 +67,7 @@ namespace ShadowFlip.Optics
             if (active)
             {
                 Vector2 dir = transform.TransformDirection(localEmitDirection.normalized);
-                CastSegment(transform.position, dir, beamColor, maxBounces);
+                CastSegment(transform.position, dir, beamColor, maxBounces, selfIgnoreCollider);
             }
 
             HideUnusedLines(activeLineCount);
@@ -101,6 +103,10 @@ namespace ShadowFlip.Optics
             if (activeInWorld == WorldAffinity.Both) return true;
             logic l = logic.Instance != null ? logic.Instance : FindFirstObjectByType<logic>();
             bool isDark = l != null && l.isDarkActive;
+            if (activeInWorld == WorldAffinity.LightOnly && isDark && RealityAnchorLantern.IsPositionAnchoredInLight(transform.position))
+            {
+                return true;
+            }
             return (activeInWorld == WorldAffinity.ShadowOnly && isDark)
                 || (activeInWorld == WorldAffinity.LightOnly && !isDark);
         }
@@ -121,8 +127,10 @@ namespace ShadowFlip.Optics
                 RaycastHit2D h = hits[i];
                 if (h.collider == null || h.collider == ignoreCollider) continue;
 
-                // Player bodies do not block light beams.
-                if (h.collider.GetComponent<Light>() != null || h.collider.GetComponent<Dark>() != null) continue;
+                // Player & Mirror Twin bodies do not block light beams.
+                if (h.collider.GetComponent<Light>() != null
+                    || h.collider.GetComponent<Dark>() != null
+                    || h.collider.GetComponent<MirrorTwinBody>() != null) continue;
 
                 IOpticalElement optical = h.collider.GetComponent<IOpticalElement>();
                 if (optical == null) optical = h.collider.GetComponentInParent<IOpticalElement>();

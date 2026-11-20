@@ -94,6 +94,7 @@ namespace ShadowFlip.Puzzle
             }
 
             PuzzleAudioManager.Instance?.PlayButtonClick();
+            PuzzleVFXManager.SpawnPixelBurst(transform.position + Vector3.up * 0.45f, new Color(0.45f, 0.92f, 1f, 1f), 6, 2.2f);
 
             if (!triggerEquipmentOnce || !equipmentTriggered)
             {

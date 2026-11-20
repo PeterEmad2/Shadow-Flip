@@ -35,6 +35,11 @@ namespace ShadowFlip.Puzzle
 
         public static bool IsPositionInSanctuary(Vector2 pos)
         {
+            if (RealityAnchorLantern.IsPositionAnchoredInLight(pos))
+            {
+                return true;
+            }
+
             for (int i = 0; i < ActiveSanctuaries.Count; i++)
             {
                 LightSanctuary s = ActiveSanctuaries[i];
