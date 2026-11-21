@@ -367,14 +367,14 @@ namespace ShadowFlip.EditorTools
             stalker.umbraSafeDuration = 16.0f;
             hud.parFlips = 3;
             hud.lessonTitle = "Level 2: Eclipse Temple";
-            hud.levelHint = "Light Realm: route Red, push both blocks onto the Floor Plates, rotate Mirror_S1 [E] & pull the Lever, then flip [F] for Shadow Beams!";
+            hud.levelHint = "Light Realm: route Red, push both crates onto the Floor Plates & pull the Lever; flip [F] to Umbra to rotate the violet Shadow Mirrors [E]!";
 
             CreateArenaWalls(assets);
             CreateLabNPC("Dr_Elena_L2", new Vector3(-7.8f, -2.0f, 0f), "Dr. Elena",
                 new[]
                 {
-                    "Pressure plates only stay active while weighed down! Push crates onto the plates in Light Realm before flipping [F] to Umbra.",
-                    "Don't forget to pull the Lever and pre-align Mirror_S1 while still in Light Mode!"
+                    "Pressure plates only stay active while weighed down! Push crates onto the plates and pull the Lever in Light Mode first.",
+                    "Then flip [F] into Umbra Mode to rotate the violet Shadow Mirrors (Mirror_S1 & Mirror_S2) with [E]!"
                 },
                 assets.LabNpcFemale, assets.LabNpcHazmat, assets);
 
@@ -391,7 +391,7 @@ namespace ShadowFlip.EditorTools
             CreateEmitter("ShadowOnly_Emitter", new Vector3(-8.5f, -4.3f, 0f), LightColor.Shadow, WorldAffinity.ShadowOnly, Vector2.right, assets);
             CreateIsometricMirror("Mirror_S1", new Vector3(-1.2f, -4.3f, 0f), 135f, 90f, WorldAffinity.Both, assets, requireShadowToRotate: true);
 
-            GameObject mirrorS2Go = CreateIsometricMirror("Mirror_S2", new Vector3(-1.2f, 4.3f, 0f), 135f, 90f, WorldAffinity.ShadowOnly, assets, canRotate: false);
+            GameObject mirrorS2Go = CreateIsometricMirror("Mirror_S2", new Vector3(-1.2f, 4.3f, 0f), 135f, 90f, WorldAffinity.ShadowOnly, assets, canRotate: true, requireShadowToRotate: true);
             OpticalMirror mirrorS2 = mirrorS2Go.GetComponent<OpticalMirror>();
             CreateWall("AlcoveWall_Left", new Vector3(-2.4f, 4.5f, 0f), new Vector2(0.65f, 2.2f), assets, WorldAffinity.Both, WallTileStyle.Pillar);
             CreateWall("AlcoveWall_Ruined", new Vector3(0.2f, 5.1f, 0f), new Vector2(1.1f, 0.9f), assets, WorldAffinity.Both, WallTileStyle.Ruined);
