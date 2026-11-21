@@ -49,6 +49,7 @@ namespace ShadowFlip.Optics
             else
             {
                 targetAngle = transform.eulerAngles.z;
+                ApplyRealmTint();
             }
         }
 
@@ -113,15 +114,29 @@ namespace ShadowFlip.Optics
                 if (canRotate && requireShadowWorldToRotate) return "Rotate in Shadow Realm only";
                 return string.Empty;
             }
+            if (requireShadowWorldToRotate)
+            {
+                return linkedTwinMirror != null ? "[E] Rotate Umbra Mirror [LINKED]" : "[E] Rotate Umbra Mirror";
+            }
             return linkedTwinMirror != null ? "[E] Rotate Mirror [LINKED]" : "[E] Rotate Mirror";
         }
 
         public void ApplyIsometricVisual()
         {
-            if (!HasIsometricSprites()) return;
             if (spriteRenderer == null) spriteRenderer = GetComponent<SpriteRenderer>();
-            if (spriteRenderer == null) return;
-            spriteRenderer.sprite = directionalSprites[GetIsometricStateIndex()];
+            if (HasIsometricSprites() && spriteRenderer != null)
+            {
+                spriteRenderer.sprite = directionalSprites[GetIsometricStateIndex()];
+            }
+            ApplyRealmTint();
+        }
+
+        private void ApplyRealmTint()
+        {
+            if (requireShadowWorldToRotate && spriteRenderer != null)
+            {
+                spriteRenderer.color = new Color(0.78f, 0.56f, 1f, 1f);
+            }
         }
 
         private bool HasIsometricSprites()

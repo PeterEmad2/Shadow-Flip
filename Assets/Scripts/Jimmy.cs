@@ -184,14 +184,106 @@ public class PlayerMovement : MonoBehaviour
 
         if (NearbyInteractable != null && Input.GetKeyDown(interactKey))
         {
-            if (IsDarkModeActive)
-            {
-                PuzzleAudioManager.Instance?.PlayFlipBlocked();
-            }
-            else
+            if (IsInteractableAllowedInCurrentRealm(NearbyInteractable, out _))
             {
                 NearbyInteractable.Interact(this);
             }
+            else
+            {
+                PuzzleAudioManager.Instance?.PlayFlipBlocked();
+            }
         }
+    }
+
+    public bool IsInteractableAllowedInCurrentRealm(IInteractable target, out string lockMessage)
+    {
+        lockMessage = string.Empty;
+        if (target == null) return false;
+
+        if (target is LabNPCController)
+        {
+            return true;
+        }
+
+        if (target is OpticalMirror mirror)
+        {
+            if (mirror.requireShadowWorldToRotate)
+            {
+                if (!IsDarkModeActive)
+                {
+                    lockMessage = "Umbra Mode Required to Rotate ([F] Flip)";
+                    return false;
+                }
+                return true;
+            }
+
+            if (IsDarkModeActive)
+            {
+                lockMessage = "Light Mode Required to Interact ([F] Flip)";
+                return false;
+            }
+            return true;
+        }
+
+        if (target is PuzzleLever lever)
+        {
+            if (lever.usableInWorld == WorldAffinity.ShadowOnly)
+            {
+                if (!IsDarkModeActive)
+                {
+                    lockMessage = "Umbra Mode Required to Pull ([F] Flip)";
+                    return false;
+                }
+                return true;
+            }
+
+            if (IsDarkModeActive)
+            {
+                lockMessage = "Light Mode Required to Interact ([F] Flip)";
+                return false;
+            }
+            return true;
+        }
+
+        if (target is BlackHoleLens bh)
+        {
+            if (bh.activeInWorld == WorldAffinity.ShadowOnly)
+            {
+                if (!IsDarkModeActive)
+                {
+                    lockMessage = "Umbra Mode Required to Tune ([F] Flip)";
+                    return false;
+                }
+                return true;
+            }
+
+            if (IsDarkModeActive)
+            {
+                lockMessage = "Light Mode Required to Interact ([F] Flip)";
+                return false;
+            }
+            return true;
+        }
+
+        if (target is MonoBehaviour mb)
+        {
+            WorldPhaseObject phase = mb.GetComponent<WorldPhaseObject>();
+            if (phase != null && phase.affinity == WorldAffinity.ShadowOnly)
+            {
+                if (!IsDarkModeActive)
+                {
+                    lockMessage = "Umbra Mode Required to Interact ([F] Flip)";
+                    return false;
+                }
+                return true;
+            }
+        }
+
+        if (IsDarkModeActive)
+        {
+            lockMessage = "Light Mode Required to Interact ([F] Flip)";
+            return false;
+        }
+        return true;
     }
 }

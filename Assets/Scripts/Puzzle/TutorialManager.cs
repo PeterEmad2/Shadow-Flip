@@ -96,8 +96,8 @@ namespace ShadowFlip.Puzzle
                     hud.levelHint = "A Light-Realm Stone Wall blocks the path! Press [F] to flip into the Shadow Realm and phase right through it.";
                     break;
                 case 2:
-                    hud.lessonTitle = "Level 0 (Tutorial) - Lesson 3/4: Shadow Beams & Light Interactions";
-                    hud.levelHint = "Flip to Light Realm [F] to rotate [E] the mirror at the top-right, then flip back to Shadow Realm so the Shadow Beam hits the Receiver Crystal!";
+                    hud.lessonTitle = "Level 0 (Tutorial) - Lesson 3/4: Umbra Beams & Shadow Mirrors";
+                    hud.levelHint = "Stay in Shadow Realm [F] and rotate [E] the violet Umbra Mirror at the top-right to aim the Shadow Beam into the Receiver Crystal!";
                     break;
                 case 3:
                     hud.lessonTitle = "Level 0 (Tutorial) - Lesson 4/4: Ruin Blocks & Vaults";

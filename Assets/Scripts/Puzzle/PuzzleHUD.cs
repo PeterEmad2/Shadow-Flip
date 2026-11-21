@@ -573,11 +573,13 @@ namespace ShadowFlip.Puzzle
         {
             if (player == null || player.NearbyInteractable == null) return;
             string rawPrompt = player.NearbyInteractable.GetInteractPrompt();
-            if (string.IsNullOrEmpty(rawPrompt)) return;
+            bool allowed = player.IsInteractableAllowedInCurrentRealm(player.NearbyInteractable, out string lockMessage);
+            if (!allowed && string.IsNullOrEmpty(lockMessage) && string.IsNullOrEmpty(rawPrompt)) return;
+            if (allowed && string.IsNullOrEmpty(rawPrompt)) return;
 
-            bool lockedInDark = player.IsDarkModeActive;
-            string shown = lockedInDark ? "Light Mode Required to Interact ([F] Flip)" : rawPrompt;
-            Color pillCol = lockedInDark ? new Color(1f, 0.72f, 0.35f, 1f) : accentColor;
+            bool showLocked = !allowed && !string.IsNullOrEmpty(lockMessage);
+            string shown = showLocked ? lockMessage : rawPrompt;
+            Color pillCol = showLocked ? new Color(1f, 0.72f, 0.35f, 1f) : accentColor;
 
             float textWidth = helperTextStyle.CalcSize(new GUIContent(shown)).x;
             float width = Mathf.Clamp(textWidth + 92f, 340f, 560f);

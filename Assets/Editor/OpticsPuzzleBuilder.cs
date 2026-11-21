@@ -229,7 +229,7 @@ namespace ShadowFlip.EditorTools
             GameObject phaseWall = CreateWall("TutPhaseWall_LightOnly", new Vector3(-1.5f, 0.0f, 0f), new Vector2(0.85f, 11.4f), assets, WorldAffinity.LightOnly, WallTileStyle.Pillar);
 
             CreateEmitter("Emitter_Tut2_Shadow", new Vector3(0.5f, 3.5f, 0f), LightColor.Shadow, WorldAffinity.ShadowOnly, Vector2.right, assets);
-            GameObject mirror2 = CreateIsometricMirror("Mirror_Tut2_Shadow", new Vector3(4.0f, 3.5f, 0f), 45f, 90f, WorldAffinity.Both, assets);
+            GameObject mirror2 = CreateIsometricMirror("Mirror_Tut2_Shadow", new Vector3(4.0f, 3.5f, 0f), 45f, 90f, WorldAffinity.Both, assets, requireShadowToRotate: true);
             LightSensor sensor2 = CreateSensor("Sensor_Tut2_Shadow", new Vector3(4.0f, 0.5f, 0f), LightColor.Shadow, WorldAffinity.ShadowOnly, assets);
 
             GameObject blockTut = CreatePushableBlock("RuinBlock_Tut", new Vector3(0.5f, -3.0f, 0f), assets);
@@ -389,7 +389,7 @@ namespace ShadowFlip.EditorTools
             PressurePlate lightButton = CreatePressurePlate("Light_Button", new Vector3(1.5f, -1.6f, 0f), assets, WorldAffinity.Both, latch: false);
 
             CreateEmitter("ShadowOnly_Emitter", new Vector3(-8.5f, -4.3f, 0f), LightColor.Shadow, WorldAffinity.ShadowOnly, Vector2.right, assets);
-            CreateIsometricMirror("Mirror_S1", new Vector3(-1.2f, -4.3f, 0f), 135f, 90f, WorldAffinity.Both, assets);
+            CreateIsometricMirror("Mirror_S1", new Vector3(-1.2f, -4.3f, 0f), 135f, 90f, WorldAffinity.Both, assets, requireShadowToRotate: true);
 
             GameObject mirrorS2Go = CreateIsometricMirror("Mirror_S2", new Vector3(-1.2f, 4.3f, 0f), 135f, 90f, WorldAffinity.ShadowOnly, assets, canRotate: false);
             OpticalMirror mirrorS2 = mirrorS2Go.GetComponent<OpticalMirror>();
@@ -447,7 +447,7 @@ namespace ShadowFlip.EditorTools
             stalker.umbraSafeDuration = 16.0f;
             hud.parFlips = 4;
             hud.lessonTitle = "Level 3: The Prism Sanctum";
-            hud.levelHint = "Light Mode: combine Red+Blue, flip [F] across Divider Gate & back to Light to align PortalMirror_B & Cart, then flip [F] to Umbra to charge the Capacitor before rushing back into Light Mode!";
+            hud.levelHint = "Light Mode: combine Red+Blue & rotate PortalMirror_B [E]; in Umbra [F], cross Divider Gate, push & aim the violet Umbra Cart to charge the Capacitor, then flip to Light to exit!";
 
             CreateArenaWalls(assets);
             CreateLabNPC("Dr_Vance_L3", new Vector3(-7.8f, -1.2f, 0f), "Dr. Vance",
@@ -472,9 +472,9 @@ namespace ShadowFlip.EditorTools
             PortalMirror portalB = CreatePortalMirror("PortalMirror_B", new Vector3(1.2f, 4.0f, 0f), assets.PortalMirrorB, Vector2.down, null);
             CreatePortalMirror("PortalMirror_A", new Vector3(-2.0f, 1.5f, 0f), assets.PortalMirrorA, Vector2.right, portalB, canRotate: false);
 
-            // East Chamber: Backstop wall + Pushable Mirror Cart + Umbra Capacitor Crystal
+            // East Chamber: Backstop wall + Umbra Pushable Mirror Cart + Umbra Capacitor Crystal
             CreateWall("Cart_Backstop", new Vector3(4.2f, 4.88f, 0f), new Vector2(1.4f, 0.7f), assets, WorldAffinity.Both, WallTileStyle.Medium);
-            CreatePushableMirrorCart("PushableMirrorCart", new Vector3(4.2f, 1.8f, 0f), 45f, 90f, assets);
+            CreatePushableMirrorCart("PushableMirrorCart", new Vector3(4.2f, 1.8f, 0f), 45f, 90f, assets, umbraOnly: true);
 
             LightSensor capSensor = CreateSensor("Sensor_Capacitor_7s", new Vector3(4.2f, -0.2f, 0f), LightColor.White, WorldAffinity.ShadowOnly, assets, isCapacitor: true, holdDuration: 11.0f);
 
@@ -610,7 +610,7 @@ namespace ShadowFlip.EditorTools
 
             // Up -> Sensor_Top, Right -> Mirror_E1 -> Sensor_Right
             LightSensor topSensor = CreateSensor("Sensor_Top", new Vector3(0.5f, 4.2f, 0f), LightColor.White, WorldAffinity.Both, assets);
-            CreateIsometricMirror("Mirror_E1", new Vector3(3.8f, 0.5f, 0f), 135f, 90f, WorldAffinity.Both, assets);
+            CreateIsometricMirror("Mirror_E1", new Vector3(3.8f, 0.5f, 0f), 135f, 90f, WorldAffinity.Both, assets, requireShadowToRotate: true);
             LightSensor rightSensor = CreateSensor("Sensor_Right", new Vector3(3.8f, 4.2f, 0f), LightColor.White, WorldAffinity.ShadowOnly, assets);
 
             // Down -> Sealed Alcove guarded by ShadowBarrierGate at (0.5, -1.8)
@@ -946,7 +946,7 @@ namespace ShadowFlip.EditorTools
             CreateBeamRelay("Relay_4Way_L8", new Vector3(2.5f, 1.5f, 0f), BeamRelayCrystal.RelayMode.CrossRepeater4Way, Vector2.right, false, assets);
             LightSensor topSensor = CreateSensor("Sensor_Facility_Top", new Vector3(2.5f, 4.2f, 0f), LightColor.White, WorldAffinity.Both, assets);
 
-            CreateIsometricMirror("Mirror_East_Aux", new Vector3(2.5f, -2.5f, 0f), 45f, 90f, WorldAffinity.Both, assets);
+            CreateIsometricMirror("Mirror_East_Aux", new Vector3(2.5f, -2.5f, 0f), 45f, 90f, WorldAffinity.Both, assets, requireShadowToRotate: true);
             LightSensor botSensor = CreateSensor("Sensor_Facility_Bot", new Vector3(4.8f, -2.5f, 0f), LightColor.White, WorldAffinity.ShadowOnly, assets);
 
             CreatePushableBlock("Scifi_StorageCrate", new Vector3(0.6f, -4.2f, 0f), assets);
@@ -1228,9 +1228,9 @@ namespace ShadowFlip.EditorTools
             CreateEmitter("Emitter_Boss_Red", new Vector3(-8.5f, 0.5f, 0f), LightColor.Red, WorldAffinity.Both, Vector2.right, assets);
             CreateOneWayPolarizer("Polarizer_Boss_Red", new Vector3(-5.0f, 0.5f, 0f), Vector2.up, false, true, assets);
 
-            // 2. GREEN Beam (Top ShadowOnly Emitter -> Rotatable Mirror -> Green Filter -> Boss)
+            // 2. GREEN Beam (Top ShadowOnly Emitter -> Umbra Mirror -> Green Filter -> Boss)
             CreateEmitter("Emitter_Boss_Green", new Vector3(-3.5f, 4.2f, 0f), LightColor.White, WorldAffinity.ShadowOnly, Vector2.right, assets);
-            CreateIsometricMirror("Mirror_Boss_Green", new Vector3(0.0f, 4.2f, 0f), 45f, 90f, WorldAffinity.Both, assets);
+            CreateIsometricMirror("Mirror_Boss_Green", new Vector3(0.0f, 4.2f, 0f), 45f, 90f, WorldAffinity.Both, assets, requireShadowToRotate: true);
             CreateColorFilter("Filter_Boss_Green", new Vector3(0.0f, 2.5f, 0f), new Vector2(1.1f, 0.45f), LightColor.Green, assets);
 
             // 3. BLUE Beam (South -> East Mirror -> Boss)
@@ -1585,7 +1585,7 @@ namespace ShadowFlip.EditorTools
             return emitter;
         }
 
-        private static GameObject CreateIsometricMirror(string name, Vector3 pos, float startAngle, float stepDegrees, WorldAffinity affinity, CelAssets assets, bool canRotate = true)
+        private static GameObject CreateIsometricMirror(string name, Vector3 pos, float startAngle, float stepDegrees, WorldAffinity affinity, CelAssets assets, bool canRotate = true, bool requireShadowToRotate = false)
         {
             GameObject go = new GameObject(name);
             go.transform.position = pos;
@@ -1593,6 +1593,7 @@ namespace ShadowFlip.EditorTools
 
             SpriteRenderer sr = go.AddComponent<SpriteRenderer>();
             sr.sprite = assets.MirrorDirections[0];
+            if (requireShadowToRotate) sr.color = new Color(0.78f, 0.56f, 1f, 1f);
             sr.sortingOrder = 4;
 
             BoxCollider2D col = go.AddComponent<BoxCollider2D>();
@@ -1601,6 +1602,7 @@ namespace ShadowFlip.EditorTools
             OpticalMirror mirror = go.AddComponent<OpticalMirror>();
             mirror.isTwoSided = true;
             mirror.canRotate = canRotate;
+            mirror.requireShadowWorldToRotate = requireShadowToRotate;
             mirror.rotationStepDegrees = stepDegrees;
             mirror.directionalSprites = assets.MirrorDirections;
             mirror.logicalAngle = startAngle;
@@ -1611,7 +1613,7 @@ namespace ShadowFlip.EditorTools
             return go;
         }
 
-        private static GameObject CreatePushableMirrorCart(string name, Vector3 pos, float startAngle, float stepDegrees, CelAssets assets)
+        private static GameObject CreatePushableMirrorCart(string name, Vector3 pos, float startAngle, float stepDegrees, CelAssets assets, bool umbraOnly = false)
         {
             GameObject go = new GameObject(name);
             go.transform.position = pos;
@@ -1619,7 +1621,7 @@ namespace ShadowFlip.EditorTools
 
             SpriteRenderer sr = go.AddComponent<SpriteRenderer>();
             sr.sprite = assets.MirrorDirections[0];
-            sr.color = new Color(0.9f, 0.95f, 1f, 1f);
+            sr.color = umbraOnly ? new Color(0.78f, 0.56f, 1f, 1f) : new Color(0.9f, 0.95f, 1f, 1f);
             sr.sortingOrder = 5;
 
             BoxCollider2D col = go.AddComponent<BoxCollider2D>();
@@ -1628,12 +1630,14 @@ namespace ShadowFlip.EditorTools
             OpticalMirror mirror = go.AddComponent<OpticalMirror>();
             mirror.isTwoSided = true;
             mirror.canRotate = true;
+            mirror.requireShadowWorldToRotate = umbraOnly;
             mirror.rotationStepDegrees = stepDegrees;
             mirror.directionalSprites = assets.MirrorDirections;
             mirror.logicalAngle = startAngle;
             mirror.ApplyIsometricVisual();
 
-            go.AddComponent<PushableBlock>();
+            PushableBlock block = go.AddComponent<PushableBlock>();
+            block.pushableInWorld = umbraOnly ? WorldAffinity.ShadowOnly : WorldAffinity.LightOnly;
             return go;
         }
 
@@ -1941,7 +1945,7 @@ namespace ShadowFlip.EditorTools
             return door;
         }
 
-        private static GameObject CreatePushableBlock(string name, Vector3 pos, CelAssets assets)
+        private static GameObject CreatePushableBlock(string name, Vector3 pos, CelAssets assets, WorldAffinity pushableInWorld = WorldAffinity.LightOnly)
         {
             GameObject go = new GameObject(name);
             go.transform.position = pos;
@@ -1949,12 +1953,14 @@ namespace ShadowFlip.EditorTools
 
             SpriteRenderer sr = go.AddComponent<SpriteRenderer>();
             sr.sprite = assets.PushableBlockSprite != null ? assets.PushableBlockSprite : assets.EmitterBroken;
+            if (pushableInWorld == WorldAffinity.ShadowOnly) sr.color = new Color(0.76f, 0.56f, 1f, 1f);
             sr.sortingOrder = 4;
 
             BoxCollider2D col = go.AddComponent<BoxCollider2D>();
             col.size = new Vector2(0.95f, 0.85f);
 
-            go.AddComponent<PushableBlock>();
+            PushableBlock block = go.AddComponent<PushableBlock>();
+            block.pushableInWorld = pushableInWorld;
             return go;
         }
 
