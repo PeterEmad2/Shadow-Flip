@@ -415,19 +415,17 @@ namespace ShadowFlip.EditorTools
                 new Vector3(-8.0f, -3.2f, 0f));
 
             stalker.umbraSafeDuration = 16.0f;
-            hud.parFlips = 3;
-            hud.lessonTitle = "Level 11: Opposite-Realm Split Vault";
-            hud.levelHint = "Opposite-Side Projection Active! While on West, East stays in the OPPOSITE realm. Align Polarizer_West [E] in Light Mode to charge East's Umbra Capacitor, flip [F] for East's Light Beam, then cross the open Door & hold the Exit Plate!";
+            hud.parFlips = 4;
+            hud.lessonTitle = "Level 11: The Reality Anchor Rift";
+            hud.levelHint = "Summon your Mirror Twin [E] onto Button_Twin_East while the beam powers Sensor_Rift to open Door_Rift_Mid! Cross through the Door and push the crate onto Button_Bubble to exit.";
 
             CreateArenaWalls(assets);
-            SplitRealmZone splitZone = gameLogic.gameObject.AddComponent<SplitRealmZone>();
-            splitZone.splitAxisX = 0f;
 
             CreateLabNPC("Dr_Vance_L11", new Vector3(-7.8f, -1.0f, 0f), "Dr. Vance",
                 new[]
                 {
-                    "Look across the dividing wall at x=0! Whatever realm you're in, the East Side projects the OPPOSITE realm until you cross through the Door!",
-                    "Rotate Polarizer_West [E] in Light Mode so White light charges East's Umbra Capacitor, then flip [F] so East's Blue Light Emitter fires too!"
+                    "Only Door_Rift_Mid lets you cross the sealed dividing wall to the East chamber!",
+                    "Summon your Mirror Twin [E] onto Button_Twin_East while MemoryPrism_Rift feeds the Reality Anchor and Sensor_Rift, then cross the Door and weigh down Button_Bubble with the crate!"
                 },
                 assets.LabNpcMale, assets.LabNpcHazmat, assets);
 
@@ -438,29 +436,27 @@ namespace ShadowFlip.EditorTools
             if (bwCol != null) bwCol.size = new Vector2(0.95f, 1.25f);
             CreateWall("Div_Mid_L11", new Vector3(0.0f, -0.05f, 0f), new Vector2(0.9f, 5.1f), assets, WorldAffinity.Both, WallTileStyle.Long);
 
-            // West Chamber: White Emitter -> Polarizer_West (rotate [E] to RIGHT) -> Window_BeamGlass_L11 -> East Side
-            CreateEmitter("Emitter_Rift_West", new Vector3(-8.5f, 3.0f, 0f), LightColor.White, WorldAffinity.Both, Vector2.right, assets);
-            CreateOneWayPolarizer("Polarizer_West", new Vector3(-4.5f, 3.0f, 0f), Vector2.up, invertColor: false, canRotate: true, assets);
+            // West Chamber: Twin Totem + White Emitter -> Memory Prism (10s hold across beam window into Reality Anchor!)
+            CreateMirrorTwinTotem("Totem_MirrorTwin", new Vector3(-4.5f, 1.5f, 0f), 0f, playerMovement.DarkspriteDown, assets);
+            PressurePlate twinEastButton = CreatePressurePlate("Button_Twin_East", new Vector3(4.5f, -2.0f, 0f), assets, WorldAffinity.Both, latch: false);
 
-            // East Chamber (Projected in OPPOSITE realm while player is on West!)
-            CreateWall("Wall_East_LightOnly", new Vector3(2.0f, 3.0f, 0f), new Vector2(0.85f, 1.6f), assets, WorldAffinity.LightOnly, WallTileStyle.Pillar);
-            LightSensor eastCap = CreateSensor("Sensor_East_Capacitor", new Vector3(4.5f, 3.0f, 0f), LightColor.White, WorldAffinity.ShadowOnly, assets, isCapacitor: true, holdDuration: 12.0f);
+            CreateEmitter("Emitter_Rift_West", new Vector3(-8.5f, 3.0f, 0f), LightColor.White, WorldAffinity.LightOnly, Vector2.right, assets);
+            CreateMemoryPrism("MemoryPrism_Rift", new Vector3(-2.2f, 3.0f, 0f), 10.0f, Vector2.right, false, assets);
 
-            CreateEmitter("Emitter_East_Light", new Vector3(1.5f, 0.5f, 0f), LightColor.Blue, WorldAffinity.LightOnly, Vector2.right, assets);
-            LightSensor eastBlue = CreateSensor("Sensor_East_Blue", new Vector3(4.5f, 0.5f, 0f), LightColor.Blue, WorldAffinity.LightOnly, assets);
+            // East Chamber: Reality Anchor Lantern + LightOnly Sensor + Crate -> LightOnly Bubble Button
+            CreateRealityAnchor("RealityAnchor_East", new Vector3(3.2f, 3.0f, 0f), 3.9f, 8.0f, assets);
+            LightSensor riftSensor = CreateSensor("Sensor_Rift_LightOnly", new Vector3(5.2f, 3.0f, 0f), LightColor.White, WorldAffinity.LightOnly, assets);
+            CreatePushableBlock("Block_East_L11", new Vector3(1.8f, 0.8f, 0f), assets);
+            PressurePlate bubbleButton = CreatePressurePlate("Button_Bubble_LightOnly", new Vector3(3.2f, 0.8f, 0f), assets, WorldAffinity.LightOnly, latch: false);
 
             PuzzleDoor midDoor = CreateLabBlastDoor("Door_Rift_Mid", new Vector3(0.0f, -4.0f, 0f), new Vector2(0.9f, 2.8f), assets,
-                new[] { eastCap, eastBlue }, null, null, requireAll: true, stayOpen: true, vertical: true, redVariant: false);
-
-            // East Exit Hold Puzzle (Light Mode push crate onto hold-only pressure plate)
-            CreatePushableBlock("Block_East_L11", new Vector3(2.5f, -2.5f, 0f), assets);
-            PressurePlate eastHoldPlate = CreatePressurePlate("Button_East_Hold", new Vector3(4.5f, -2.5f, 0f), assets, WorldAffinity.Both, latch: false);
+                new[] { riftSensor }, new[] { twinEastButton }, null, requireAll: true, stayOpen: true, vertical: true, redVariant: false);
 
             // Exit Airlock at x = 6.8
             CreateWall("ExitWall_Top_L11", new Vector3(6.8f, 3.8f, 0f), new Vector2(0.85f, 4.8f), assets, WorldAffinity.Both, WallTileStyle.Long);
             CreateWall("ExitWall_Bot_L11", new Vector3(6.8f, -3.8f, 0f), new Vector2(0.85f, 4.8f), assets, WorldAffinity.Both, WallTileStyle.Long);
             PuzzleDoor finalDoor = CreateLabBlastDoor("Door_Rift_Exit", new Vector3(6.8f, 0.0f, 0f), new Vector2(1.05f, 2.8f), assets,
-                null, new[] { eastHoldPlate }, null, requireAll: true, stayOpen: false, vertical: true, redVariant: true);
+                new[] { riftSensor }, new[] { bubbleButton }, null, requireAll: true, stayOpen: false, vertical: true, redVariant: true);
 
             CreateExit("LevelExit", new Vector3(8.8f, 0.0f, 0f), assets, new[] { midDoor, finalDoor }, "OpticsPuzzle_Level12");
 
