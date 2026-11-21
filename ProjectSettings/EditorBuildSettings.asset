@@ -35,6 +35,24 @@ EditorBuildSettings:
   - enabled: 1
     path: Assets/Scenes/OpticsPuzzle_Level8.unity
     guid: 95331ab60f2b4a64da169d79cf2040f1
+  - enabled: 1
+    path: Assets/Scenes/OpticsPuzzle_Level9.unity
+    guid: 3cd7a4fb463fbe74a8669332002e9ee3
+  - enabled: 1
+    path: Assets/Scenes/OpticsPuzzle_Level10.unity
+    guid: 3bf8c4beeb0518142ab9e67139e6730e
+  - enabled: 1
+    path: Assets/Scenes/OpticsPuzzle_Level11.unity
+    guid: 4609ba1a53448d44faf61084b18559f1
+  - enabled: 1
+    path: Assets/Scenes/OpticsPuzzle_Level12.unity
+    guid: 92295c38fd7267745bc6e0ae21181bf0
+  - enabled: 1
+    path: Assets/Scenes/OpticsPuzzle_Level13.unity
+    guid: 2e90de880401f9c498f7d938c1080721
+  - enabled: 1
+    path: Assets/Scenes/OpticsPuzzle_Sandbox.unity
+    guid: 64f2ae70b85b5bb43ae1853b52cc3a92
   m_configObjects:
     com.unity.input.settings.actions: {fileID: -944628639613478452, guid: 2bcd2660ca9b64942af0de543d8d7100, type: 3}
   m_UseUCBPForAssetBundles: 0
