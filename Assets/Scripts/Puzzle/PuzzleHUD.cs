@@ -85,12 +85,21 @@ namespace ShadowFlip.Puzzle
         private PressurePlate[] cachedPlates;
         private ShadowEchoPedestal[] cachedEchoes;
         private Texture2D whiteTex;
+        private Texture2D btnNormalTex;
+        private Texture2D btnHoverTex;
+        private Texture2D btnActiveTex;
+        private Texture2D btnPrimaryTex;
+        private Texture2D btnPrimaryHoverTex;
         private GUIStyle badgeStyle;
+        private GUIStyle realmPillStyle;
         private GUIStyle titleStyle;
         private GUIStyle promptStyle;
         private GUIStyle statusStyle;
         private GUIStyle bannerStyle;
         private GUIStyle hintStyle;
+        private GUIStyle helperTextStyle;
+        private GUIStyle buttonStyle;
+        private GUIStyle primaryButtonStyle;
 
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
         private static void ResetStatics()
@@ -147,10 +156,19 @@ namespace ShadowFlip.Puzzle
                 levelElapsedSeconds += Time.deltaTime;
             }
 
+            bool hasNearby = player != null && player.NearbyInteractable != null;
+            if (!hasNearby)
+            {
+                showControlsHelper = false;
+            }
+
             if (Input.GetKeyDown(KeyCode.Q) && !showMainMenu && !levelComplete && !PixelSandboxEditor.IsInBuildMode)
             {
-                showControlsHelper = !showControlsHelper;
-                PuzzleAudioManager.Instance?.PlayButtonClick();
+                if (hasNearby)
+                {
+                    showControlsHelper = !showControlsHelper;
+                    PuzzleAudioManager.Instance?.PlayButtonClick();
+                }
             }
 
             if (Input.GetKeyDown(KeyCode.Escape) || Input.GetKeyDown(KeyCode.Tab) || Input.GetKeyDown(KeyCode.M))
@@ -220,13 +238,13 @@ namespace ShadowFlip.Puzzle
             EnsureResources();
 
             bool isDark = gameLogic != null && gameLogic.isDarkActive;
-            Color inkColor = new Color(0.078f, 0.063f, 0.11f, 0.96f);
+            Color inkColor = new Color(0.06f, 0.05f, 0.10f, 0.96f);
             Color panelColor = isDark
-                ? new Color(0.16f, 0.12f, 0.27f, 0.94f)
-                : new Color(0.20f, 0.17f, 0.14f, 0.94f);
+                ? new Color(0.13f, 0.09f, 0.24f, 0.92f)
+                : new Color(0.16f, 0.14f, 0.13f, 0.92f);
             Color accentColor = isDark
-                ? new Color(0.486f, 0.322f, 1.0f, 1f)
-                : new Color(0.961f, 0.882f, 0.643f, 1f);
+                ? new Color(0.62f, 0.44f, 1.0f, 1f)
+                : new Color(0.961f, 0.882f, 0.56f, 1f);
 
             if (showMainMenu)
             {
@@ -235,8 +253,6 @@ namespace ShadowFlip.Puzzle
             }
 
             if (Time.timeScale == 0f && !levelComplete) return;
-
-            string worldLabel = isDark ? "SHADOW REALM" : "LIGHT REALM";
 
             int totalSensors = cachedSensors != null ? cachedSensors.Length : 0;
             int activeSensors = 0;
@@ -258,93 +274,74 @@ namespace ShadowFlip.Puzzle
                 }
             }
 
-            int totalSwitches = (cachedLevers != null ? cachedLevers.Length : 0)
-                              + (cachedPlates != null ? cachedPlates.Length : 0);
-            int activeSwitches = 0;
-            if (cachedLevers != null)
-            {
-                for (int i = 0; i < cachedLevers.Length; i++)
-                {
-                    if (cachedLevers[i] != null && cachedLevers[i].isActivated) activeSwitches++;
-                }
-            }
-            if (cachedPlates != null)
-            {
-                for (int i = 0; i < cachedPlates.Length; i++)
-                {
-                    if (cachedPlates[i] != null && cachedPlates[i].IsPressed) activeSwitches++;
-                }
-            }
-
-            // Top-Left Pixel Panel + [MENU] Button (yields neatly below Top-of-Screen NPC Dialogue Banner)
+            // Compact Top-Left HUD Card (yields neatly below the bigger Top-of-Screen NPC Dialogue Banner)
             int currentLevelIdx = GetCurrentLevelIndex();
-            string levelPrefix = currentLevelIdx >= 0 ? $"LEVEL {currentLevelIdx}  |  " : "";
-            float topY = LabNPCController.IsAnyDialogueActive ? 116f : 14f;
-            Rect topPanel = new Rect(16, topY, 620, 94);
+            string levelLabel = currentLevelIdx >= 0 ? $"LEVEL {currentLevelIdx}" : "SANDBOX";
+            string realmPillText = isDark ? "● UMBRA" : "● LIGHT";
+            float topY = LabNPCController.IsAnyDialogueActive ? LabNPCController.ActiveBannerBottomY : 14f;
+            Rect topPanel = new Rect(16f, topY, 450f, 88f);
             DrawCelPanel(topPanel, panelColor, inkColor, accentColor, 4f);
 
+            // Realm Pill Badge
+            Rect realmPill = new Rect(28f, topY + 11f, 92f, 22f);
+            GUI.color = inkColor;
+            GUI.DrawTexture(realmPill, whiteTex);
+            GUI.color = new Color(accentColor.r, accentColor.g, accentColor.b, 0.24f);
+            GUI.DrawTexture(new Rect(realmPill.x + 2f, realmPill.y + 2f, realmPill.width - 4f, realmPill.height - 4f), whiteTex);
             GUI.color = accentColor;
-            GUI.Label(new Rect(30, topY + 8f, 475, 28), levelPrefix + worldLabel, badgeStyle);
-            GUI.color = Color.white;
+            GUI.Label(realmPill, realmPillText, realmPillStyle);
 
-            if (GUI.Button(new Rect(520, topY + 8f, 102, 26), "MENU [Esc]"))
+            // Level Title + Custom Styled MENU Button
+            GUI.color = Color.white;
+            GUI.Label(new Rect(128f, topY + 8f, 200f, 26f), levelLabel, badgeStyle);
+
+            if (GUI.Button(new Rect(348f, topY + 9f, 104f, 24f), "MENU [Esc]", buttonStyle))
             {
                 PuzzleAudioManager.Instance?.PlayButtonClick();
                 OpenMainMenu();
             }
 
-            string doorText = totalDoors == 0
-                ? "0/0"
-                : $"{openDoors}/{totalDoors}";
+            // Clean Spaced Stats Row + Subtle Footer
+            string doorText = totalDoors == 0 ? "0/0" : $"{openDoors}/{totalDoors}";
             int curFlips = ShadowStalkerController.Instance != null ? ShadowStalkerController.Instance.FlipCount : 0;
-            GUI.Label(new Rect(30, topY + 38f, 595, 22),
-                $"Crystals: {activeSensors}/{totalSensors}  |  Gates: {doorText}  |  Time: {FormatTime(levelElapsedSeconds)}  |  Flips: {curFlips}/{parFlips}",
+            GUI.color = new Color(0.95f, 0.96f, 0.99f, 1f);
+            GUI.Label(new Rect(28f, topY + 38f, 424f, 22f),
+                $"Crystals {activeSensors}/{totalSensors}   ·   Gates {doorText}   ·   {FormatTime(levelElapsedSeconds)}   ·   Flips {curFlips}/{parFlips}",
                 statusStyle);
-            GUI.Label(new Rect(30, topY + 62f, 595, 22), "[WASD] Move   [F] Flip   [E] Interact   [Q] Help   [R] Reset   [Esc] Menu", promptStyle);
+
+            GUI.color = new Color(0.76f, 0.80f, 0.88f, 0.88f);
+            GUI.Label(new Rect(28f, topY + 60f, 424f, 20f),
+                "[F] Flip   ·   [E] Interact   ·   [Q] Nearby Help   ·   [R] Reset",
+                promptStyle);
+            GUI.color = Color.white;
 
             DrawUmbraStalkerHUD(isDark, panelColor, inkColor, topY);
             DrawEchoRecordingHUD(panelColor, inkColor, topY);
 
-            // Interact Prompt Pill (blocks manual interaction in Umbra Mode)
-            if (player != null && player.NearbyInteractable != null)
+            // Top-of-Screen [Q] Nearby Interaction Helper (shown ONLY when Q is pressed while close to an interactable)
+            if (showControlsHelper && player != null && player.NearbyInteractable != null)
             {
-                string rawPrompt = player.NearbyInteractable.GetInteractPrompt();
-                if (!string.IsNullOrEmpty(rawPrompt))
-                {
-                    bool lockedInDark = player.IsDarkModeActive;
-                    string shown = lockedInDark ? "Light Mode Required to Interact ([F] Flip)" : rawPrompt;
-                    Color pillCol = lockedInDark ? new Color(1f, 0.72f, 0.35f, 1f) : accentColor;
-                    Rect interactRect = new Rect(Screen.width * 0.5f - 205f, Screen.height - 134f, 410f, 36f);
-                    DrawCelPanel(interactRect, inkColor, pillCol, pillCol, 3f);
-                    GUI.color = pillCol;
-                    GUI.Label(interactRect, shown, bannerStyle);
-                    GUI.color = Color.white;
-                }
+                DrawNearbyHelperBanner(panelColor, inkColor, accentColor, topY);
             }
 
-            // [Q] Toggle Controls & Interaction Helper Overlay
-            if (showControlsHelper)
-            {
-                DrawControlsHelperOverlay(inkColor, accentColor, isDark);
-            }
-
-            // Bottom-Center Tutorial / Level Hint Banner
+            // Bottom-Center Translucent Tutorial / Level Hint Banner
             if (!string.IsNullOrEmpty(levelHint) || !string.IsNullOrEmpty(lessonTitle))
             {
                 float w = Mathf.Min(820f, Screen.width - 40f);
-                Rect hintRect = new Rect((Screen.width - w) * 0.5f, Screen.height - 86f, w, 72f);
-                DrawCelPanel(hintRect, panelColor, inkColor, accentColor, 4f);
+                Rect hintRect = new Rect(Mathf.Round((Screen.width - w) * 0.5f), Screen.height - 84f, w, 70f);
+                Color hintBackdrop = isDark
+                    ? new Color(0.10f, 0.07f, 0.19f, 0.86f)
+                    : new Color(0.12f, 0.11f, 0.10f, 0.86f);
+                DrawCelPanel(hintRect, hintBackdrop, inkColor, accentColor, 4f);
 
                 if (!string.IsNullOrEmpty(lessonTitle))
                 {
-                    GUI.color = accentColor;
-                    GUI.Label(new Rect(hintRect.x + 16f, hintRect.y + 8f, hintRect.width - 32f, 22f), lessonTitle, statusStyle);
-                    GUI.color = Color.white;
-                    GUI.Label(new Rect(hintRect.x + 16f, hintRect.y + 30f, hintRect.width - 32f, 36f), levelHint, hintStyle);
+                    DrawShadowedLabel(new Rect(hintRect.x + 16f, hintRect.y + 8f, hintRect.width - 32f, 22f), lessonTitle, statusStyle, accentColor);
+                    DrawShadowedLabel(new Rect(hintRect.x + 16f, hintRect.y + 30f, hintRect.width - 32f, 34f), levelHint, hintStyle, Color.white);
                 }
                 else
                 {
-                    GUI.Label(new Rect(hintRect.x + 16f, hintRect.y + 14f, hintRect.width - 32f, 44f), levelHint, hintStyle);
+                    DrawShadowedLabel(new Rect(hintRect.x + 16f, hintRect.y + 14f, hintRect.width - 32f, 42f), levelHint, hintStyle, Color.white);
                 }
             }
 
@@ -408,14 +405,14 @@ namespace ShadowFlip.Puzzle
             string primaryLabel = isDedicatedMenuScene ? "▶ PLAY LEVEL 0 (TUTORIAL)" : "▶ RESUME LEVEL";
             float halfW = (modal.width - 64f) * 0.5f;
 
-            if (GUI.Button(new Rect(modal.x + 24f, modal.y + 76f, halfW, 34f), primaryLabel))
+            if (GUI.Button(new Rect(modal.x + 24f, modal.y + 76f, halfW, 34f), primaryLabel, primaryButtonStyle))
             {
                 PuzzleAudioManager.Instance?.PlayButtonClick();
                 if (isDedicatedMenuScene) TryLoadLevel("OpticsPuzzle_Tutorial");
                 else CloseMainMenu();
             }
 
-            if (GUI.Button(new Rect(modal.x + modal.width - 24f - halfW, modal.y + 76f, halfW, 34f), isDedicatedMenuScene ? "▶ PLAY LEVEL 1" : "↻ RESTART LEVEL"))
+            if (GUI.Button(new Rect(modal.x + modal.width - 24f - halfW, modal.y + 76f, halfW, 34f), isDedicatedMenuScene ? "▶ PLAY LEVEL 1" : "↻ RESTART LEVEL", primaryButtonStyle))
             {
                 PuzzleAudioManager.Instance?.PlayButtonClick();
                 if (isDedicatedMenuScene)
@@ -453,7 +450,7 @@ namespace ShadowFlip.Puzzle
                 float bx = col == 0 ? modal.x + 24f : modal.x + modal.width - 24f - halfW;
                 float by = gridTop + row * rowStep;
                 Rect btnRect = new Rect(bx, by, halfW, btnH);
-                if (GUI.Button(btnRect, $" {LevelDisplayNames[i]}{activeTag}  [{starStr}]{timeTag}"))
+                if (GUI.Button(btnRect, $" {LevelDisplayNames[i]}{activeTag}  [{starStr}]{timeTag}", buttonStyle))
                 {
                     PuzzleAudioManager.Instance?.PlayButtonClick();
                     TryLoadLevel(sceneName);
@@ -463,7 +460,7 @@ namespace ShadowFlip.Puzzle
             // Right column slot 7 (row 6): Sandbox Level Editor
             Rect sandboxRect = new Rect(modal.x + modal.width - 24f - halfW, gridTop + 6 * rowStep, halfW, btnH);
             string sandboxTag = currentScene == "OpticsPuzzle_Sandbox" ? " [ACTIVE]" : "";
-            if (GUI.Button(sandboxRect, $" ⚙ SANDBOX LEVEL EDITOR{sandboxTag}"))
+            if (GUI.Button(sandboxRect, $" ⚙ SANDBOX LEVEL EDITOR{sandboxTag}", buttonStyle))
             {
                 PuzzleAudioManager.Instance?.PlayButtonClick();
                 TryLoadLevel("OpticsPuzzle_Sandbox");
@@ -477,7 +474,7 @@ namespace ShadowFlip.Puzzle
             }
 
             // Footer Buttons
-            if (GUI.Button(new Rect(modal.x + 24f, modal.y + h - 42f, 200f, 30f), "Reset Saved Stars & Times"))
+            if (GUI.Button(new Rect(modal.x + 24f, modal.y + h - 42f, 212f, 30f), "Reset Saved Stars & Times", buttonStyle))
             {
                 PuzzleAudioManager.Instance?.PlayButtonClick();
                 for (int i = 0; i < LevelScenes.Length; i++)
@@ -489,7 +486,7 @@ namespace ShadowFlip.Puzzle
                 menuNotice = "All saved stars & best times cleared.";
             }
 
-            if (GUI.Button(new Rect(modal.x + modal.width - 184f, modal.y + h - 42f, 160f, 30f), "Quit Game"))
+            if (GUI.Button(new Rect(modal.x + modal.width - 184f, modal.y + h - 42f, 160f, 30f), "Quit Game", buttonStyle))
             {
                 PuzzleAudioManager.Instance?.PlayButtonClick();
                 Application.Quit();
@@ -572,65 +569,54 @@ namespace ShadowFlip.Puzzle
             }
         }
 
-        private void DrawControlsHelperOverlay(Color inkColor, Color accentColor, bool isDark)
+        private void DrawNearbyHelperBanner(Color panelColor, Color inkColor, Color accentColor, float topY)
         {
-            float w = Mathf.Min(560f, Screen.width - 40f);
-            float h = 252f;
-            float x = Mathf.Round((Screen.width - w) * 0.5f);
-            float y = Mathf.Round((Screen.height - h) * 0.5f);
-            Rect box = new Rect(x, y, w, h);
+            if (player == null || player.NearbyInteractable == null) return;
+            string rawPrompt = player.NearbyInteractable.GetInteractPrompt();
+            if (string.IsNullOrEmpty(rawPrompt)) return;
 
-            Color translucentDark = isDark
-                ? new Color(0.08f, 0.05f, 0.16f, 0.90f)
-                : new Color(0.06f, 0.08f, 0.12f, 0.90f);
-            DrawCelPanel(box, translucentDark, inkColor, accentColor, 4f);
+            bool lockedInDark = player.IsDarkModeActive;
+            string shown = lockedInDark ? "Light Mode Required to Interact ([F] Flip)" : rawPrompt;
+            Color pillCol = lockedInDark ? new Color(1f, 0.72f, 0.35f, 1f) : accentColor;
 
-            GUI.color = accentColor;
-            GUI.Label(new Rect(box.x + 16f, box.y + 10f, box.width - 32f, 28f),
-                "CONTROLS & INTERACTION HELPER   [Q to Close]", bannerStyle);
-            GUI.color = Color.white;
+            float textWidth = helperTextStyle.CalcSize(new GUIContent(shown)).x;
+            float width = Mathf.Clamp(textWidth + 92f, 340f, 560f);
+            float height = 48f;
 
-            GUI.Label(new Rect(box.x + 22f, box.y + 44f, box.width - 44f, 22f), "[WASD / Arrows]   Move Jimmy", statusStyle);
-            GUI.Label(new Rect(box.x + 22f, box.y + 68f, box.width - 44f, 22f), "[F]   Flip Light Realm <-> Umbra (Dark) Realm", statusStyle);
-            GUI.Label(new Rect(box.x + 22f, box.y + 92f, box.width - 44f, 22f), "[E]   Interact (Mirrors, Levers, NPCs — Light Mode Only)", statusStyle);
-            GUI.Label(new Rect(box.x + 22f, box.y + 116f, box.width - 44f, 22f), "[R]   Reset Level     |     [Esc / Tab / M]   Main Menu", statusStyle);
-            GUI.Label(new Rect(box.x + 22f, box.y + 140f, box.width - 44f, 22f), "[Q]   Toggle this Helper", statusStyle);
-
-            GUI.color = accentColor;
-            GUI.DrawTexture(new Rect(box.x + 18f, box.y + 168f, box.width - 36f, 2f), whiteTex);
-            GUI.Label(new Rect(box.x + 22f, box.y + 176f, box.width - 44f, 22f), "CURRENT CONTEXT INTERACTION:", statusStyle);
-
-            string contextLine;
-            Color contextCol;
-            if (player != null && player.NearbyInteractable != null)
+            float helperX = Mathf.Round((Screen.width - width) * 0.5f);
+            float helperY;
+            float freeLeft = 478f;
+            float freeRight = Screen.width - 348f;
+            if (Screen.width >= 1220f && (freeRight - freeLeft) >= width)
             {
-                string prompt = player.NearbyInteractable.GetInteractPrompt();
-                if (string.IsNullOrEmpty(prompt))
-                {
-                    contextLine = "Nearby object has no manual interaction right now.";
-                    contextCol = new Color(0.82f, 0.85f, 0.90f, 1f);
-                }
-                else if (player.IsDarkModeActive)
-                {
-                    contextLine = $"LOCKED IN UMBRA MODE — Press [F] to return to Light Mode.\nAvailable in Light Mode: {prompt}";
-                    contextCol = new Color(1f, 0.72f, 0.35f, 1f);
-                }
-                else
-                {
-                    contextLine = $"Ready: {prompt}";
-                    contextCol = new Color(0.45f, 1f, 0.72f, 1f);
-                }
+                helperY = topY;
+                helperX = Mathf.Round(Mathf.Clamp(helperX, freeLeft, freeRight - width));
             }
             else
             {
-                contextLine = isDark
-                    ? "Umbra Mode: pushing blocks & [E] interactions are frozen. Phase past Light Walls or charge Capacitors!"
-                    : "Walk near a mirror, lever, polarizer, NPC, or pedestal to see its [E] action.";
-                contextCol = Color.white;
+                helperY = topY + 98f;
             }
 
-            GUI.color = contextCol;
-            GUI.Label(new Rect(box.x + 22f, box.y + 198f, box.width - 44f, 46f), contextLine, hintStyle);
+            Rect box = new Rect(helperX, helperY, width, height);
+            DrawCelPanel(box, panelColor, inkColor, pillCol, 4f);
+
+            Rect qPill = new Rect(box.x + 12f, box.y + 11f, 38f, 26f);
+            GUI.color = inkColor;
+            GUI.DrawTexture(qPill, whiteTex);
+            GUI.color = new Color(pillCol.r, pillCol.g, pillCol.b, 0.25f);
+            GUI.DrawTexture(new Rect(qPill.x + 2f, qPill.y + 2f, qPill.width - 4f, qPill.height - 4f), whiteTex);
+            DrawShadowedLabel(qPill, "[Q]", realmPillStyle, pillCol);
+
+            Rect textRect = new Rect(box.x + 58f, box.y + 6f, box.width - 70f, box.height - 12f);
+            DrawShadowedLabel(textRect, shown, helperTextStyle, pillCol);
+        }
+
+        private void DrawShadowedLabel(Rect rect, string text, GUIStyle style, Color textColor)
+        {
+            GUI.color = new Color(0f, 0f, 0f, 0.85f);
+            GUI.Label(new Rect(rect.x + 1.5f, rect.y + 1.5f, rect.width, rect.height), text, style);
+            GUI.color = textColor;
+            GUI.Label(rect, text, style);
             GUI.color = Color.white;
         }
 
@@ -654,7 +640,7 @@ namespace ShadowFlip.Puzzle
             float b = Mathf.Max(4f, Mathf.Round(borderWidth));
 
             // Stepped pixel-art drop shadow (notched corners)
-            GUI.color = new Color(0f, 0f, 0f, 0.45f);
+            GUI.color = new Color(0f, 0f, 0f, 0.48f);
             GUI.DrawTexture(new Rect(px + b * 2f, py + b, pw - b * 2f, ph), whiteTex);
             GUI.DrawTexture(new Rect(px + b, py + b * 2f, pw, ph - b * 2f), whiteTex);
 
@@ -667,6 +653,12 @@ namespace ShadowFlip.Puzzle
             GUI.color = fill;
             GUI.DrawTexture(new Rect(px + b, py + b, pw - b * 2f, ph - b * 2f), whiteTex);
 
+            // Subtle 1px inner sheen & bottom rim
+            GUI.color = new Color(1f, 1f, 1f, 0.10f);
+            GUI.DrawTexture(new Rect(px + b, py + b + 4f, pw - b * 2f, 1f), whiteTex);
+            GUI.color = new Color(0f, 0f, 0f, 0.22f);
+            GUI.DrawTexture(new Rect(px + b, py + ph - b - 1f, pw - b * 2f, 1f), whiteTex);
+
             // Crisp 4px accent header stripe + 4x4 corner rivets
             GUI.color = topStripe;
             GUI.DrawTexture(new Rect(px + b * 2f, py + b, pw - b * 4f, 4f), whiteTex);
@@ -678,23 +670,51 @@ namespace ShadowFlip.Puzzle
             GUI.color = Color.white;
         }
 
+        private static Texture2D MakeSolidTex(Color color)
+        {
+            Texture2D tex = new Texture2D(1, 1);
+            tex.filterMode = FilterMode.Point;
+            tex.SetPixel(0, 0, color);
+            tex.Apply();
+            return tex;
+        }
+
+        void OnDestroy()
+        {
+            if (whiteTex != null) Destroy(whiteTex);
+            if (btnNormalTex != null) Destroy(btnNormalTex);
+            if (btnHoverTex != null) Destroy(btnHoverTex);
+            if (btnActiveTex != null) Destroy(btnActiveTex);
+            if (btnPrimaryTex != null) Destroy(btnPrimaryTex);
+            if (btnPrimaryHoverTex != null) Destroy(btnPrimaryHoverTex);
+        }
+
         private void EnsureResources()
         {
-            if (whiteTex == null)
-            {
-                whiteTex = new Texture2D(1, 1);
-                whiteTex.filterMode = FilterMode.Point;
-                whiteTex.SetPixel(0, 0, Color.white);
-                whiteTex.Apply();
-            }
+            if (whiteTex == null) whiteTex = MakeSolidTex(Color.white);
+            if (btnNormalTex == null) btnNormalTex = MakeSolidTex(new Color(0.16f, 0.14f, 0.25f, 0.96f));
+            if (btnHoverTex == null) btnHoverTex = MakeSolidTex(new Color(0.26f, 0.22f, 0.40f, 0.98f));
+            if (btnActiveTex == null) btnActiveTex = MakeSolidTex(new Color(0.36f, 0.28f, 0.56f, 1f));
+            if (btnPrimaryTex == null) btnPrimaryTex = MakeSolidTex(new Color(0.27f, 0.21f, 0.46f, 0.98f));
+            if (btnPrimaryHoverTex == null) btnPrimaryHoverTex = MakeSolidTex(new Color(0.39f, 0.29f, 0.66f, 1f));
 
             if (badgeStyle == null)
             {
                 badgeStyle = new GUIStyle(GUI.skin.label)
                 {
-                    fontSize = 20,
+                    fontSize = 18,
                     fontStyle = FontStyle.Bold,
                     alignment = TextAnchor.MiddleLeft
+                };
+            }
+
+            if (realmPillStyle == null)
+            {
+                realmPillStyle = new GUIStyle(GUI.skin.label)
+                {
+                    fontSize = 12,
+                    fontStyle = FontStyle.Bold,
+                    alignment = TextAnchor.MiddleCenter
                 };
             }
 
@@ -712,7 +732,7 @@ namespace ShadowFlip.Puzzle
             {
                 promptStyle = new GUIStyle(GUI.skin.label)
                 {
-                    fontSize = 13,
+                    fontSize = 12,
                     alignment = TextAnchor.MiddleLeft
                 };
             }
@@ -742,9 +762,51 @@ namespace ShadowFlip.Puzzle
                 hintStyle = new GUIStyle(GUI.skin.label)
                 {
                     fontSize = 14,
+                    fontStyle = FontStyle.Bold,
                     wordWrap = true,
                     alignment = TextAnchor.UpperLeft
                 };
+            }
+
+            if (helperTextStyle == null)
+            {
+                helperTextStyle = new GUIStyle(GUI.skin.label)
+                {
+                    fontSize = 17,
+                    fontStyle = FontStyle.Bold,
+                    alignment = TextAnchor.MiddleLeft
+                };
+            }
+
+            if (buttonStyle == null)
+            {
+                buttonStyle = new GUIStyle(GUI.skin.button)
+                {
+                    fontSize = 13,
+                    fontStyle = FontStyle.Bold,
+                    alignment = TextAnchor.MiddleCenter,
+                    clipping = TextClipping.Clip
+                };
+                buttonStyle.normal.background = btnNormalTex;
+                buttonStyle.normal.textColor = new Color(0.92f, 0.94f, 0.99f, 1f);
+                buttonStyle.hover.background = btnHoverTex;
+                buttonStyle.hover.textColor = new Color(1f, 0.92f, 0.65f, 1f);
+                buttonStyle.active.background = btnActiveTex;
+                buttonStyle.active.textColor = Color.white;
+                buttonStyle.border = new RectOffset(2, 2, 2, 2);
+                buttonStyle.padding = new RectOffset(8, 8, 2, 2);
+            }
+
+            if (primaryButtonStyle == null)
+            {
+                primaryButtonStyle = new GUIStyle(buttonStyle)
+                {
+                    fontSize = 14
+                };
+                primaryButtonStyle.normal.background = btnPrimaryTex;
+                primaryButtonStyle.normal.textColor = new Color(1f, 0.92f, 0.65f, 1f);
+                primaryButtonStyle.hover.background = btnPrimaryHoverTex;
+                primaryButtonStyle.hover.textColor = Color.white;
             }
         }
     }

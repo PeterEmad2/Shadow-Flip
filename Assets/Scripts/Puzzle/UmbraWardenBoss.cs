@@ -107,7 +107,9 @@ namespace ShadowFlip.Puzzle
 
             float w = 310f;
             float h = 42f;
-            float barY = LabNPCController.IsAnyDialogueActive ? 118f : (Screen.width < 1380f ? 114f : 14f);
+            float barY = LabNPCController.IsAnyDialogueActive
+                ? LabNPCController.ActiveBannerBottomY
+                : (Screen.width < 1380f ? 114f : 14f);
             Rect r = new Rect(Mathf.Round((Screen.width - w) * 0.5f), barY, w, h);
 
             GUI.color = new Color(0.06f, 0.05f, 0.10f, 0.95f);

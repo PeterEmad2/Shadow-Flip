@@ -27,21 +27,47 @@ namespace ShadowFlip.Puzzle
 
         public bool IsPressed { get; private set; }
 
+        private Collider2D plateCollider;
         private readonly HashSet<Collider2D> occupants = new HashSet<Collider2D>();
+        private readonly List<Collider2D> overlapResults = new List<Collider2D>(8);
+        private ContactFilter2D overlapFilter;
 
         void Awake()
         {
             // Enforce continuous hold-only behavior on all pressure plates.
             latchOncePressed = false;
-            Collider2D col = GetComponent<Collider2D>();
-            col.isTrigger = true;
+            plateCollider = GetComponent<Collider2D>();
+            plateCollider.isTrigger = true;
+            overlapFilter = ContactFilter2D.noFilter;
+            overlapFilter.useTriggers = true;
             if (plateRenderer == null) plateRenderer = GetComponent<SpriteRenderer>();
             UpdateVisuals();
         }
 
+        void FixedUpdate()
+        {
+            RefreshOccupantsFromOverlap();
+        }
+
         void Update()
         {
-            occupants.RemoveWhere(c => c == null || !c.gameObject.activeInHierarchy || !c.enabled || !IsValidOccupant(c));
+            RefreshOccupantsFromOverlap();
+        }
+
+        private void RefreshOccupantsFromOverlap()
+        {
+            if (plateCollider == null) return;
+            occupants.Clear();
+            overlapResults.Clear();
+            plateCollider.Overlap(overlapFilter, overlapResults);
+            for (int i = 0; i < overlapResults.Count; i++)
+            {
+                Collider2D c = overlapResults[i];
+                if (c != null && c != plateCollider && c.gameObject.activeInHierarchy && c.enabled && IsValidOccupant(c))
+                {
+                    occupants.Add(c);
+                }
+            }
             SetPressed(occupants.Count > 0);
         }
 

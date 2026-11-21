@@ -46,11 +46,13 @@ namespace ShadowFlip.Puzzle
         public UnityEvent onInteract;
 
         public static bool IsAnyDialogueActive { get; private set; }
+        public static float ActiveBannerBottomY { get; private set; }
 
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
         private static void ResetStatics()
         {
             IsAnyDialogueActive = false;
+            ActiveBannerBottomY = 0f;
         }
 
         private SpriteRenderer sr;
@@ -65,6 +67,7 @@ namespace ShadowFlip.Puzzle
         private GUIStyle nameStyle;
         private GUIStyle textStyle;
         private GUIStyle hintStyle;
+        private GUIStyle realmBadgeStyle;
 
         void Awake()
         {
@@ -127,6 +130,7 @@ namespace ShadowFlip.Puzzle
                 }
             }
             IsAnyDialogueActive = any;
+            ActiveBannerBottomY = any ? (14f + 148f + 10f) : 0f;
         }
 
         public void Interact(PlayerMovement player)
@@ -256,41 +260,128 @@ namespace ShadowFlip.Puzzle
 
             EnsureGuiStyles();
 
-            float bannerW = Mathf.Min(820f, Screen.width - 40f);
-            float bannerH = 98f;
+            float bannerW = Mathf.Min(980f, Screen.width - 48f);
+            float bannerH = 148f;
             float x = Mathf.Round((Screen.width - bannerW) * 0.5f);
-            float y = 12f;
+            float y = 14f;
 
             logic l = logic.Instance != null ? logic.Instance : FindFirstObjectByType<logic>();
             bool isDark = l != null && l.isDarkActive;
-            Color ink = new Color(0.03f, 0.02f, 0.06f, 0.88f);
-            Color fill = isDark ? new Color(0.08f, 0.05f, 0.16f, 0.78f) : new Color(0.05f, 0.07f, 0.12f, 0.78f);
+            Color ink = new Color(0.03f, 0.02f, 0.06f, 0.94f);
+            Color fill = isDark ? new Color(0.09f, 0.05f, 0.19f, 0.86f) : new Color(0.06f, 0.08f, 0.14f, 0.86f);
             Color accent = isDark ? new Color(0.76f, 0.48f, 1f, 1f) : new Color(0.38f, 0.92f, 1f, 1f);
+            Color innerLine = new Color(accent.r, accent.g, accent.b, 0.25f);
 
-            const float pxStep = 3f;
+            const float b = 4f;
             Rect box = new Rect(x, y, bannerW, bannerH);
+
+            // Stepped pixel-art drop shadow
+            GUI.color = new Color(0f, 0f, 0f, 0.50f);
+            GUI.DrawTexture(new Rect(box.x + b * 2f, box.y + b, box.width - b * 2f, box.height), whiteTex);
+            GUI.DrawTexture(new Rect(box.x + b, box.y + b * 2f, box.width, box.height - b * 2f), whiteTex);
+
+            // Outer ink border
             GUI.color = ink;
-            GUI.DrawTexture(new Rect(box.x + pxStep, box.y, box.width - pxStep * 2f, box.height), whiteTex);
-            GUI.DrawTexture(new Rect(box.x, box.y + pxStep, box.width, box.height - pxStep * 2f), whiteTex);
+            GUI.DrawTexture(new Rect(box.x + b, box.y, box.width - b * 2f, box.height), whiteTex);
+            GUI.DrawTexture(new Rect(box.x, box.y + b, box.width, box.height - b * 2f), whiteTex);
 
+            // Translucent interior fill
             GUI.color = fill;
-            GUI.DrawTexture(new Rect(box.x + pxStep, box.y + pxStep, box.width - pxStep * 2f, box.height - pxStep * 2f), whiteTex);
+            GUI.DrawTexture(new Rect(box.x + b, box.y + b, box.width - b * 2f, box.height - b * 2f), whiteTex);
+
+            // Subtle inner hairline border
+            GUI.color = innerLine;
+            GUI.DrawTexture(new Rect(box.x + b, box.y + box.height - b - 1f, box.width - b * 2f, 1f), whiteTex);
+            GUI.DrawTexture(new Rect(box.x + b, box.y + b, 1f, box.height - b * 2f), whiteTex);
+            GUI.DrawTexture(new Rect(box.x + box.width - b - 1f, box.y + b, 1f, box.height - b * 2f), whiteTex);
+
+            // Luminous accent top bar + 4 corner rivets
             GUI.color = accent;
-            GUI.DrawTexture(new Rect(box.x + pxStep * 2f, box.y + pxStep, box.width - pxStep * 4f, 4f), whiteTex);
+            GUI.DrawTexture(new Rect(box.x + b * 2f, box.y + b, box.width - b * 4f, 5f), whiteTex);
+            GUI.DrawTexture(new Rect(box.x + b, box.y + b, 4f, 4f), whiteTex);
+            GUI.DrawTexture(new Rect(box.x + box.width - b - 4f, box.y + b, 4f, 4f), whiteTex);
+            GUI.DrawTexture(new Rect(box.x + b, box.y + box.height - b - 4f, 4f, 4f), whiteTex);
+            GUI.DrawTexture(new Rect(box.x + box.width - b - 4f, box.y + box.height - b - 4f, 4f, 4f), whiteTex);
 
-            GUI.color = accent;
-            GUI.Label(new Rect(box.x + 18f, box.y + 10f, box.width - 170f, 26f), npcName.ToUpperInvariant(), nameStyle);
+            // Left portrait slot (104 x 104 framed box)
+            Rect portraitFrame = new Rect(box.x + 18f, box.y + 22f, 104f, 104f);
+            GUI.color = ink;
+            GUI.DrawTexture(portraitFrame, whiteTex);
+            GUI.color = new Color(accent.r, accent.g, accent.b, 0.45f);
+            GUI.DrawTexture(new Rect(portraitFrame.x + 2f, portraitFrame.y + 2f, portraitFrame.width - 4f, portraitFrame.height - 4f), whiteTex);
+            GUI.color = isDark ? new Color(0.14f, 0.09f, 0.26f, 0.95f) : new Color(0.10f, 0.13f, 0.20f, 0.95f);
+            GUI.DrawTexture(new Rect(portraitFrame.x + 4f, portraitFrame.y + 4f, portraitFrame.width - 8f, portraitFrame.height - 8f), whiteTex);
 
-            GUI.color = new Color(0.82f, 0.88f, 0.96f, 0.9f);
-            string counter = dialogueLines.Length > 1 ? $"[{dialogueIndex + 1}/{dialogueLines.Length}]  [E] Next" : "[E] Repeat";
-            GUI.Label(new Rect(box.x + box.width - 155f, box.y + 12f, 138f, 22f), counter, hintStyle);
+            Sprite portrait = sr != null && sr.sprite != null ? sr.sprite : (isDark ? shadowSpriteDown : spriteDown);
+            if (portrait != null && portrait.texture != null)
+            {
+                Texture2D tex = portrait.texture;
+                Rect tr = portrait.textureRect;
+                Rect uv = new Rect(tr.x / tex.width, tr.y / tex.height, tr.width / tex.width, tr.height / tex.height);
+                Rect avail = new Rect(portraitFrame.x + 8f, portraitFrame.y + 8f, portraitFrame.width - 16f, portraitFrame.height - 16f);
+                float aspect = tr.width / Mathf.Max(1f, tr.height);
+                float drawW = avail.width;
+                float drawH = drawW / Mathf.Max(0.01f, aspect);
+                if (drawH > avail.height)
+                {
+                    drawH = avail.height;
+                    drawW = drawH * aspect;
+                }
+                Rect drawRect = new Rect(
+                    Mathf.Round(avail.x + (avail.width - drawW) * 0.5f),
+                    Mathf.Round(avail.y + (avail.height - drawH) * 0.5f),
+                    Mathf.Round(drawW),
+                    Mathf.Round(drawH));
+                GUI.color = Color.white;
+                GUI.DrawTextureWithTexCoords(drawRect, tex, uv, true);
+            }
 
-            // Drop shadow + crisp pure white dialogue text for high legibility over any background
-            Rect textRect = new Rect(box.x + 18f, box.y + 38f, box.width - 36f, 52f);
+            // Right text column
+            float contentX = box.x + 138f;
+            float contentW = box.width - 156f;
+
+            // Header row: Name + Realm Badge + Counter
+            string upperName = npcName.ToUpperInvariant();
+            GUIContent nameContent = new GUIContent(upperName);
+            float nameW = Mathf.Min(contentW - 260f, nameStyle.CalcSize(nameContent).x + 10f);
+
             GUI.color = new Color(0f, 0f, 0f, 0.85f);
-            GUI.Label(new Rect(textRect.x + 1.5f, textRect.y + 1.5f, textRect.width, textRect.height), dialogueLines[dialogueIndex], textStyle);
+            GUI.Label(new Rect(contentX + 2f, box.y + 15f, nameW, 28f), upperName, nameStyle);
+            GUI.color = accent;
+            GUI.Label(new Rect(contentX, box.y + 13f, nameW, 28f), upperName, nameStyle);
+
+            string realmBadgeText = isDark ? "UMBRA LAB" : "LIGHT LAB";
+            Rect badgeRect = new Rect(contentX + nameW + 10f, box.y + 16f, 102f, 22f);
+            GUI.color = ink;
+            GUI.DrawTexture(badgeRect, whiteTex);
+            GUI.color = new Color(accent.r, accent.g, accent.b, 0.25f);
+            GUI.DrawTexture(new Rect(badgeRect.x + 2f, badgeRect.y + 2f, badgeRect.width - 4f, badgeRect.height - 4f), whiteTex);
+            GUI.color = accent;
+            GUI.Label(badgeRect, realmBadgeText, realmBadgeStyle);
+
+            string counter = dialogueLines.Length > 1 ? $"[{dialogueIndex + 1}/{dialogueLines.Length}]  [E] Next" : "[E] Repeat";
+            GUI.color = new Color(0.86f, 0.91f, 0.98f, 0.95f);
+            GUI.Label(new Rect(box.x + box.width - 188f, box.y + 15f, 170f, 24f), counter, hintStyle);
+
+            // Divider hairline below header
+            GUI.color = new Color(accent.r, accent.g, accent.b, 0.35f);
+            GUI.DrawTexture(new Rect(contentX, box.y + 44f, contentW, 2f), whiteTex);
+
+            // Spacious wrapped dialogue text with 2px drop shadow
+            Rect textRect = new Rect(contentX, box.y + 52f, contentW, 84f);
+            GUI.color = new Color(0f, 0f, 0f, 0.88f);
+            GUI.Label(new Rect(textRect.x + 2f, textRect.y + 2f, textRect.width, textRect.height), dialogueLines[dialogueIndex], textStyle);
             GUI.color = Color.white;
             GUI.Label(textRect, dialogueLines[dialogueIndex], textStyle);
+
+            // Bottom progress bar depleting over dialogueDuration
+            float progress = Mathf.Clamp01(dialogueTimer / Mathf.Max(0.01f, dialogueDuration));
+            Rect barTrack = new Rect(box.x + b + 4f, box.y + box.height - b - 5f, box.width - (b + 4f) * 2f, 4f);
+            GUI.color = new Color(0f, 0f, 0f, 0.45f);
+            GUI.DrawTexture(barTrack, whiteTex);
+            GUI.color = accent;
+            GUI.DrawTexture(new Rect(barTrack.x, barTrack.y, Mathf.Round(barTrack.width * progress), barTrack.height), whiteTex);
+            GUI.color = Color.white;
         }
 
         private void EnsureGuiStyles()
@@ -307,9 +398,9 @@ namespace ShadowFlip.Puzzle
             {
                 nameStyle = new GUIStyle(GUI.skin.label)
                 {
-                    fontSize = 18,
+                    fontSize = 22,
                     fontStyle = FontStyle.Bold,
-                    alignment = TextAnchor.UpperLeft
+                    alignment = TextAnchor.MiddleLeft
                 };
             }
 
@@ -317,7 +408,7 @@ namespace ShadowFlip.Puzzle
             {
                 textStyle = new GUIStyle(GUI.skin.label)
                 {
-                    fontSize = 17,
+                    fontSize = 20,
                     fontStyle = FontStyle.Bold,
                     wordWrap = true,
                     alignment = TextAnchor.UpperLeft
@@ -328,9 +419,19 @@ namespace ShadowFlip.Puzzle
             {
                 hintStyle = new GUIStyle(GUI.skin.label)
                 {
-                    fontSize = 13,
+                    fontSize = 15,
                     fontStyle = FontStyle.Bold,
-                    alignment = TextAnchor.UpperRight
+                    alignment = TextAnchor.MiddleRight
+                };
+            }
+
+            if (realmBadgeStyle == null)
+            {
+                realmBadgeStyle = new GUIStyle(GUI.skin.label)
+                {
+                    fontSize = 12,
+                    fontStyle = FontStyle.Bold,
+                    alignment = TextAnchor.MiddleCenter
                 };
             }
         }
