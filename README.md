@@ -27,3 +27,13 @@ Open the project in **Unity 6000.3** and use the top menu bar:
   1. `Assets/Scenes/OpticsPuzzle_Tutorial.unity` — 4-lesson interactive tutorial
   2. `Assets/Scenes/OpticsPuzzle.unity` — *Chromatic Vault* (Hard Level 1)
   3. `Assets/Scenes/OpticsPuzzle_Level2.unity` — *Eclipse Temple* (Hard Level 2)
+
+## Project Structure
+- `Assets/Scripts/Core/` — Player controllers, realm state (`logic.cs`, `Switch.cs`), and core input/sound hooks
+- `Assets/Scripts/Optics/` — Lasers, mirrors, prisms, filters, capacitors, black holes, and split-realm zones
+- `Assets/Scripts/Puzzle/` — Doors, pressure plates, levers, blocks, NPCs, sanctuaries, pedestals, and teleporters
+- `Assets/Scripts/Enemies/` — Umbra Stalker, Warden Boss, Beam Eater Moth, Mimic Mirror, and Mold
+- `Assets/Scripts/UI/` — `PuzzleHUD`, `PixelGuiUtility`, `TutorialManager`, and `PixelSandboxEditor`
+- `Assets/Scripts/Systems/` — Audio, VFX, camera, borders, and sprite repair systems
+- `Assets/Scripts/Legacy/` — Early prototype scripts archived out of the active folders
+- `Assets/Editor/` — Modular `OpticsPuzzleBuilder` partial scripts (`Levels0To6`, `Levels7To13`, `Factory`, `Assets`)

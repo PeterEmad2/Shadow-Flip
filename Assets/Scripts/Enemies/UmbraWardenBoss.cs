@@ -171,13 +171,7 @@ namespace ShadowFlip.Puzzle
 
         private void EnsureStyles()
         {
-            if (whiteTex == null)
-            {
-                whiteTex = new Texture2D(1, 1);
-                whiteTex.filterMode = FilterMode.Point;
-                whiteTex.SetPixel(0, 0, Color.white);
-                whiteTex.Apply();
-            }
+            if (whiteTex == null) whiteTex = PixelGuiUtility.MakeSolidTexture(Color.white);
             if (bossStyle == null)
             {
                 bossStyle = new GUIStyle(GUI.skin.label)

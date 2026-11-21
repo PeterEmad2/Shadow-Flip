@@ -345,10 +345,7 @@ namespace ShadowFlip.Puzzle
             GUIContent nameContent = new GUIContent(upperName);
             float nameW = Mathf.Min(contentW - 260f, nameStyle.CalcSize(nameContent).x + 10f);
 
-            GUI.color = new Color(0f, 0f, 0f, 0.85f);
-            GUI.Label(new Rect(contentX + 2f, box.y + 15f, nameW, 28f), upperName, nameStyle);
-            GUI.color = accent;
-            GUI.Label(new Rect(contentX, box.y + 13f, nameW, 28f), upperName, nameStyle);
+            PixelGuiUtility.DrawShadowedLabel(new Rect(contentX, box.y + 13f, nameW, 28f), upperName, nameStyle, accent, 2f);
 
             string realmBadgeText = isDark ? "UMBRA LAB" : "LIGHT LAB";
             Rect badgeRect = new Rect(contentX + nameW + 10f, box.y + 16f, 102f, 22f);
@@ -369,10 +366,7 @@ namespace ShadowFlip.Puzzle
 
             // Spacious wrapped dialogue text with 2px drop shadow
             Rect textRect = new Rect(contentX, box.y + 52f, contentW, 84f);
-            GUI.color = new Color(0f, 0f, 0f, 0.88f);
-            GUI.Label(new Rect(textRect.x + 2f, textRect.y + 2f, textRect.width, textRect.height), dialogueLines[dialogueIndex], textStyle);
-            GUI.color = Color.white;
-            GUI.Label(textRect, dialogueLines[dialogueIndex], textStyle);
+            PixelGuiUtility.DrawShadowedLabel(textRect, dialogueLines[dialogueIndex], textStyle, Color.white, 2f);
 
             // Bottom progress bar depleting over dialogueDuration
             float progress = Mathf.Clamp01(dialogueTimer / Mathf.Max(0.01f, dialogueDuration));
@@ -386,13 +380,7 @@ namespace ShadowFlip.Puzzle
 
         private void EnsureGuiStyles()
         {
-            if (whiteTex == null)
-            {
-                whiteTex = new Texture2D(1, 1);
-                whiteTex.filterMode = FilterMode.Point;
-                whiteTex.SetPixel(0, 0, Color.white);
-                whiteTex.Apply();
-            }
+            if (whiteTex == null) whiteTex = PixelGuiUtility.MakeSolidTexture(Color.white);
 
             if (nameStyle == null)
             {

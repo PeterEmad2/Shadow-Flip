@@ -81,8 +81,6 @@ namespace ShadowFlip.Puzzle
 
         private LightSensor[] cachedSensors;
         private PuzzleDoor[] cachedDoors;
-        private PuzzleLever[] cachedLevers;
-        private PressurePlate[] cachedPlates;
         private ShadowEchoPedestal[] cachedEchoes;
         private Texture2D whiteTex;
         private Texture2D btnNormalTex;
@@ -125,8 +123,6 @@ namespace ShadowFlip.Puzzle
 
             cachedSensors = FindObjectsByType<LightSensor>(FindObjectsSortMode.None);
             cachedDoors = FindObjectsByType<PuzzleDoor>(FindObjectsSortMode.None);
-            cachedLevers = FindObjectsByType<PuzzleLever>(FindObjectsSortMode.None);
-            cachedPlates = FindObjectsByType<PressurePlate>(FindObjectsSortMode.None);
             cachedEchoes = FindObjectsByType<ShadowEchoPedestal>(FindObjectsSortMode.None);
 
             string activeScene = SceneManager.GetActiveScene().name;
@@ -615,11 +611,7 @@ namespace ShadowFlip.Puzzle
 
         private void DrawShadowedLabel(Rect rect, string text, GUIStyle style, Color textColor)
         {
-            GUI.color = new Color(0f, 0f, 0f, 0.85f);
-            GUI.Label(new Rect(rect.x + 1.5f, rect.y + 1.5f, rect.width, rect.height), text, style);
-            GUI.color = textColor;
-            GUI.Label(rect, text, style);
-            GUI.color = Color.white;
+            PixelGuiUtility.DrawShadowedLabel(rect, text, style, textColor);
         }
 
         private static string GetStarsKey(string sceneName) => "ShadowFlip_Stars_" + sceneName;
@@ -635,50 +627,7 @@ namespace ShadowFlip.Puzzle
 
         private void DrawCelPanel(Rect rect, Color fill, Color border, Color topStripe, float borderWidth)
         {
-            float px = Mathf.Round(rect.x);
-            float py = Mathf.Round(rect.y);
-            float pw = Mathf.Round(rect.width);
-            float ph = Mathf.Round(rect.height);
-            float b = Mathf.Max(4f, Mathf.Round(borderWidth));
-
-            // Stepped pixel-art drop shadow (notched corners)
-            GUI.color = new Color(0f, 0f, 0f, 0.48f);
-            GUI.DrawTexture(new Rect(px + b * 2f, py + b, pw - b * 2f, ph), whiteTex);
-            GUI.DrawTexture(new Rect(px + b, py + b * 2f, pw, ph - b * 2f), whiteTex);
-
-            // Pixel-beveled outer ink frame (missing 4 outer corner squares)
-            GUI.color = border;
-            GUI.DrawTexture(new Rect(px + b, py, pw - b * 2f, ph), whiteTex);
-            GUI.DrawTexture(new Rect(px, py + b, pw, ph - b * 2f), whiteTex);
-
-            // Inner panel fill
-            GUI.color = fill;
-            GUI.DrawTexture(new Rect(px + b, py + b, pw - b * 2f, ph - b * 2f), whiteTex);
-
-            // Subtle 1px inner sheen & bottom rim
-            GUI.color = new Color(1f, 1f, 1f, 0.10f);
-            GUI.DrawTexture(new Rect(px + b, py + b + 4f, pw - b * 2f, 1f), whiteTex);
-            GUI.color = new Color(0f, 0f, 0f, 0.22f);
-            GUI.DrawTexture(new Rect(px + b, py + ph - b - 1f, pw - b * 2f, 1f), whiteTex);
-
-            // Crisp 4px accent header stripe + 4x4 corner rivets
-            GUI.color = topStripe;
-            GUI.DrawTexture(new Rect(px + b * 2f, py + b, pw - b * 4f, 4f), whiteTex);
-            GUI.DrawTexture(new Rect(px + b, py + b, 4f, 4f), whiteTex);
-            GUI.DrawTexture(new Rect(px + pw - b - 4f, py + b, 4f, 4f), whiteTex);
-            GUI.DrawTexture(new Rect(px + b, py + ph - b - 4f, 4f, 4f), whiteTex);
-            GUI.DrawTexture(new Rect(px + pw - b - 4f, py + ph - b - 4f, 4f, 4f), whiteTex);
-
-            GUI.color = Color.white;
-        }
-
-        private static Texture2D MakeSolidTex(Color color)
-        {
-            Texture2D tex = new Texture2D(1, 1);
-            tex.filterMode = FilterMode.Point;
-            tex.SetPixel(0, 0, color);
-            tex.Apply();
-            return tex;
+            PixelGuiUtility.DrawPixelPanel(rect, whiteTex, fill, border, topStripe, borderWidth);
         }
 
         void OnDestroy()
@@ -693,12 +642,12 @@ namespace ShadowFlip.Puzzle
 
         private void EnsureResources()
         {
-            if (whiteTex == null) whiteTex = MakeSolidTex(Color.white);
-            if (btnNormalTex == null) btnNormalTex = MakeSolidTex(new Color(0.16f, 0.14f, 0.25f, 0.96f));
-            if (btnHoverTex == null) btnHoverTex = MakeSolidTex(new Color(0.26f, 0.22f, 0.40f, 0.98f));
-            if (btnActiveTex == null) btnActiveTex = MakeSolidTex(new Color(0.36f, 0.28f, 0.56f, 1f));
-            if (btnPrimaryTex == null) btnPrimaryTex = MakeSolidTex(new Color(0.27f, 0.21f, 0.46f, 0.98f));
-            if (btnPrimaryHoverTex == null) btnPrimaryHoverTex = MakeSolidTex(new Color(0.39f, 0.29f, 0.66f, 1f));
+            if (whiteTex == null) whiteTex = PixelGuiUtility.MakeSolidTexture(Color.white);
+            if (btnNormalTex == null) btnNormalTex = PixelGuiUtility.MakeSolidTexture(new Color(0.16f, 0.14f, 0.25f, 0.96f));
+            if (btnHoverTex == null) btnHoverTex = PixelGuiUtility.MakeSolidTexture(new Color(0.26f, 0.22f, 0.40f, 0.98f));
+            if (btnActiveTex == null) btnActiveTex = PixelGuiUtility.MakeSolidTexture(new Color(0.36f, 0.28f, 0.56f, 1f));
+            if (btnPrimaryTex == null) btnPrimaryTex = PixelGuiUtility.MakeSolidTexture(new Color(0.27f, 0.21f, 0.46f, 0.98f));
+            if (btnPrimaryHoverTex == null) btnPrimaryHoverTex = PixelGuiUtility.MakeSolidTexture(new Color(0.39f, 0.29f, 0.66f, 1f));
 
             if (badgeStyle == null)
             {
