@@ -1,4 +1,5 @@
 using ShadowFlip.Optics;
+using ShadowFlip.Puzzle;
 using UnityEngine;
 
 public class PlayerMovement : MonoBehaviour
@@ -26,6 +27,7 @@ public class PlayerMovement : MonoBehaviour
     public float interactRadius = 1.6f;
 
     public IInteractable NearbyInteractable { get; private set; }
+    public bool IsDarkModeActive => logic != null && logic.isDarkActive;
     public float CurrentSpeedMultiplier => Time.time <= moldSlowUntil ? 0.42f : 1f;
 
     private int facingIndex = 0; // 0=Down, 1=Up, 2=Left, 3=Right
@@ -182,7 +184,14 @@ public class PlayerMovement : MonoBehaviour
 
         if (NearbyInteractable != null && Input.GetKeyDown(interactKey))
         {
-            NearbyInteractable.Interact(this);
+            if (IsDarkModeActive)
+            {
+                PuzzleAudioManager.Instance?.PlayFlipBlocked();
+            }
+            else
+            {
+                NearbyInteractable.Interact(this);
+            }
         }
     }
 }

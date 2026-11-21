@@ -210,6 +210,20 @@ namespace ShadowFlip.Puzzle
                 }
             }
 
+            // 5B. Ensure every LabNPCController has Umbra Chemistry Lab Uniform sprites loaded
+            foreach (LabNPCController npc in Object.FindObjectsByType<LabNPCController>(FindObjectsSortMode.None))
+            {
+                if (npc == null) continue;
+                if (npc.spriteDown == null) npc.spriteDown = LoadRes("Sprites/Laboratory/LabNPC_Male_Down");
+                if (npc.spriteUp == null) npc.spriteUp = LoadRes("Sprites/Laboratory/LabNPC_Male_Up");
+                if (npc.spriteLeft == null) npc.spriteLeft = LoadRes("Sprites/Laboratory/LabNPC_Male_Left");
+                if (npc.spriteRight == null) npc.spriteRight = LoadRes("Sprites/Laboratory/LabNPC_Male_Right");
+                if (npc.shadowSpriteDown == null) npc.shadowSpriteDown = LoadRes("Sprites/Laboratory/LabNPC_Hazmat_Down");
+                if (npc.shadowSpriteUp == null) npc.shadowSpriteUp = LoadRes("Sprites/Laboratory/LabNPC_Hazmat_Up");
+                if (npc.shadowSpriteLeft == null) npc.shadowSpriteLeft = LoadRes("Sprites/Laboratory/LabNPC_Hazmat_Left");
+                if (npc.shadowSpriteRight == null) npc.shadowSpriteRight = LoadRes("Sprites/Laboratory/LabNPC_Hazmat_Right");
+            }
+
             // 6. Floors & Borderless Rotated Long Walls
             foreach (WorldPhaseObject phase in Object.FindObjectsByType<WorldPhaseObject>(FindObjectsSortMode.None))
             {

@@ -42,6 +42,8 @@ namespace ShadowFlip.Puzzle
             public List<SavedItem> items = new List<SavedItem>();
         }
 
+        public static bool IsInBuildMode { get; private set; }
+
         public PlayerMovement player;
 
         private static readonly string[] ToolLabels =
@@ -148,8 +150,20 @@ namespace ShadowFlip.Puzzle
             if (Input.GetKeyDown(KeyCode.Alpha0)) selectedTool = ToolType.Eraser;
         }
 
+        [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
+        private static void ResetStatics()
+        {
+            IsInBuildMode = false;
+        }
+
+        private void OnDisable()
+        {
+            IsInBuildMode = false;
+        }
+
         private void ApplyModeState()
         {
+            IsInBuildMode = buildMode;
             if (player != null)
             {
                 player.enabled = !buildMode;
@@ -340,6 +354,7 @@ namespace ShadowFlip.Puzzle
             {
                 doors[i].requiredSensors = sensors.ToArray();
                 doors[i].requiredPlates = plates.ToArray();
+                doors[i].RebuildIndicators();
             }
         }
 

@@ -45,6 +45,14 @@ namespace ShadowFlip.Puzzle
         public bool triggerEquipmentOnce = false;
         public UnityEvent onInteract;
 
+        public static bool IsAnyDialogueActive { get; private set; }
+
+        [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
+        private static void ResetStatics()
+        {
+            IsAnyDialogueActive = false;
+        }
+
         private SpriteRenderer sr;
         private int dialogueIndex = -1;
         private float dialogueTimer = 0f;
@@ -56,11 +64,22 @@ namespace ShadowFlip.Puzzle
         private Texture2D whiteTex;
         private GUIStyle nameStyle;
         private GUIStyle textStyle;
+        private GUIStyle hintStyle;
 
         void Awake()
         {
             sr = GetComponent<SpriteRenderer>();
+            EnsureLabUniformFallbacks();
             UpdateVisualSprite();
+        }
+
+        void OnDisable()
+        {
+            if (dialogueTimer > 0f)
+            {
+                dialogueTimer = 0f;
+                RefreshAnyDialogueFlag();
+            }
         }
 
         void Update()
@@ -68,13 +87,46 @@ namespace ShadowFlip.Puzzle
             if (dialogueTimer > 0f)
             {
                 dialogueTimer -= Time.deltaTime;
+                if (dialogueTimer <= 0f)
+                {
+                    dialogueTimer = 0f;
+                }
             }
             else if (patrolPoints != null && patrolPoints.Length > 1)
             {
                 UpdatePatrol();
             }
 
+            RefreshAnyDialogueFlag();
             UpdateVisualSprite();
+        }
+
+        private void EnsureLabUniformFallbacks()
+        {
+            if (spriteDown == null) spriteDown = Resources.Load<Sprite>("Sprites/Laboratory/LabNPC_Male_Down");
+            if (spriteUp == null) spriteUp = Resources.Load<Sprite>("Sprites/Laboratory/LabNPC_Male_Up");
+            if (spriteLeft == null) spriteLeft = Resources.Load<Sprite>("Sprites/Laboratory/LabNPC_Male_Left");
+            if (spriteRight == null) spriteRight = Resources.Load<Sprite>("Sprites/Laboratory/LabNPC_Male_Right");
+
+            if (shadowSpriteDown == null) shadowSpriteDown = Resources.Load<Sprite>("Sprites/Laboratory/LabNPC_Hazmat_Down");
+            if (shadowSpriteUp == null) shadowSpriteUp = Resources.Load<Sprite>("Sprites/Laboratory/LabNPC_Hazmat_Up");
+            if (shadowSpriteLeft == null) shadowSpriteLeft = Resources.Load<Sprite>("Sprites/Laboratory/LabNPC_Hazmat_Left");
+            if (shadowSpriteRight == null) shadowSpriteRight = Resources.Load<Sprite>("Sprites/Laboratory/LabNPC_Hazmat_Right");
+        }
+
+        private static void RefreshAnyDialogueFlag()
+        {
+            LabNPCController[] npcs = FindObjectsByType<LabNPCController>(FindObjectsSortMode.None);
+            bool any = false;
+            for (int i = 0; i < npcs.Length; i++)
+            {
+                if (npcs[i] != null && npcs[i].dialogueTimer > 0f)
+                {
+                    any = true;
+                    break;
+                }
+            }
+            IsAnyDialogueActive = any;
         }
 
         public void Interact(PlayerMovement player)
@@ -202,35 +254,21 @@ namespace ShadowFlip.Puzzle
             if (dialogueTimer <= 0f || Time.timeScale == 0f) return;
             if (dialogueLines == null || dialogueLines.Length == 0 || dialogueIndex < 0) return;
 
-            Camera cam = Camera.main;
-            if (cam == null) return;
-
             EnsureGuiStyles();
 
-            Vector3 worldAnchor = transform.position + new Vector3(0f, 1.05f, 0f);
-            Vector3 screenPos = cam.WorldToScreenPoint(worldAnchor);
-            if (screenPos.z < 0f) return;
-
-            float guiX = screenPos.x;
-            float guiY = Screen.height - screenPos.y;
-
-            float boxW = 340f;
-            float boxH = 82f;
-            float x = Mathf.Round(Mathf.Clamp(guiX - boxW * 0.5f, 12f, Screen.width - boxW - 12f));
-            float y = Mathf.Round(Mathf.Clamp(guiY - boxH, 12f, Screen.height - boxH - 12f));
+            float bannerW = Mathf.Min(820f, Screen.width - 40f);
+            float bannerH = 98f;
+            float x = Mathf.Round((Screen.width - bannerW) * 0.5f);
+            float y = 12f;
 
             logic l = logic.Instance != null ? logic.Instance : FindFirstObjectByType<logic>();
             bool isDark = l != null && l.isDarkActive;
-            Color ink = new Color(0.07f, 0.06f, 0.11f, 0.96f);
-            Color fill = isDark ? new Color(0.15f, 0.11f, 0.28f, 0.96f) : new Color(0.14f, 0.20f, 0.30f, 0.96f);
-            Color accent = isDark ? new Color(0.75f, 0.48f, 1f, 1f) : new Color(0.45f, 0.88f, 1f, 1f);
+            Color ink = new Color(0.03f, 0.02f, 0.06f, 0.88f);
+            Color fill = isDark ? new Color(0.08f, 0.05f, 0.16f, 0.78f) : new Color(0.05f, 0.07f, 0.12f, 0.78f);
+            Color accent = isDark ? new Color(0.76f, 0.48f, 1f, 1f) : new Color(0.38f, 0.92f, 1f, 1f);
 
             const float pxStep = 3f;
-            Rect box = new Rect(x, y, boxW, boxH);
-            GUI.color = new Color(0f, 0f, 0f, 0.45f);
-            GUI.DrawTexture(new Rect(box.x + pxStep, box.y + pxStep, box.width - pxStep * 2f, box.height), whiteTex);
-            GUI.DrawTexture(new Rect(box.x, box.y + pxStep * 2f, box.width + pxStep, box.height - pxStep * 3f), whiteTex);
-
+            Rect box = new Rect(x, y, bannerW, bannerH);
             GUI.color = ink;
             GUI.DrawTexture(new Rect(box.x + pxStep, box.y, box.width - pxStep * 2f, box.height), whiteTex);
             GUI.DrawTexture(new Rect(box.x, box.y + pxStep, box.width, box.height - pxStep * 2f), whiteTex);
@@ -238,11 +276,21 @@ namespace ShadowFlip.Puzzle
             GUI.color = fill;
             GUI.DrawTexture(new Rect(box.x + pxStep, box.y + pxStep, box.width - pxStep * 2f, box.height - pxStep * 2f), whiteTex);
             GUI.color = accent;
-            GUI.DrawTexture(new Rect(box.x + pxStep * 2f, box.y + pxStep, box.width - pxStep * 4f, pxStep), whiteTex);
+            GUI.DrawTexture(new Rect(box.x + pxStep * 2f, box.y + pxStep, box.width - pxStep * 4f, 4f), whiteTex);
 
-            GUI.Label(new Rect(box.x + 10f, box.y + 8f, box.width - 20f, 20f), npcName, nameStyle);
+            GUI.color = accent;
+            GUI.Label(new Rect(box.x + 18f, box.y + 10f, box.width - 170f, 26f), npcName.ToUpperInvariant(), nameStyle);
+
+            GUI.color = new Color(0.82f, 0.88f, 0.96f, 0.9f);
+            string counter = dialogueLines.Length > 1 ? $"[{dialogueIndex + 1}/{dialogueLines.Length}]  [E] Next" : "[E] Repeat";
+            GUI.Label(new Rect(box.x + box.width - 155f, box.y + 12f, 138f, 22f), counter, hintStyle);
+
+            // Drop shadow + crisp pure white dialogue text for high legibility over any background
+            Rect textRect = new Rect(box.x + 18f, box.y + 38f, box.width - 36f, 52f);
+            GUI.color = new Color(0f, 0f, 0f, 0.85f);
+            GUI.Label(new Rect(textRect.x + 1.5f, textRect.y + 1.5f, textRect.width, textRect.height), dialogueLines[dialogueIndex], textStyle);
             GUI.color = Color.white;
-            GUI.Label(new Rect(box.x + 10f, box.y + 28f, box.width - 20f, 48f), dialogueLines[dialogueIndex], textStyle);
+            GUI.Label(textRect, dialogueLines[dialogueIndex], textStyle);
         }
 
         private void EnsureGuiStyles()
@@ -259,7 +307,7 @@ namespace ShadowFlip.Puzzle
             {
                 nameStyle = new GUIStyle(GUI.skin.label)
                 {
-                    fontSize = 13,
+                    fontSize = 18,
                     fontStyle = FontStyle.Bold,
                     alignment = TextAnchor.UpperLeft
                 };
@@ -269,9 +317,20 @@ namespace ShadowFlip.Puzzle
             {
                 textStyle = new GUIStyle(GUI.skin.label)
                 {
-                    fontSize = 12,
+                    fontSize = 17,
+                    fontStyle = FontStyle.Bold,
                     wordWrap = true,
                     alignment = TextAnchor.UpperLeft
+                };
+            }
+
+            if (hintStyle == null)
+            {
+                hintStyle = new GUIStyle(GUI.skin.label)
+                {
+                    fontSize = 13,
+                    fontStyle = FontStyle.Bold,
+                    alignment = TextAnchor.UpperRight
                 };
             }
         }

@@ -72,6 +72,7 @@ namespace ShadowFlip.Puzzle
 
         private bool levelComplete = false;
         private bool showMainMenu = false;
+        private bool showControlsHelper = false;
         private bool isDedicatedMenuScene = false;
         private int earnedStars = 1;
         private int finalFlips = 0;
@@ -144,6 +145,12 @@ namespace ShadowFlip.Puzzle
             else if (!isDedicatedMenuScene && !levelComplete && Time.timeScale > 0f)
             {
                 levelElapsedSeconds += Time.deltaTime;
+            }
+
+            if (Input.GetKeyDown(KeyCode.Q) && !showMainMenu && !levelComplete && !PixelSandboxEditor.IsInBuildMode)
+            {
+                showControlsHelper = !showControlsHelper;
+                PuzzleAudioManager.Instance?.PlayButtonClick();
             }
 
             if (Input.GetKeyDown(KeyCode.Escape) || Input.GetKeyDown(KeyCode.Tab) || Input.GetKeyDown(KeyCode.M))
@@ -269,17 +276,18 @@ namespace ShadowFlip.Puzzle
                 }
             }
 
-            // Top-Left Pixel Panel + [MENU] Button
+            // Top-Left Pixel Panel + [MENU] Button (yields neatly below Top-of-Screen NPC Dialogue Banner)
             int currentLevelIdx = GetCurrentLevelIndex();
             string levelPrefix = currentLevelIdx >= 0 ? $"LEVEL {currentLevelIdx}  |  " : "";
-            Rect topPanel = new Rect(16, 14, 620, 94);
+            float topY = LabNPCController.IsAnyDialogueActive ? 116f : 14f;
+            Rect topPanel = new Rect(16, topY, 620, 94);
             DrawCelPanel(topPanel, panelColor, inkColor, accentColor, 4f);
 
             GUI.color = accentColor;
-            GUI.Label(new Rect(30, 22, 475, 28), levelPrefix + worldLabel, badgeStyle);
+            GUI.Label(new Rect(30, topY + 8f, 475, 28), levelPrefix + worldLabel, badgeStyle);
             GUI.color = Color.white;
 
-            if (GUI.Button(new Rect(520, 22, 102, 26), "MENU [Esc]"))
+            if (GUI.Button(new Rect(520, topY + 8f, 102, 26), "MENU [Esc]"))
             {
                 PuzzleAudioManager.Instance?.PlayButtonClick();
                 OpenMainMenu();
@@ -289,26 +297,35 @@ namespace ShadowFlip.Puzzle
                 ? "0/0"
                 : $"{openDoors}/{totalDoors}";
             int curFlips = ShadowStalkerController.Instance != null ? ShadowStalkerController.Instance.FlipCount : 0;
-            GUI.Label(new Rect(30, 52, 595, 22),
+            GUI.Label(new Rect(30, topY + 38f, 595, 22),
                 $"Crystals: {activeSensors}/{totalSensors}  |  Gates: {doorText}  |  Time: {FormatTime(levelElapsedSeconds)}  |  Flips: {curFlips}/{parFlips}",
                 statusStyle);
-            GUI.Label(new Rect(30, 76, 595, 22), "[WASD] Move   [F] Flip   [E] Interact   [R] Reset   [Esc/Tab] Main Menu", promptStyle);
+            GUI.Label(new Rect(30, topY + 62f, 595, 22), "[WASD] Move   [F] Flip   [E] Interact   [Q] Help   [R] Reset   [Esc] Menu", promptStyle);
 
-            DrawUmbraStalkerHUD(isDark, panelColor, inkColor);
-            DrawEchoRecordingHUD(panelColor, inkColor);
+            DrawUmbraStalkerHUD(isDark, panelColor, inkColor, topY);
+            DrawEchoRecordingHUD(panelColor, inkColor, topY);
 
-            // Interact Prompt Pill
+            // Interact Prompt Pill (blocks manual interaction in Umbra Mode)
             if (player != null && player.NearbyInteractable != null)
             {
-                string prompt = player.NearbyInteractable.GetInteractPrompt();
-                if (!string.IsNullOrEmpty(prompt))
+                string rawPrompt = player.NearbyInteractable.GetInteractPrompt();
+                if (!string.IsNullOrEmpty(rawPrompt))
                 {
-                    Rect interactRect = new Rect(Screen.width * 0.5f - 175f, Screen.height - 134f, 350f, 36f);
-                    DrawCelPanel(interactRect, inkColor, accentColor, accentColor, 3f);
-                    GUI.color = accentColor;
-                    GUI.Label(interactRect, prompt, bannerStyle);
+                    bool lockedInDark = player.IsDarkModeActive;
+                    string shown = lockedInDark ? "Light Mode Required to Interact ([F] Flip)" : rawPrompt;
+                    Color pillCol = lockedInDark ? new Color(1f, 0.72f, 0.35f, 1f) : accentColor;
+                    Rect interactRect = new Rect(Screen.width * 0.5f - 205f, Screen.height - 134f, 410f, 36f);
+                    DrawCelPanel(interactRect, inkColor, pillCol, pillCol, 3f);
+                    GUI.color = pillCol;
+                    GUI.Label(interactRect, shown, bannerStyle);
                     GUI.color = Color.white;
                 }
+            }
+
+            // [Q] Toggle Controls & Interaction Helper Overlay
+            if (showControlsHelper)
+            {
+                DrawControlsHelperOverlay(inkColor, accentColor, isDark);
             }
 
             // Bottom-Center Tutorial / Level Hint Banner
@@ -492,7 +509,7 @@ namespace ShadowFlip.Puzzle
             SceneManager.LoadScene(sceneName);
         }
 
-        private void DrawUmbraStalkerHUD(bool isDark, Color panelColor, Color inkColor)
+        private void DrawUmbraStalkerHUD(bool isDark, Color panelColor, Color inkColor, float topY = 14f)
         {
             ShadowStalkerController stalker = ShadowStalkerController.Instance;
             if (stalker == null) return;
@@ -509,12 +526,12 @@ namespace ShadowFlip.Puzzle
                 barColor = Color.Lerp(crimson, Color.white, pulse * 0.35f);
             }
 
-            Rect dangerPanel = new Rect(Screen.width - 336f, 14f, 320f, 64f);
+            Rect dangerPanel = new Rect(Screen.width - 336f, topY, 320f, 64f);
             DrawCelPanel(dangerPanel, panelColor, inkColor, barColor, 4f);
 
             string label = stalker.IsMonsterActive
                 ? (stalker.IsSlowedByLaser ? "LASER PETRIFYING UMBRA!" : "⚠ UMBRA STALKER HUNTING! FLIP [F]!")
-                : (stalker.IsInSanctuary ? "SAFE IN SANCTUARY (DRAINING)" : $"UMBRA STALKER AWAKENS: {stalker.RemainingSeconds:0.0}s");
+                : (stalker.IsInSanctuary ? "SAFE IN TESLA ZONE (DRAINING)" : $"UMBRA STALKER AWAKENS: {stalker.RemainingSeconds:0.0}s");
 
             GUI.color = stalker.IsMonsterActive || stalker.IsInSanctuary ? barColor : Color.white;
             GUI.Label(new Rect(dangerPanel.x + 14f, dangerPanel.y + 10f, dangerPanel.width - 28f, 22f), label, statusStyle);
@@ -535,7 +552,7 @@ namespace ShadowFlip.Puzzle
             GUI.color = Color.white;
         }
 
-        private void DrawEchoRecordingHUD(Color panelColor, Color inkColor)
+        private void DrawEchoRecordingHUD(Color panelColor, Color inkColor, float topY = 14f)
         {
             if (cachedEchoes == null) return;
             for (int i = 0; i < cachedEchoes.Length; i++)
@@ -544,7 +561,7 @@ namespace ShadowFlip.Puzzle
                 if (echo != null && echo.IsRecording)
                 {
                     Color cyan = new Color(0.35f, 0.92f, 1f, 1f);
-                    Rect recRect = new Rect(Screen.width - 336f, 86f, 320f, 44f);
+                    Rect recRect = new Rect(Screen.width - 336f, topY + 72f, 320f, 44f);
                     DrawCelPanel(recRect, panelColor, inkColor, cyan, 4f);
                     GUI.color = cyan;
                     GUI.Label(new Rect(recRect.x + 14f, recRect.y + 10f, recRect.width - 28f, 24f),
@@ -553,6 +570,68 @@ namespace ShadowFlip.Puzzle
                     break;
                 }
             }
+        }
+
+        private void DrawControlsHelperOverlay(Color inkColor, Color accentColor, bool isDark)
+        {
+            float w = Mathf.Min(560f, Screen.width - 40f);
+            float h = 252f;
+            float x = Mathf.Round((Screen.width - w) * 0.5f);
+            float y = Mathf.Round((Screen.height - h) * 0.5f);
+            Rect box = new Rect(x, y, w, h);
+
+            Color translucentDark = isDark
+                ? new Color(0.08f, 0.05f, 0.16f, 0.90f)
+                : new Color(0.06f, 0.08f, 0.12f, 0.90f);
+            DrawCelPanel(box, translucentDark, inkColor, accentColor, 4f);
+
+            GUI.color = accentColor;
+            GUI.Label(new Rect(box.x + 16f, box.y + 10f, box.width - 32f, 28f),
+                "CONTROLS & INTERACTION HELPER   [Q to Close]", bannerStyle);
+            GUI.color = Color.white;
+
+            GUI.Label(new Rect(box.x + 22f, box.y + 44f, box.width - 44f, 22f), "[WASD / Arrows]   Move Jimmy", statusStyle);
+            GUI.Label(new Rect(box.x + 22f, box.y + 68f, box.width - 44f, 22f), "[F]   Flip Light Realm <-> Umbra (Dark) Realm", statusStyle);
+            GUI.Label(new Rect(box.x + 22f, box.y + 92f, box.width - 44f, 22f), "[E]   Interact (Mirrors, Levers, NPCs — Light Mode Only)", statusStyle);
+            GUI.Label(new Rect(box.x + 22f, box.y + 116f, box.width - 44f, 22f), "[R]   Reset Level     |     [Esc / Tab / M]   Main Menu", statusStyle);
+            GUI.Label(new Rect(box.x + 22f, box.y + 140f, box.width - 44f, 22f), "[Q]   Toggle this Helper", statusStyle);
+
+            GUI.color = accentColor;
+            GUI.DrawTexture(new Rect(box.x + 18f, box.y + 168f, box.width - 36f, 2f), whiteTex);
+            GUI.Label(new Rect(box.x + 22f, box.y + 176f, box.width - 44f, 22f), "CURRENT CONTEXT INTERACTION:", statusStyle);
+
+            string contextLine;
+            Color contextCol;
+            if (player != null && player.NearbyInteractable != null)
+            {
+                string prompt = player.NearbyInteractable.GetInteractPrompt();
+                if (string.IsNullOrEmpty(prompt))
+                {
+                    contextLine = "Nearby object has no manual interaction right now.";
+                    contextCol = new Color(0.82f, 0.85f, 0.90f, 1f);
+                }
+                else if (player.IsDarkModeActive)
+                {
+                    contextLine = $"LOCKED IN UMBRA MODE — Press [F] to return to Light Mode.\nAvailable in Light Mode: {prompt}";
+                    contextCol = new Color(1f, 0.72f, 0.35f, 1f);
+                }
+                else
+                {
+                    contextLine = $"Ready: {prompt}";
+                    contextCol = new Color(0.45f, 1f, 0.72f, 1f);
+                }
+            }
+            else
+            {
+                contextLine = isDark
+                    ? "Umbra Mode: pushing blocks & [E] interactions are frozen. Phase past Light Walls or charge Capacitors!"
+                    : "Walk near a mirror, lever, polarizer, NPC, or pedestal to see its [E] action.";
+                contextCol = Color.white;
+            }
+
+            GUI.color = contextCol;
+            GUI.Label(new Rect(box.x + 22f, box.y + 198f, box.width - 44f, 46f), contextLine, hintStyle);
+            GUI.color = Color.white;
         }
 
         private static string GetStarsKey(string sceneName) => "ShadowFlip_Stars_" + sceneName;

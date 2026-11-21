@@ -28,10 +28,11 @@ namespace ShadowFlip.Puzzle
         public bool IsPressed { get; private set; }
 
         private readonly HashSet<Collider2D> occupants = new HashSet<Collider2D>();
-        private bool hasLatched = false;
 
         void Awake()
         {
+            // Enforce continuous hold-only behavior on all pressure plates.
+            latchOncePressed = false;
             Collider2D col = GetComponent<Collider2D>();
             col.isTrigger = true;
             if (plateRenderer == null) plateRenderer = GetComponent<SpriteRenderer>();
@@ -40,9 +41,7 @@ namespace ShadowFlip.Puzzle
 
         void Update()
         {
-            if (latchOncePressed && hasLatched) return;
-
-            occupants.RemoveWhere(c => c == null || !c.gameObject.activeInHierarchy || !c.enabled);
+            occupants.RemoveWhere(c => c == null || !c.gameObject.activeInHierarchy || !c.enabled || !IsValidOccupant(c));
             SetPressed(occupants.Count > 0);
         }
 
@@ -57,12 +56,11 @@ namespace ShadowFlip.Puzzle
 
         void OnTriggerStay2D(Collider2D other)
         {
-            bool valid = IsValidOccupant(other);
-            if (valid)
+            if (IsValidOccupant(other))
             {
                 if (occupants.Add(other)) SetPressed(occupants.Count > 0);
             }
-            else if (!latchOncePressed || !hasLatched)
+            else
             {
                 if (occupants.Remove(other)) SetPressed(occupants.Count > 0);
             }
@@ -70,8 +68,6 @@ namespace ShadowFlip.Puzzle
 
         void OnTriggerExit2D(Collider2D other)
         {
-            if (latchOncePressed && hasLatched) return;
-
             if (occupants.Remove(other))
             {
                 SetPressed(occupants.Count > 0);
@@ -80,16 +76,22 @@ namespace ShadowFlip.Puzzle
 
         private bool IsValidOccupant(Collider2D other)
         {
+            if (other == null) return false;
             if (allowPushableBlocks && other.GetComponent<PushableBlock>() != null)
             {
                 return true;
             }
 
+            logic l = logic.Instance != null ? logic.Instance : FindFirstObjectByType<logic>();
+            bool globalDark = l != null && l.isDarkActive;
+            bool effectiveDark = SplitRealmZone.GetEffectiveDarkState(transform.position, globalDark);
+
             bool isMirrorTwin = other.GetComponent<MirrorTwinBody>() != null;
             if (isMirrorTwin)
             {
-                return acceptedForm != WorldAffinity.LightOnly
-                    || RealityAnchorLantern.IsPositionAnchoredInLight(transform.position);
+                return acceptedForm == WorldAffinity.Both
+                    || (acceptedForm == WorldAffinity.LightOnly && (!effectiveDark || RealityAnchorLantern.IsPositionAnchoredInLight(transform.position)))
+                    || (acceptedForm == WorldAffinity.ShadowOnly && effectiveDark);
             }
 
             bool isLightForm = other.GetComponent<Light>() != null;
@@ -99,17 +101,17 @@ namespace ShadowFlip.Puzzle
             if (acceptedForm == WorldAffinity.Both) return true;
             if (acceptedForm == WorldAffinity.LightOnly)
             {
-                return isLightForm || RealityAnchorLantern.IsPositionAnchoredInLight(transform.position);
+                return !effectiveDark || isLightForm || RealityAnchorLantern.IsPositionAnchoredInLight(transform.position);
             }
-            if (acceptedForm == WorldAffinity.ShadowOnly) return isDarkForm;
+            if (acceptedForm == WorldAffinity.ShadowOnly)
+            {
+                return effectiveDark || isDarkForm;
+            }
             return false;
         }
 
         private void SetPressed(bool pressed)
         {
-            if (latchOncePressed && pressed) hasLatched = true;
-            if (latchOncePressed && hasLatched) pressed = true;
-
             if (IsPressed == pressed) return;
             IsPressed = pressed;
             UpdateVisuals();

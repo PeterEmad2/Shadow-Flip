@@ -84,7 +84,7 @@ namespace ShadowFlip.EditorTools
             public Sprite OneWayPolarizer, RealityAnchorOff, RealityAnchorOn, MagneticRailTrack, MagneticRailCart;
             public Sprite SplitTotem, MemoryPrismIdle, MemoryPrismCharged, MimicMirrorIdle, MimicMirrorAwake;
             public Sprite BeamMoth1, BeamMoth2, UmbraMoldTile, UmbraWarden1, UmbraWarden2;
-            public Sprite BlackHole1, BlackHole2;
+            public Sprite BlackHole1, BlackHole2, CapacitorIdle, CapacitorActive;
         }
 
         [MenuItem("Shadow Flip/Create All Levels (Main Menu + Levels 0-13 + Sandbox)")]
@@ -229,7 +229,7 @@ namespace ShadowFlip.EditorTools
             GameObject phaseWall = CreateWall("TutPhaseWall_LightOnly", new Vector3(-1.5f, 0.0f, 0f), new Vector2(0.85f, 11.4f), assets, WorldAffinity.LightOnly, WallTileStyle.Pillar);
 
             CreateEmitter("Emitter_Tut2_Shadow", new Vector3(0.5f, 3.5f, 0f), LightColor.Shadow, WorldAffinity.ShadowOnly, Vector2.right, assets);
-            GameObject mirror2 = CreateIsometricMirror("Mirror_Tut2_Shadow", new Vector3(4.0f, 3.5f, 0f), 45f, 90f, WorldAffinity.ShadowOnly, assets);
+            GameObject mirror2 = CreateIsometricMirror("Mirror_Tut2_Shadow", new Vector3(4.0f, 3.5f, 0f), 45f, 90f, WorldAffinity.Both, assets);
             LightSensor sensor2 = CreateSensor("Sensor_Tut2_Shadow", new Vector3(4.0f, 0.5f, 0f), LightColor.Shadow, WorldAffinity.ShadowOnly, assets);
 
             GameObject blockTut = CreatePushableBlock("RuinBlock_Tut", new Vector3(0.5f, -3.0f, 0f), assets);
@@ -290,7 +290,7 @@ namespace ShadowFlip.EditorTools
             stalker.umbraSafeDuration = 18.0f;
             hud.parFlips = 3;
             hud.lessonTitle = "Level 1: Chromatic Vault";
-            hud.levelHint = "Align Mirror_Red1 in Light Realm, rotate RGB_Prism [E], pull the Green Shutter Lever, step on the Vault Button, then flip [F] to Shadow Realm!";
+            hud.levelHint = "Align mirrors & RGB_Prism [E] in Light Realm, push the Crate onto the Vault Button, pull the Green Shutter Lever, then flip [F] to Shadow Realm!";
 
             CreateArenaWalls(assets);
             CreateWall("RuinedDecor_L1_Top", new Vector3(-8.7f, 4.7f, 0f), new Vector2(1.24f, 1.14f), assets, WorldAffinity.Both, WallTileStyle.Ruined);
@@ -301,8 +301,8 @@ namespace ShadowFlip.EditorTools
             CreateLabNPC("Dr_Vance_L1", new Vector3(-7.5f, -0.8f, 0f), "Dr. Vance",
                 new[]
                 {
-                    "Some mirrors are locked to a specific realm! Align the gold Mirror_Red1 while in Light Realm.",
-                    "Flip [F] to Shadow Realm after pulling the Green Shutter Lever so the Green beam can hit its Shadow Mirror!"
+                    "Interactions and pushing crates only work in the Light Realm! Align all mirrors & RGB_Prism and weigh down the Vault Button first.",
+                    "Then flip [F] to the Shadow Realm so the beams pass the LightOnly Shutter and strike Sensor_Blue!"
                 },
                 assets.LabNpcMale, assets.LabNpcHazmat, assets);
 
@@ -317,7 +317,7 @@ namespace ShadowFlip.EditorTools
 
             CreateColorFilter("GreenFilter", new Vector3(-0.5f, 1.5f, 0f), new Vector2(0.45f, 1.1f), LightColor.Green, assets);
             GameObject greenBarrier = CreateWall("GreenPath_Barrier", new Vector3(0.8f, 1.5f, 0f), new Vector2(0.65f, 1.4f), assets, WorldAffinity.Both, WallTileStyle.Medium);
-            CreateIsometricMirror("Mirror_Green", new Vector3(2.2f, 1.5f, 0f), 45f, 90f, WorldAffinity.ShadowOnly, assets);
+            CreateIsometricMirror("Mirror_Green", new Vector3(2.2f, 1.5f, 0f), 45f, 90f, WorldAffinity.Both, assets);
             LightSensor greenSensor = CreateSensor("Sensor_Green", new Vector3(2.2f, -1.2f, 0f), LightColor.Green, WorldAffinity.Both, assets);
 
             PuzzleLever greenLever = CreateLever("Lever_GreenShutter", new Vector3(-1.0f, -2.2f, 0f), assets, WorldAffinity.Both,
@@ -330,7 +330,8 @@ namespace ShadowFlip.EditorTools
             CreateIsometricMirror("Mirror_Red2", new Vector3(4.5f, -3.5f, 0f), 135f, 90f, WorldAffinity.Both, assets);
             LightSensor redSensor = CreateSensor("Sensor_Red", new Vector3(4.5f, -0.8f, 0f), LightColor.Red, WorldAffinity.Both, assets);
 
-            PressurePlate vaultButton = CreatePressurePlate("Button_VaultSeal", new Vector3(0.5f, 2.8f, 0f), assets, WorldAffinity.Both, latch: true);
+            CreatePushableBlock("PushableBlock_L1", new Vector3(-1.6f, 2.8f, 0f), assets);
+            PressurePlate vaultButton = CreatePressurePlate("Button_VaultSeal", new Vector3(0.5f, 2.8f, 0f), assets, WorldAffinity.Both, latch: false);
 
             CreateWall("VaultWall_Upper", new Vector3(6.5f, 3.8f, 0f), new Vector2(0.85f, 4.4f), assets, WorldAffinity.Both, WallTileStyle.Pillar);
             CreateWall("VaultWall_Lower", new Vector3(6.5f, -3.6f, 0f), new Vector2(0.85f, 4.8f), assets, WorldAffinity.Both, WallTileStyle.Pillar);
@@ -366,9 +367,16 @@ namespace ShadowFlip.EditorTools
             stalker.umbraSafeDuration = 16.0f;
             hud.parFlips = 3;
             hud.lessonTitle = "Level 2: Eclipse Temple";
-            hud.levelHint = "Light Realm: route Red & press the Light Button. Pull the Lever to rotate the enclosed Shadow Mirror, then flip [F] to push the Ruin Block!";
+            hud.levelHint = "Light Realm: route Red, push both blocks onto the Floor Plates, rotate Mirror_S1 [E] & pull the Lever, then flip [F] for Shadow Beams!";
 
             CreateArenaWalls(assets);
+            CreateLabNPC("Dr_Elena_L2", new Vector3(-7.8f, -2.0f, 0f), "Dr. Elena",
+                new[]
+                {
+                    "Pressure plates only stay active while weighed down! Push crates onto the plates in Light Realm before flipping [F] to Umbra.",
+                    "Don't forget to pull the Lever and pre-align Mirror_S1 while still in Light Mode!"
+                },
+                assets.LabNpcFemale, assets.LabNpcHazmat, assets);
 
             CreateEmitter("LightOnly_Emitter", new Vector3(-8.5f, 3.8f, 0f), LightColor.White, WorldAffinity.LightOnly, Vector2.right, assets);
             CreateIsometricMirror("Mirror_L1", new Vector3(-5.2f, 3.8f, 0f), 45f, 90f, WorldAffinity.Both, assets);
@@ -377,10 +385,11 @@ namespace ShadowFlip.EditorTools
             CreateColorFilter("RedFilter", new Vector3(-2.8f, -1.2f, 0f), new Vector2(1.1f, 0.45f), LightColor.Red, assets);
             CreateIsometricMirror("Mirror_L3", new Vector3(-2.8f, -2.8f, 0f), 45f, 90f, WorldAffinity.Both, assets);
             LightSensor stage1Sensor = CreateSensor("Sensor_Stage1_Red", new Vector3(4.2f, -2.8f, 0f), LightColor.Red, WorldAffinity.LightOnly, assets);
-            PressurePlate lightButton = CreatePressurePlate("Light_Button", new Vector3(1.5f, -1.6f, 0f), assets, WorldAffinity.LightOnly, latch: true);
+            CreatePushableBlock("PushableBlock_L2_Light", new Vector3(-0.4f, -1.6f, 0f), assets);
+            PressurePlate lightButton = CreatePressurePlate("Light_Button", new Vector3(1.5f, -1.6f, 0f), assets, WorldAffinity.Both, latch: false);
 
             CreateEmitter("ShadowOnly_Emitter", new Vector3(-8.5f, -4.3f, 0f), LightColor.Shadow, WorldAffinity.ShadowOnly, Vector2.right, assets);
-            CreateIsometricMirror("Mirror_S1", new Vector3(-1.2f, -4.3f, 0f), 135f, 90f, WorldAffinity.ShadowOnly, assets);
+            CreateIsometricMirror("Mirror_S1", new Vector3(-1.2f, -4.3f, 0f), 135f, 90f, WorldAffinity.Both, assets);
 
             GameObject mirrorS2Go = CreateIsometricMirror("Mirror_S2", new Vector3(-1.2f, 4.3f, 0f), 135f, 90f, WorldAffinity.ShadowOnly, assets, canRotate: false);
             OpticalMirror mirrorS2 = mirrorS2Go.GetComponent<OpticalMirror>();
@@ -394,10 +403,10 @@ namespace ShadowFlip.EditorTools
 
             CreateWall("ChannelWall_Top", new Vector3(3.0f, 3.55f, 0f), new Vector2(6.4f, 0.65f), assets, WorldAffinity.Both, WallTileStyle.Medium);
             CreateWall("ChannelWall_Bottom", new Vector3(3.0f, 0.15f, 0f), new Vector2(6.4f, 0.65f), assets, WorldAffinity.Both, WallTileStyle.Medium);
-            CreateWall("LightOnly_Gate", new Vector3(0.4f, 1.85f, 0f), new Vector2(0.75f, 2.5f), assets, WorldAffinity.LightOnly, WallTileStyle.Pillar);
+            CreateWall("ShadowOnly_ChannelGate", new Vector3(0.4f, 1.85f, 0f), new Vector2(0.75f, 2.5f), assets, WorldAffinity.ShadowOnly, WallTileStyle.Pillar);
 
             CreatePushableBlock("PushableBlock", new Vector3(-2.5f, 1.85f, 0f), assets);
-            PressurePlate shadowPlate = CreatePressurePlate("Shadow_PressurePlate", new Vector3(3.6f, 1.85f, 0f), assets, WorldAffinity.ShadowOnly, latch: false);
+            PressurePlate shadowPlate = CreatePressurePlate("Shadow_PressurePlate", new Vector3(3.6f, 1.85f, 0f), assets, WorldAffinity.Both, latch: false);
 
             CreateWall("Vault1_Upper", new Vector3(6.2f, 4.6f, 0f), new Vector2(0.75f, 3.0f), assets, WorldAffinity.Both, WallTileStyle.Pillar);
             CreateWall("Vault1_Lower", new Vector3(6.2f, -2.7f, 0f), new Vector2(0.75f, 6.6f), assets, WorldAffinity.Both, WallTileStyle.Pillar);
@@ -438,9 +447,16 @@ namespace ShadowFlip.EditorTools
             stalker.umbraSafeDuration = 16.0f;
             hud.parFlips = 4;
             hud.lessonTitle = "Level 3: The Prism Sanctum";
-            hud.levelHint = "Combine Red+Blue into White, aim PortalMirror_B [E] right across the wall, push & rotate the Mirror Cart to charge the 7s Capacitor Crystal, then flip [F] and dash through!";
+            hud.levelHint = "Light Mode: combine Red+Blue, flip [F] across Divider Gate & back to Light to align PortalMirror_B & Cart, then flip [F] to Umbra to charge the Capacitor before rushing back into Light Mode!";
 
             CreateArenaWalls(assets);
+            CreateLabNPC("Dr_Vance_L3", new Vector3(-7.8f, -1.2f, 0f), "Dr. Vance",
+                new[]
+                {
+                    "Twin-coil Capacitor Receivers ONLY charge in the Umbra (Dark) Side, then slowly discharge!",
+                    "Charge it in Umbra [F], then flip back to Light Mode so the Shadow Shutter vanishes before the capacitor drains!"
+                },
+                assets.LabNpcMale, assets.LabNpcHazmat, assets);
 
             // Center Divider Wall at x = -0.5 with a LightOnly gate at (-0.5, -0.5)
             CreateWall("Divider_Top", new Vector3(-0.5f, 3.3f, 0f), new Vector2(0.8f, 5.2f), assets, WorldAffinity.Both, WallTileStyle.Pillar);
@@ -456,17 +472,16 @@ namespace ShadowFlip.EditorTools
             PortalMirror portalB = CreatePortalMirror("PortalMirror_B", new Vector3(1.2f, 4.0f, 0f), assets.PortalMirrorB, Vector2.down, null);
             CreatePortalMirror("PortalMirror_A", new Vector3(-2.0f, 1.5f, 0f), assets.PortalMirrorA, Vector2.right, portalB, canRotate: false);
 
-            // East Chamber: Backstop wall + Pushable Mirror Cart + Timed Capacitor Crystal
+            // East Chamber: Backstop wall + Pushable Mirror Cart + Umbra Capacitor Crystal
             CreateWall("Cart_Backstop", new Vector3(4.2f, 4.88f, 0f), new Vector2(1.4f, 0.7f), assets, WorldAffinity.Both, WallTileStyle.Medium);
             CreatePushableMirrorCart("PushableMirrorCart", new Vector3(4.2f, 1.8f, 0f), 45f, 90f, assets);
 
-            LightSensor capSensor = CreateSensor("Sensor_Capacitor_7s", new Vector3(4.2f, -0.2f, 0f), LightColor.White, WorldAffinity.LightOnly, assets);
-            capSensor.holdDuration = 7.0f;
+            LightSensor capSensor = CreateSensor("Sensor_Capacitor_7s", new Vector3(4.2f, -0.2f, 0f), LightColor.White, WorldAffinity.ShadowOnly, assets, isCapacitor: true, holdDuration: 11.0f);
 
             // Inner Shutter corridor before PuzzleDoor
             CreateWall("Shutter_Corridor_Top", new Vector3(5.95f, -0.4f, 0f), new Vector2(1.7f, 0.6f), assets, WorldAffinity.Both, WallTileStyle.Medium);
             CreateWall("Shutter_Corridor_Bot", new Vector3(5.95f, -3.6f, 0f), new Vector2(1.7f, 0.6f), assets, WorldAffinity.Both, WallTileStyle.Medium);
-            CreateWall("InnerShutter_LightOnly", new Vector3(5.4f, -2.0f, 0f), new Vector2(0.65f, 2.6f), assets, WorldAffinity.LightOnly, WallTileStyle.Pillar);
+            CreateWall("InnerShutter_ShadowOnly", new Vector3(5.4f, -2.0f, 0f), new Vector2(0.65f, 2.6f), assets, WorldAffinity.ShadowOnly, WallTileStyle.Pillar);
 
             CreateWall("VaultWall_Upper", new Vector3(6.5f, 2.8f, 0f), new Vector2(0.8f, 6.2f), assets, WorldAffinity.Both, WallTileStyle.Pillar);
             CreateWall("VaultWall_Lower", new Vector3(6.5f, -4.7f, 0f), new Vector2(0.8f, 2.4f), assets, WorldAffinity.Both, WallTileStyle.Pillar);
@@ -499,19 +514,26 @@ namespace ShadowFlip.EditorTools
                 new Color(0.28f, 0.18f, 0.52f, 1f), 0.45f,
                 new Vector3(-8.0f, 3.5f, 0f));
 
-            stalker.umbraSafeDuration = 8.0f;
+            stalker.umbraSafeDuration = 12.0f;
             stalker.canBePetrifiedByLaser = true;
             stalker.petrifyExposureTime = 1.1f;
 
             hud.parFlips = 4;
             hud.lessonTitle = "Level 4: Umbra Labyrinth";
-            hud.levelHint = "Record a Light Echo [E] holding the Light Button, step out of the Sanctuary in Shadow Realm to lure the Umbra Stalker into the Laser to petrify it, then push its Statue onto the final Button!";
+            hud.levelHint = "Record a Light Echo [E] holding the Light Button, step outside the Tesla Sanctuary in Shadow Realm to lure & petrify the Stalker, then push its Statue in Light Mode onto the Final Button!";
 
             CreateArenaWalls(assets);
             CreateWall("RuinedDecor_L4", new Vector3(4.5f, 4.5f, 0f), new Vector2(1.24f, 1.14f), assets, WorldAffinity.Both, WallTileStyle.Ruined);
 
-            // Light Sanctuary in bottom-left
-            CreateSanctuary("Lantern_Sanctuary", new Vector3(-7.5f, -3.0f, 0f), 2.2f, assets);
+            // Tesla Coil Sanctuary in bottom-left
+            CreateLabSanctuary("Lantern_Sanctuary", new Vector3(-7.5f, -3.0f, 0f), 1.4f, assets);
+            CreateLabNPC("Dr_Elena_L4", new Vector3(-4.8f, -3.6f, 0f), "Dr. Elena",
+                new[]
+                {
+                    "Only the Tesla Coil's glowing perimeter keeps you safe from the Umbra Stalker!",
+                    "Petrify the Stalker in the central laser, then flip to Light Mode [F] to push its stone Statue onto Button_Statue."
+                },
+                assets.LabNpcFemale, assets.LabNpcHazmat, assets);
 
             // Echo Pedestal + LightOnly Button
             CreateEchoPedestal("Echo_Pedestal", new Vector3(-7.5f, 0.5f, 0f), playerMovement.LightspriteDown, assets);
@@ -557,9 +579,9 @@ namespace ShadowFlip.EditorTools
                 new Vector3(-8.0f, -3.5f, 0f));
 
             stalker.umbraSafeDuration = 18.0f;
-            hud.parFlips = 3;
+            hud.parFlips = 5;
             hud.lessonTitle = "Level 5: The Flip-Clock Matrix";
-            hud.levelHint = "Flip [F] to aim the Turret into the 4-Way Relay Crystal, align Mirror_E1 [E], then cross the dissolved Forcefield onto the Phase Teleport Pad!";
+            hud.levelHint = "Power the Forcefield with the Turret, push the Crate onto PhasePad_In in Light Mode to teleport it onto the Vault Button, then sync the Turret in Umbra Mode to open the Exit!";
 
             CreateArenaWalls(assets);
 
@@ -572,8 +594,8 @@ namespace ShadowFlip.EditorTools
             CreateLabNPC("Dr_Vance_L5", new Vector3(-7.5f, 2.3f, 0f), "Dr. Vance",
                 new[]
                 {
-                    "This wing houses our Flip-Clock Turret! Every time you press [F], the turret steps 90 degrees clockwise.",
-                    "Aim it into the Relay Crystal to split power to both sensors and drop the Forcefield!"
+                    "Phase Teleport Pads can now warp Pushable Crates too! Lower the Forcefield, then push the crate into PhasePad_In in Light Mode.",
+                    "Follow the crate through the teleporter, push it onto the Vault Button, return via the second pad, and align the Flip-Clock Turret in Umbra!"
                 },
                 assets.LabNpcMale, assets.LabNpcHazmat, assets);
 
@@ -594,16 +616,17 @@ namespace ShadowFlip.EditorTools
             // Down -> Sealed Alcove guarded by ShadowBarrierGate at (0.5, -1.8)
             CreateWall("Alcove_Left", new Vector3(-1.0f, -3.8f, 0f), new Vector2(0.9f, 4.4f), assets, WorldAffinity.Both, WallTileStyle.Pillar);
             CreateWall("Alcove_Right", new Vector3(2.0f, -3.8f, 0f), new Vector2(0.9f, 4.4f), assets, WorldAffinity.Both, WallTileStyle.Pillar);
-            CreateShadowBarrierGate("Forcefield_Gate", new Vector3(0.5f, -1.8f, 0f), new Vector2(2.1f, 0.9f), assets);
+            CreateShadowBarrierGate("Forcefield_Gate", new Vector3(0.5f, -1.8f, 0f), new Vector2(2.1f, 0.9f), assets, openWhenLit: true, stayOpenOnceLit: true);
 
-            // Teleport Pads: Alcove -> Upper-Right Vault Button -> Exit Hallway
-            PhaseShiftTile padOut = CreatePhaseShiftTile("PhasePad_Vault", new Vector3(8.9f, 4.1f, 0f), null, false, assets);
-            CreatePhaseShiftTile("PhasePad_In", new Vector3(0.5f, -4.3f, 0f), padOut, false, assets);
+            // Pushable Block inside Alcove + Teleport Pads (pushable blocks enabled!) -> Upper-Right Vault Button
+            CreatePushableBlock("PushableBlock_Vault", new Vector3(0.5f, -3.0f, 0f), assets);
+            PhaseShiftTile padOut = CreatePhaseShiftTile("PhasePad_Vault", new Vector3(8.9f, 4.3f, 0f), null, false, assets);
+            CreatePhaseShiftTile("PhasePad_In", new Vector3(0.5f, -4.3f, 0f), padOut, false, assets, allowPushableBlocks: true);
 
             PhaseShiftTile padReturnTarget = CreatePhaseShiftTile("PhasePad_ReturnTarget", new Vector3(4.5f, -3.8f, 0f), null, false, assets);
-            CreatePhaseShiftTile("PhasePad_Return", new Vector3(7.4f, 4.1f, 0f), padReturnTarget, false, assets);
+            CreatePhaseShiftTile("PhasePad_Return", new Vector3(7.4f, 2.5f, 0f), padReturnTarget, false, assets, allowPushableBlocks: true);
 
-            PressurePlate vaultButton = CreatePressurePlate("Button_Vault", new Vector3(8.5f, 2.5f, 0f), assets, WorldAffinity.Both, latch: true);
+            PressurePlate vaultButton = CreatePressurePlate("Button_Vault", new Vector3(8.9f, 2.5f, 0f), assets, WorldAffinity.Both, latch: false);
 
             // Sealed Vault at x = 6.5 & Horizontal Vault Shelf at y = 1.4
             CreateWall("VaultWall_Upper", new Vector3(6.5f, 2.6f, 0f), new Vector2(0.85f, 6.8f), assets, WorldAffinity.Both, WallTileStyle.Pillar);
@@ -642,10 +665,10 @@ namespace ShadowFlip.EditorTools
             stalker.umbraSafeDuration = 18.0f;
             hud.parFlips = 5;
             hud.lessonTitle = "Level 6: Grandmaster Facility";
-            hud.levelHint = "Free the Pushable Mirror Cart via the Forcefield, warp the beam across the wall, charge the 9s Capacitor Crystal in Light Realm, then flip [F] so the Realm Inverter converts the beam to Shadow!";
+            hud.levelHint = "Free & push the Mirror Cart in Light Mode, flip [F] so the Realm Inverter converts the beam to Shadow to charge the Upper Umbra Capacitor, then flip back to Light to light Sensor_Light_Grand!";
 
             CreateArenaWalls(assets);
-            CreateLabSanctuary("Sanctuary_NorthWest", new Vector3(-7.5f, 3.5f, 0f), 2.2f, assets);
+            CreateLabSanctuary("Sanctuary_NorthWest", new Vector3(-7.5f, 3.5f, 0f), 1.4f, assets);
 
             // Sci-Fi Facility Perimeter Props, Signage, Security & Shadow-Only Horror Decals
             CreateLabProp("Scifi_Label_Ctrl_L6", new Vector3(-6.2f, 5.4f, 0f), assets.ScifiLabelCtrl, 1.0f, 3);
@@ -665,8 +688,8 @@ namespace ShadowFlip.EditorTools
             CreateLabNPC("Dr_Elena_L6", new Vector3(-5.8f, -1.8f, 0f), "Dr. Elena",
                 new[]
                 {
-                    "The Realm Inverter Relay flips any beam into Shadow Energy whenever you shift into the Shadow Realm!",
-                    "Charge the 9-second Light Capacitor first, then flip [F] and step beside the Vault Door. Stand near the Tesla Coil to discharge Umbra!"
+                    "Push the Mirror Cart in Light Mode to aim at the Upper Umbra Capacitor first, then flip [F] to charge it via the Realm Inverter!",
+                    "While the Capacitor slowly discharges, flip back to Light Mode to push the cart down onto Sensor_Light_Grand!"
                 },
                 assets.LabNpcFemale, assets.LabNpcHazmat, assets);
 
@@ -689,16 +712,15 @@ namespace ShadowFlip.EditorTools
 
             CreatePushableMirrorCart("PushableMirrorCart", new Vector3(3.6f, -3.8f, 0f), 45f, 90f, assets);
 
-            // Dual Target Sensors on x = 4.8 (Light 9s Capacitor at y = 2.0, Shadow at y = -0.2)
-            LightSensor lightCapSensor = CreateSensor("Sensor_Capacitor_7s", new Vector3(4.8f, 2.0f, 0f), LightColor.White, WorldAffinity.LightOnly, assets);
-            lightCapSensor.holdDuration = 9.0f;
-            LightSensor shadowFinalSensor = CreateSensor("Sensor_Shadow_Grand", new Vector3(4.8f, -0.2f, 0f), LightColor.Shadow, WorldAffinity.ShadowOnly, assets);
+            // Dual Target Sensors on x = 4.8 (Umbra 11s Capacitor at y = 2.0, Light Receiver at y = -0.2)
+            LightSensor umbraCapSensor = CreateSensor("Sensor_Capacitor_7s", new Vector3(4.8f, 2.0f, 0f), LightColor.Shadow, WorldAffinity.ShadowOnly, assets, isCapacitor: true, holdDuration: 11.0f);
+            LightSensor lightFinalSensor = CreateSensor("Sensor_Light_Grand", new Vector3(4.8f, -0.2f, 0f), LightColor.White, WorldAffinity.LightOnly, assets);
 
             // Grandmaster Vault at x = 6.5 using Sci-Fi Lab Sliding Door + Threshold
             CreateWall("VaultWall_Upper", new Vector3(6.5f, 3.9f, 0f), new Vector2(0.85f, 4.2f), assets, WorldAffinity.Both, WallTileStyle.Pillar);
             CreateWall("VaultWall_Lower", new Vector3(6.5f, -3.2f, 0f), new Vector2(0.85f, 5.6f), assets, WorldAffinity.Both, WallTileStyle.Pillar);
             PuzzleDoor grandDoor = CreateScifiDoor("PuzzleDoor_Grandmaster", new Vector3(6.5f, 0.8f, 0f), new Vector2(1.1f, 2.4f), assets,
-                new[] { lightCapSensor, shadowFinalSensor }, null, null, requireAll: true, stayOpen: false, isLabDoor: true);
+                new[] { umbraCapSensor, lightFinalSensor }, null, null, requireAll: true, stayOpen: false, isLabDoor: true);
 
             CreateExit("LevelExit", new Vector3(8.6f, 0.8f, 0f), assets, new[] { grandDoor }, "OpticsPuzzle_Level7");
 
@@ -726,10 +748,10 @@ namespace ShadowFlip.EditorTools
                 new Color(0.26f, 0.22f, 0.56f, 1f), 0.48f,
                 new Vector3(-8.2f, -3.5f, 0f));
 
-            stalker.umbraSafeDuration = 15.0f;
+            stalker.umbraSafeDuration = 16.0f;
             hud.parFlips = 3;
             hud.lessonTitle = "Level 7: Quantum Laboratory";
-            hud.levelHint = "Light Realm: talk [E] to Dr. Vance to lower the shutter & rotate Mirror_Red [E] to open the Red Blast Door. Flip [F] to cross the Phase Gate, talk [E] to Unit-7 in Shadow Realm, push the Crate onto the Button & pull the Console!";
+            hud.levelHint = "Light Mode: talk [E] to Dr. Vance & align Mirror_Red. Flip [F] past the Phase Gate & back to Light to talk to Unit-7, push the Crate & pull the Console, then flip to Shadow for the Cryo Beam!";
 
             CreateArenaWalls(assets);
 
@@ -737,8 +759,8 @@ namespace ShadowFlip.EditorTools
             CreateFloorAccent("LabFloor_GratingAisle", new Vector3(1.5f, 0.0f, 0f), new Vector2(3.6f, 9.6f), assets.LabFloorGrating, -18);
             CreateFloorAccent("LabFloor_HazardAirlock", new Vector3(6.75f, 0.0f, 0f), new Vector2(2.6f, 2.8f), assets.LabFloorHazard, -17);
 
-            // Tesla Coil Sanctuary in NW corner
-            CreateLabSanctuary("Sanctuary_Tesla", new Vector3(-7.8f, 3.8f, 0f), 2.2f, assets);
+            // Tesla Coil Sanctuary in NW corner (reduced radius)
+            CreateLabSanctuary("Sanctuary_Tesla", new Vector3(-7.8f, 3.8f, 0f), 1.4f, assets);
 
             // Laboratory perimeter props, bubbling vats, & Sci-Fi facility wall instrumentation
             CreateLabProp("Lab_Pipes_West", new Vector3(-8.6f, 2.5f, 0f), assets.LabWallPipes, 0.72f, 2);
@@ -792,14 +814,14 @@ namespace ShadowFlip.EditorTools
             OpticalMirror cryoMirror = cryoMirrorGo.GetComponent<OpticalMirror>();
             LightSensor shadowSensor = CreateSensor("Sensor_Cryo_Shadow", new Vector3(3.8f, 0.2f, 0f), LightColor.Shadow, WorldAffinity.ShadowOnly, assets);
 
-            // NPC 2: Hazmat Tech Unit-7 in East Wing (Shadow Realm Only! Rotates Mirror_Cryo_Locked from 45 -> 135)
-            LabNPCController unit7 = CreateLabNPC("Hazmat_Unit7_L7", new Vector3(1.5f, 1.8f, 0f), "Hazmat Unit-7",
+            // NPC 2: Unit-7 in East Wing (talk [E] in Light Mode -> rotates Cryo Mirror; wears Chemistry Lab Uniform in Umbra)
+            LabNPCController unit7 = CreateLabNPC("Hazmat_Unit7_L7", new Vector3(1.5f, 1.8f, 0f), "Tech Unit-7",
                 new[]
                 {
                     "Remote calibration complete! Bio-Pod Cryo Mirror locked onto the Shadow receiver below.",
-                    "Push the heavy crate onto the floor button and pull the Security Console to unseal the Blue Blast Door!"
+                    "Push the crate onto the button and pull the Security Console in Light Mode, then flip [F] to power the Shadow receiver!"
                 },
-                assets.LabNpcHazmat, assets.LabNpcHazmat, assets, usableWorld: WorldAffinity.ShadowOnly);
+                assets.LabNpcMale, assets.LabNpcHazmat, assets, usableWorld: WorldAffinity.Both);
             unit7.assistedMirrors = new[] { cryoMirror };
             unit7.triggerEquipmentOnce = true;
 
@@ -857,8 +879,8 @@ namespace ShadowFlip.EditorTools
             CreateLabProp("FloorArrow_Gate", new Vector3(-2.6f, -2.5f, 0f), assets.ScifiArrowR, 1.8f, -15);
             CreateLabProp("FloorArrow_Airlock", new Vector3(4.8f, 0.0f, 0f), assets.ScifiArrowR, 1.8f, -15);
 
-            // Tesla Sanctuary in NW corner
-            CreateLabSanctuary("Sanctuary_Tesla_L8", new Vector3(-8.0f, 3.8f, 0f), 2.2f, assets);
+            // Tesla Sanctuary in NW corner (reduced radius)
+            CreateLabSanctuary("Sanctuary_Tesla_L8", new Vector3(-8.0f, 3.8f, 0f), 1.4f, assets);
 
             // Wall Mounting Props: Pipes, Cameras, Room Labels, Warning Signs, Pulsing Emergency Beacons
             CreateLabProp("Pipes_NorthWest", new Vector3(-3.2f, 4.9f, 0f), assets.ScifiPipesDouble, 0.95f, 2);
@@ -968,9 +990,9 @@ namespace ShadowFlip.EditorTools
                 new Vector3(-8.0f, -3.5f, 0f));
 
             stalker.umbraSafeDuration = 16.0f;
-            hud.parFlips = 3;
+            hud.parFlips = 4;
             hud.lessonTitle = "Level 9: Twin-Mirror Observatory";
-            hud.levelHint = "Rotate the Linked West Mirror [E] to align BOTH twins, charge the Memory Prism, then flip [F] to pin & aim the Awakened Mimic Mirror!";
+            hud.levelHint = "Rotate the Linked West Mirror [E] in Light Mode, flip [F] across the Phase Gate, flip back to Light Mode to rotate [E] MimicMirror_Obs, then flip [F] to pin & power the East Sensor!";
 
             CreateArenaWalls(assets);
 
@@ -981,7 +1003,7 @@ namespace ShadowFlip.EditorTools
             // West Wing: White Emitter -> Linked Twin Mirror A -> Memory Delay Prism -> West Sensor
             CreateEmitter("Emitter_Obs_Light", new Vector3(-8.5f, 3.5f, 0f), LightColor.White, WorldAffinity.Both, Vector2.right, assets);
             GameObject twinAGo = CreateIsometricMirror("Mirror_Twin_Light", new Vector3(-4.5f, 3.5f, 0f), 45f, 90f, WorldAffinity.Both, assets);
-            CreateMemoryPrism("MemoryPrism_Obs", new Vector3(-4.5f, 0.5f, 0f), 9.0f, Vector2.down, false, assets);
+            CreateMemoryPrism("MemoryPrism_Obs", new Vector3(-4.5f, 0.5f, 0f), 14.0f, Vector2.down, false, assets);
             LightSensor westSensor = CreateSensor("Sensor_Obs_West", new Vector3(-4.5f, -2.6f, 0f), LightColor.White, WorldAffinity.Both, assets);
 
             // East Wing: Shadow Emitter -> Linked Twin Mirror B -> Mimic Mirror -> East Shadow Sensor
@@ -996,7 +1018,7 @@ namespace ShadowFlip.EditorTools
                 new[]
                 {
                     "Linked Twin Mirrors synchronize rotations across worlds! Rotating Mirror_Twin_Light steers Mirror_Twin_Shadow too.",
-                    "That Shadow Beam pins the Umbra Mimic Mirror in place so it can't run away!"
+                    "In the East Wing, return to Light Mode to rotate [E] MimicMirror_Obs before flipping [F] to pin it with the Shadow Beam!"
                 },
                 assets.LabNpcMale, assets.LabNpcHazmat, assets);
 
@@ -1031,13 +1053,20 @@ namespace ShadowFlip.EditorTools
                 new Color(0.28f, 0.18f, 0.44f, 1f), 0.46f,
                 new Vector3(-8.0f, -4.0f, 0f));
 
-            stalker.umbraSafeDuration = 12.0f;
+            stalker.umbraSafeDuration = 16.0f;
             hud.parFlips = 4;
             hud.lessonTitle = "Level 10: Polarized Rail Foundry";
             hud.levelHint = "Aim the Red Stun Mirror [E] onto the Beam-Eater Moth, open the Blue One-Way Polarizer [E] to glide the Rail Mirror into place, then flip [F] for the Inverted Shadow Sensor!";
 
             CreateArenaWalls(assets);
-            CreateLabSanctuary("Sanctuary_Foundry", new Vector3(-8.2f, 1.2f, 0f), 2.1f, assets);
+            CreateLabSanctuary("Sanctuary_Foundry", new Vector3(-8.2f, 1.2f, 0f), 1.4f, assets);
+            CreateLabNPC("Dr_Elena_L10", new Vector3(-8.2f, -1.0f, 0f), "Dr. Elena",
+                new[]
+                {
+                    "That Beam-Eater Moth absorbs the White beam below! Aim Red light at it via Mirror_StunAim [E] to stun it.",
+                    "Open the Blue Polarizer [E] so the Rail Mirror glides to (4.5, 1.0), then flip [F] for the Shadow Diode Sensor!"
+                },
+                assets.LabNpcFemale, assets.LabNpcHazmat, assets);
 
             // Creeping Umbra Mold patches cleared by lasers
             CreateUmbraMold("UmbraMold_Walkway", new Vector3(-2.5f, 4.0f, 0f), 1.0f, assets);
@@ -1105,37 +1134,52 @@ namespace ShadowFlip.EditorTools
                 new Vector3(-8.0f, -3.2f, 0f));
 
             stalker.umbraSafeDuration = 16.0f;
-            hud.parFlips = 4;
-            hud.lessonTitle = "Level 11: The Reality Anchor Rift";
-            hud.levelHint = "Summon your Mirror Twin [E] to step onto the East Button, feed the Memory Prism, then flip [F] so it powers the Reality Anchor Bubble for Light-Realm devices in Shadow!";
+            hud.parFlips = 3;
+            hud.lessonTitle = "Level 11: Opposite-Realm Split Vault";
+            hud.levelHint = "Opposite-Side Projection Active! While on West, East stays in the OPPOSITE realm. Align Polarizer_West [E] in Light Mode to charge East's Umbra Capacitor, flip [F] for East's Light Beam, then cross the open Door & hold the Exit Plate!";
 
             CreateArenaWalls(assets);
+            SplitRealmZone splitZone = gameLogic.gameObject.AddComponent<SplitRealmZone>();
+            splitZone.splitAxisX = 0f;
 
-            // Mirror Symmetry Axis at x = 0
-            CreateWall("Div_Top_L11", new Vector3(0.0f, 4.75f, 0f), new Vector2(0.9f, 1.3f), assets, WorldAffinity.Both, WallTileStyle.Long);
-            CreateWall("Div_Window_LightOnly", new Vector3(0.0f, 3.0f, 0f), new Vector2(0.9f, 2.2f), assets, WorldAffinity.LightOnly, WallTileStyle.Long);
-            CreateWall("Div_Mid_L11", new Vector3(0.0f, -0.4f, 0f), new Vector2(0.9f, 4.6f), assets, WorldAffinity.Both, WallTileStyle.Long);
+            CreateLabNPC("Dr_Vance_L11", new Vector3(-7.8f, -1.0f, 0f), "Dr. Vance",
+                new[]
+                {
+                    "Look across the dividing wall at x=0! Whatever realm you're in, the East Side projects the OPPOSITE realm until you cross through the Door!",
+                    "Rotate Polarizer_West [E] in Light Mode so White light charges East's Umbra Capacitor, then flip [F] so East's Blue Light Emitter fires too!"
+                },
+                assets.LabNpcMale, assets.LabNpcHazmat, assets);
 
-            // West Chamber: Twin Totem + White Emitter -> Memory Prism (10s delay across x=0 when flipped to Shadow!)
-            CreateMirrorTwinTotem("Totem_MirrorTwin", new Vector3(-4.5f, 1.5f, 0f), 0f, playerMovement.DarkspriteDown, assets);
-            PressurePlate twinEastButton = CreatePressurePlate("Button_Twin_East", new Vector3(4.5f, -2.0f, 0f), assets, WorldAffinity.Both, latch: true);
+            // Sealed Dividing Wall along x = 0: ONLY Door_Rift_Mid (y = -4.0) lets Jimmy cross to x > 0!
+            CreateWall("Div_Top_L11", new Vector3(0.0f, 4.45f, 0f), new Vector2(0.9f, 1.9f), assets, WorldAffinity.Both, WallTileStyle.Long);
+            GameObject beamWindow = CreateOneWayPolarizer("Window_BeamGlass_L11", new Vector3(0.0f, 3.0f, 0f), Vector2.right, invertColor: false, canRotate: false, assets);
+            BoxCollider2D bwCol = beamWindow.GetComponent<BoxCollider2D>();
+            if (bwCol != null) bwCol.size = new Vector2(0.95f, 1.25f);
+            CreateWall("Div_Mid_L11", new Vector3(0.0f, -0.05f, 0f), new Vector2(0.9f, 5.1f), assets, WorldAffinity.Both, WallTileStyle.Long);
 
-            CreateEmitter("Emitter_Rift_West", new Vector3(-8.5f, 3.0f, 0f), LightColor.White, WorldAffinity.LightOnly, Vector2.right, assets);
-            CreateMemoryPrism("MemoryPrism_Rift", new Vector3(-2.2f, 3.0f, 0f), 10.0f, Vector2.right, false, assets);
+            // West Chamber: White Emitter -> Polarizer_West (rotate [E] to RIGHT) -> Window_BeamGlass_L11 -> East Side
+            CreateEmitter("Emitter_Rift_West", new Vector3(-8.5f, 3.0f, 0f), LightColor.White, WorldAffinity.Both, Vector2.right, assets);
+            CreateOneWayPolarizer("Polarizer_West", new Vector3(-4.5f, 3.0f, 0f), Vector2.up, invertColor: false, canRotate: true, assets);
 
-            // East Chamber: Reality Anchor Lantern + LightOnly Sensor + LightOnly Bubble Button
-            CreateRealityAnchor("RealityAnchor_East", new Vector3(3.2f, 3.0f, 0f), 3.9f, 8.0f, assets);
-            LightSensor riftSensor = CreateSensor("Sensor_Rift_LightOnly", new Vector3(5.2f, 3.0f, 0f), LightColor.White, WorldAffinity.LightOnly, assets);
-            PressurePlate bubbleButton = CreatePressurePlate("Button_Bubble_LightOnly", new Vector3(3.2f, 0.8f, 0f), assets, WorldAffinity.LightOnly, latch: true);
+            // East Chamber (Projected in OPPOSITE realm while player is on West!)
+            CreateWall("Wall_East_LightOnly", new Vector3(2.0f, 3.0f, 0f), new Vector2(0.85f, 1.6f), assets, WorldAffinity.LightOnly, WallTileStyle.Pillar);
+            LightSensor eastCap = CreateSensor("Sensor_East_Capacitor", new Vector3(4.5f, 3.0f, 0f), LightColor.White, WorldAffinity.ShadowOnly, assets, isCapacitor: true, holdDuration: 12.0f);
 
-            PuzzleDoor midDoor = CreateLabBlastDoor("Door_Rift_Mid", new Vector3(0.0f, -4.0f, 0f), new Vector2(0.9f, 2.6f), assets,
-                new[] { riftSensor }, new[] { twinEastButton }, null, requireAll: true, stayOpen: true, vertical: true, redVariant: false);
+            CreateEmitter("Emitter_East_Light", new Vector3(1.5f, 0.5f, 0f), LightColor.Blue, WorldAffinity.LightOnly, Vector2.right, assets);
+            LightSensor eastBlue = CreateSensor("Sensor_East_Blue", new Vector3(4.5f, 0.5f, 0f), LightColor.Blue, WorldAffinity.LightOnly, assets);
+
+            PuzzleDoor midDoor = CreateLabBlastDoor("Door_Rift_Mid", new Vector3(0.0f, -4.0f, 0f), new Vector2(0.9f, 2.8f), assets,
+                new[] { eastCap, eastBlue }, null, null, requireAll: true, stayOpen: true, vertical: true, redVariant: false);
+
+            // East Exit Hold Puzzle (Light Mode push crate onto hold-only pressure plate)
+            CreatePushableBlock("Block_East_L11", new Vector3(2.5f, -2.5f, 0f), assets);
+            PressurePlate eastHoldPlate = CreatePressurePlate("Button_East_Hold", new Vector3(4.5f, -2.5f, 0f), assets, WorldAffinity.Both, latch: false);
 
             // Exit Airlock at x = 6.8
             CreateWall("ExitWall_Top_L11", new Vector3(6.8f, 3.8f, 0f), new Vector2(0.85f, 4.8f), assets, WorldAffinity.Both, WallTileStyle.Long);
             CreateWall("ExitWall_Bot_L11", new Vector3(6.8f, -3.8f, 0f), new Vector2(0.85f, 4.8f), assets, WorldAffinity.Both, WallTileStyle.Long);
             PuzzleDoor finalDoor = CreateLabBlastDoor("Door_Rift_Exit", new Vector3(6.8f, 0.0f, 0f), new Vector2(1.05f, 2.8f), assets,
-                null, new[] { twinEastButton, bubbleButton }, null, requireAll: true, stayOpen: false, vertical: true, redVariant: true);
+                null, new[] { eastHoldPlate }, null, requireAll: true, stayOpen: false, vertical: true, redVariant: true);
 
             CreateExit("LevelExit", new Vector3(8.8f, 0.0f, 0f), assets, new[] { midDoor, finalDoor }, "OpticsPuzzle_Level12");
 
@@ -1164,12 +1208,19 @@ namespace ShadowFlip.EditorTools
                 new Vector3(-8.0f, -3.8f, 0f));
 
             stalker.umbraSafeDuration = 16.0f;
-            hud.parFlips = 4;
+            hud.parFlips = 2;
             hud.lessonTitle = "Level 12: Eclipse Paradox [BOSS]";
-            hud.levelHint = "Shatter the Umbra Warden's 3 Shields in order (RED -> GREEN -> BLUE)! Open Red Polarizer [E], flip [F] for the Shadow Green Mirror, and aim the Blue Mirror [E]!";
+            hud.levelHint = "Light Mode: open Red Polarizer [E] to shatter Shield 1, and pre-align both Top Green & East Blue Mirrors [E]! Then flip [F] to Umbra to shatter Shields 2 & 3!";
 
             CreateArenaWalls(assets);
-            CreateLabSanctuary("Sanctuary_Boss", new Vector3(-7.8f, 3.8f, 0f), 2.3f, assets);
+            CreateLabSanctuary("Sanctuary_Boss", new Vector3(-7.8f, 3.8f, 0f), 1.4f, assets);
+            CreateLabNPC("Chief_Engineer_Mara_L12", new Vector3(-7.6f, 0.8f, 0f), "Chief Engineer Mara",
+                new[]
+                {
+                    "Wait! The Warden's shields drop in order: RED -> GREEN -> BLUE.",
+                    "Open Polarizer_Boss_Red [E] & align Mirror_Boss_Green and Mirror_Boss_Blue in Light Mode first, then flip [F] to Umbra for the Green Emitter!"
+                },
+                assets.LabNpcFemale, assets.LabNpcHazmat, assets);
 
             UmbraWardenBoss warden = CreateUmbraWardenBoss("UmbraWarden_Boss", new Vector3(0.0f, 0.5f, 0f), assets);
 
@@ -1177,9 +1228,9 @@ namespace ShadowFlip.EditorTools
             CreateEmitter("Emitter_Boss_Red", new Vector3(-8.5f, 0.5f, 0f), LightColor.Red, WorldAffinity.Both, Vector2.right, assets);
             CreateOneWayPolarizer("Polarizer_Boss_Red", new Vector3(-5.0f, 0.5f, 0f), Vector2.up, false, true, assets);
 
-            // 2. GREEN Beam (Top ShadowMirror -> Green Filter -> Boss)
-            CreateEmitter("Emitter_Boss_Green", new Vector3(-3.5f, 4.2f, 0f), LightColor.White, WorldAffinity.Both, Vector2.right, assets);
-            CreateIsometricMirror("Mirror_Boss_Green", new Vector3(0.0f, 4.2f, 0f), 45f, 90f, WorldAffinity.ShadowOnly, assets);
+            // 2. GREEN Beam (Top ShadowOnly Emitter -> Rotatable Mirror -> Green Filter -> Boss)
+            CreateEmitter("Emitter_Boss_Green", new Vector3(-3.5f, 4.2f, 0f), LightColor.White, WorldAffinity.ShadowOnly, Vector2.right, assets);
+            CreateIsometricMirror("Mirror_Boss_Green", new Vector3(0.0f, 4.2f, 0f), 45f, 90f, WorldAffinity.Both, assets);
             CreateColorFilter("Filter_Boss_Green", new Vector3(0.0f, 2.5f, 0f), new Vector2(1.1f, 0.45f), LightColor.Green, assets);
 
             // 3. BLUE Beam (South -> East Mirror -> Boss)
@@ -1220,30 +1271,29 @@ namespace ShadowFlip.EditorTools
                 new Vector3(-8.0f, -1.5f, 0f));
 
             stalker.umbraSafeDuration = 16.0f;
-            hud.parFlips = 3;
+            hud.parFlips = 2;
             hud.lessonTitle = "Level 13: Event Horizon Singularity";
-            hud.levelHint = "Aim Mirror_BH_Top [E] to charge the 10s Light Capacitor, tune the Bottom Black Hole [E] from Overdrive to LENS to bend Blue light over the blocker, then flip [F] for Shadow gravitational lensing!";
+            hud.levelHint = "Light Mode: aim Mirror_BH_Top [E] & tune Bottom Black Hole [E] to LENS. Flip [F] to Umbra so BlackHole_Shadow charges the Capacitor, then flip back to Light while it discharges!";
 
             CreateArenaWalls(assets);
-            CreateLabSanctuary("Sanctuary_EventHorizon", new Vector3(-8.0f, 1.0f, 0f), 2.2f, assets);
+            CreateLabSanctuary("Sanctuary_EventHorizon", new Vector3(-8.0f, 1.0f, 0f), 1.4f, assets);
 
             CreateLabNPC("Dr_Elena_L13", new Vector3(-6.8f, -1.2f, 0f), "Dr. Elena",
                 new[]
                 {
-                    "Black Holes bend light around obstacles! Tune [E] the bottom Singularity from Overdrive down to Lens to arc the Blue beam above the blocker wall.",
-                    "In the Shadow Realm, the upper Singularity activates—bending the straight White beam downward beneath the Shadow Pillar!"
+                    "Tune [E] the bottom Singularity to LENS in Light Mode, aim Mirror_BH_Top [E], then flip [F] to Umbra so BlackHole_Shadow bends the beam into the Capacitor!",
+                    "While the Capacitor slowly discharges, flip back to Light Mode so Sensor_Straight_Light activates too!"
                 },
                 assets.LabNpcFemale, assets.LabNpcHazmat, assets);
 
-            // Top Lane: Straight in Light (10s Capacitor) -> Lensed DOWN around Shadow Pillar in Shadow
+            // Top Lane: Straight Light Receiver in Light -> Lensed DOWN into Umbra Capacitor in Shadow
             CreateEmitter("Emitter_BH_Top", new Vector3(-6.5f, 5.05f, 0f), LightColor.White, WorldAffinity.Both, Vector2.down, assets);
             CreateIsometricMirror("Mirror_BH_Top", new Vector3(-6.5f, 4.0f, 0f), 45f, 90f, WorldAffinity.Both, assets);
             CreateBlackHole("BlackHole_Shadow", new Vector3(-3.0f, 2.0f, 0f), 3.3f, 0.48f, 2.8f, WorldAffinity.ShadowOnly, canAdjust: false, startPreset: 1, assets: assets);
             CreateWall("Wall_ShadowPillar", new Vector3(1.5f, 4.0f, 0f), new Vector2(0.85f, 1.2f), assets, WorldAffinity.ShadowOnly, WallTileStyle.Pillar);
 
-            LightSensor straightCap = CreateSensor("Sensor_Straight_Cap", new Vector3(4.5f, 4.0f, 0f), LightColor.White, WorldAffinity.LightOnly, assets);
-            straightCap.holdDuration = 10.0f;
-            LightSensor lensedShadow = CreateSensor("Sensor_Lensed_Shadow", new Vector3(4.5f, 1.64f, 0f), LightColor.White, WorldAffinity.ShadowOnly, assets);
+            LightSensor straightLight = CreateSensor("Sensor_Straight_Light", new Vector3(4.5f, 4.0f, 0f), LightColor.White, WorldAffinity.LightOnly, assets);
+            LightSensor lensedCapShadow = CreateSensor("Sensor_Lensed_Capacitor", new Vector3(4.5f, 1.64f, 0f), LightColor.White, WorldAffinity.ShadowOnly, assets, isCapacitor: true, holdDuration: 11.0f);
 
             // Bottom Lane: Starts Overdrive (swallows Blue); [E] tunes to LENS (2.8f), arcing Blue beam over blocker wall
             CreateEmitter("Emitter_BH_Bot", new Vector3(-8.5f, -4.0f, 0f), LightColor.Blue, WorldAffinity.Both, Vector2.right, assets);
@@ -1255,7 +1305,7 @@ namespace ShadowFlip.EditorTools
             CreateWall("VaultWall_Top_L13", new Vector3(6.8f, 3.8f, 0f), new Vector2(0.85f, 4.8f), assets, WorldAffinity.Both, WallTileStyle.Long);
             CreateWall("VaultWall_Bot_L13", new Vector3(6.8f, -3.8f, 0f), new Vector2(0.85f, 4.8f), assets, WorldAffinity.Both, WallTileStyle.Long);
             PuzzleDoor ehDoor = CreateLabBlastDoor("Door_EventHorizon", new Vector3(6.8f, 0.0f, 0f), new Vector2(1.05f, 2.8f), assets,
-                new[] { straightCap, lensedShadow, blueSensor }, null, null, requireAll: true, stayOpen: false, vertical: true, redVariant: false);
+                new[] { straightLight, lensedCapShadow, blueSensor }, null, null, requireAll: true, stayOpen: false, vertical: true, redVariant: false);
 
             CreateExit("LevelExit", new Vector3(8.8f, 0.0f, 0f), assets, new[] { ehDoor }, "MainMenu");
 
@@ -1648,6 +1698,7 @@ namespace ShadowFlip.EditorTools
             }
 
             LightSanctuary sanc = go.AddComponent<LightSanctuary>();
+            sanc.isTeslaSafeZone = false;
             sanc.sanctuaryRadius = radius;
         }
 
@@ -1716,7 +1767,7 @@ namespace ShadowFlip.EditorTools
             gate.acceptAnyColor = true;
         }
 
-        private static PhaseShiftTile CreatePhaseShiftTile(string name, Vector3 pos, PhaseShiftTile linkedPad, bool flipOnStep, CelAssets assets)
+        private static PhaseShiftTile CreatePhaseShiftTile(string name, Vector3 pos, PhaseShiftTile linkedPad, bool flipOnStep, CelAssets assets, bool allowPushableBlocks = false)
         {
             GameObject go = new GameObject(name);
             go.transform.position = pos;
@@ -1733,6 +1784,7 @@ namespace ShadowFlip.EditorTools
             PhaseShiftTile pad = go.AddComponent<PhaseShiftTile>();
             pad.linkedTeleportPad = linkedPad;
             pad.flipRealmOnStep = flipOnStep;
+            pad.allowPushableBlocks = allowPushableBlocks;
             return pad;
         }
 
@@ -1801,14 +1853,21 @@ namespace ShadowFlip.EditorTools
             return filterGo;
         }
 
-        private static LightSensor CreateSensor(string name, Vector3 pos, LightColor color, WorldAffinity requiredWorld, CelAssets assets, bool acceptAny = false)
+        private static LightSensor CreateSensor(string name, Vector3 pos, LightColor color, WorldAffinity requiredWorld, CelAssets assets, bool acceptAny = false, bool isCapacitor = false, float holdDuration = 0f)
         {
             GameObject go = new GameObject(name);
             go.transform.position = pos;
             go.transform.localScale = new Vector3(0.9f, 0.9f, 1f);
 
+            Sprite idleSp = isCapacitor && assets.CapacitorIdle != null
+                ? assets.CapacitorIdle
+                : (requiredWorld == WorldAffinity.ShadowOnly ? assets.ReceiverInactiveDark : assets.ReceiverInactive);
+            Sprite activeSp = isCapacitor && assets.CapacitorActive != null
+                ? assets.CapacitorActive
+                : assets.ReceiverActiveGlow;
+
             SpriteRenderer sr = go.AddComponent<SpriteRenderer>();
-            sr.sprite = requiredWorld == WorldAffinity.ShadowOnly ? assets.ReceiverInactiveDark : assets.ReceiverInactive;
+            sr.sprite = idleSp;
             sr.sortingOrder = 3;
 
             BoxCollider2D col = go.AddComponent<BoxCollider2D>();
@@ -1817,10 +1876,12 @@ namespace ShadowFlip.EditorTools
             LightSensor sensor = go.AddComponent<LightSensor>();
             sensor.requiredColor = color;
             sensor.acceptAnyColor = acceptAny;
-            sensor.requiredWorld = requiredWorld;
+            sensor.requiredWorld = isCapacitor ? WorldAffinity.ShadowOnly : requiredWorld;
+            sensor.isCapacitor = isCapacitor;
+            sensor.holdDuration = holdDuration > 0f ? holdDuration : (isCapacitor ? 10.0f : 0f);
             sensor.indicatorRenderer = sr;
-            sensor.inactiveSprite = requiredWorld == WorldAffinity.ShadowOnly ? assets.ReceiverInactiveDark : assets.ReceiverInactive;
-            sensor.activeSprite = assets.ReceiverActiveGlow;
+            sensor.inactiveSprite = idleSp;
+            sensor.activeSprite = activeSp;
             return sensor;
         }
 
@@ -2122,6 +2183,7 @@ namespace ShadowFlip.EditorTools
             }
 
             LightSanctuary sanc = go.AddComponent<LightSanctuary>();
+            sanc.isTeslaSafeZone = true;
             sanc.sanctuaryRadius = radius;
         }
 
@@ -2820,7 +2882,9 @@ namespace ShadowFlip.EditorTools
                 UmbraWarden1 = LoadSprite(PixelNewDir + "UmbraWarden_1.png"),
                 UmbraWarden2 = LoadSprite(PixelNewDir + "UmbraWarden_2.png"),
                 BlackHole1 = LoadSprite(PixelNewDir + "BlackHole_1.png"),
-                BlackHole2 = LoadSprite(PixelNewDir + "BlackHole_2.png")
+                BlackHole2 = LoadSprite(PixelNewDir + "BlackHole_2.png"),
+                CapacitorIdle = LoadSprite(PixelNewDir + "Capacitor_Idle.png"),
+                CapacitorActive = LoadSprite(PixelNewDir + "Capacitor_Active.png")
             };
         }
 

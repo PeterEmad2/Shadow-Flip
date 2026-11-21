@@ -5,22 +5,35 @@ using UnityEngine;
 namespace ShadowFlip.Puzzle
 {
     /// <summary>
-    /// Golden crystal sanctuary zone that drains and holds off the Umbra Stalker timer
-    /// while the player stands inside it in Shadow/Umbra mode.
+    /// Tesla Coil safe zone that drains and holds off the Umbra Stalker timer
+    /// while the player stands inside its smaller electrical perimeter in Umbra mode.
+    /// Only Tesla safe zones protect the player from the Umbra Stalker.
     /// </summary>
     public class LightSanctuary : MonoBehaviour
     {
-        public float sanctuaryRadius = 2.2f;
+        public bool isTeslaSafeZone = true;
+        public float sanctuaryRadius = 1.4f;
         public float drainMultiplier = 2.0f;
-        public Color ringColor = new Color(1f, 0.88f, 0.42f, 0.75f);
+        public Color ringColor = new Color(1f, 0.88f, 0.42f, 0.85f);
 
         private static readonly List<LightSanctuary> ActiveSanctuaries = new List<LightSanctuary>();
 
         private LineRenderer ringRenderer;
 
+        [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
+        private static void ResetStatics()
+        {
+            ActiveSanctuaries.Clear();
+        }
+
         void Awake()
         {
             BuildRing();
+        }
+
+        void Start()
+        {
+            SyncRingGeometry();
         }
 
         void OnEnable()
@@ -35,15 +48,10 @@ namespace ShadowFlip.Puzzle
 
         public static bool IsPositionInSanctuary(Vector2 pos)
         {
-            if (RealityAnchorLantern.IsPositionAnchoredInLight(pos))
-            {
-                return true;
-            }
-
             for (int i = 0; i < ActiveSanctuaries.Count; i++)
             {
                 LightSanctuary s = ActiveSanctuaries[i];
-                if (s != null && s.gameObject.activeInHierarchy)
+                if (s != null && s.isTeslaSafeZone && s.gameObject.activeInHierarchy)
                 {
                     if (((Vector2)s.transform.position - pos).sqrMagnitude <= s.sanctuaryRadius * s.sanctuaryRadius)
                     {
@@ -52,21 +60,24 @@ namespace ShadowFlip.Puzzle
                 }
             }
 
-            LightSensor[] sensors = FindObjectsByType<LightSensor>(FindObjectsSortMode.None);
-            const float sensorRadiusSq = 1.6f * 1.6f;
-            for (int i = 0; i < sensors.Length; i++)
-            {
-                LightSensor sensor = sensors[i];
-                if (sensor != null && sensor.gameObject.activeInHierarchy && sensor.IsActivated)
-                {
-                    if (((Vector2)sensor.transform.position - pos).sqrMagnitude <= sensorRadiusSq)
-                    {
-                        return true;
-                    }
-                }
-            }
-
             return false;
+        }
+
+        public void SyncRingGeometry()
+        {
+            if (ringRenderer == null) return;
+
+            float invX = 1f / Mathf.Max(0.1f, Mathf.Abs(transform.lossyScale.x));
+            float invY = 1f / Mathf.Max(0.1f, Mathf.Abs(transform.lossyScale.y));
+            const int segments = 24;
+            ringRenderer.positionCount = segments;
+            for (int i = 0; i < segments; i++)
+            {
+                float angle = i * Mathf.PI * 2f / segments;
+                float px = Mathf.Round(Mathf.Cos(angle) * sanctuaryRadius * invX * 16f) / 16f;
+                float py = Mathf.Round(Mathf.Sin(angle) * sanctuaryRadius * invY * 16f) / 16f;
+                ringRenderer.SetPosition(i, new Vector3(px, py, 0f));
+            }
         }
 
         private void BuildRing()
@@ -87,15 +98,7 @@ namespace ShadowFlip.Puzzle
             Shader shader = Shader.Find("Sprites/Default");
             if (shader != null) ringRenderer.material = new Material(shader);
 
-            const int segments = 16;
-            ringRenderer.positionCount = segments;
-            for (int i = 0; i < segments; i++)
-            {
-                float angle = i * Mathf.PI * 2f / segments;
-                float px = Mathf.Round(Mathf.Cos(angle) * sanctuaryRadius * 16f) / 16f;
-                float py = Mathf.Round(Mathf.Sin(angle) * sanctuaryRadius * 16f) / 16f;
-                ringRenderer.SetPosition(i, new Vector3(px, py, 0f));
-            }
+            SyncRingGeometry();
         }
     }
 }

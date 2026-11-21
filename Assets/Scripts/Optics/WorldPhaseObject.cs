@@ -1,3 +1,4 @@
+using ShadowFlip.Puzzle;
 using UnityEngine;
 
 namespace ShadowFlip.Optics
@@ -15,7 +16,7 @@ namespace ShadowFlip.Optics
         public Sprite shadowWorldSprite;
 
         [Range(0f, 1f)]
-        public float inactiveAlpha = 0.2f;
+        public float inactiveAlpha = 0.16f;
         public Color lightWorldTint = Color.white;
         public Color shadowWorldTint = new Color(0.68f, 0.72f, 1f, 1f);
         public bool disableRenderersInsteadOfFade = false;
@@ -24,6 +25,8 @@ namespace ShadowFlip.Optics
         private SpriteRenderer[] renderers;
         private Color[] baseColors;
         private logic cachedLogic;
+        private LineRenderer phaseBorder;
+        private bool isPhaseWall;
 
         public bool IsActiveInCurrentWorld { get; private set; } = true;
 
@@ -36,6 +39,8 @@ namespace ShadowFlip.Optics
             {
                 baseColors[i] = renderers[i].color;
             }
+
+            DetectAndStyleWall();
         }
 
         void OnEnable()
@@ -70,8 +75,9 @@ namespace ShadowFlip.Optics
         {
             if (affinity == WorldAffinity.Both || IsActiveInCurrentWorld) return false;
 
-            bool activeInTarget = (affinity == WorldAffinity.LightOnly && !targetDarkWorld)
-                || (affinity == WorldAffinity.ShadowOnly && targetDarkWorld);
+            bool effectiveTargetDark = SplitRealmZone.GetEffectiveDarkState(transform.position, targetDarkWorld);
+            bool activeInTarget = (affinity == WorldAffinity.LightOnly && !effectiveTargetDark)
+                || (affinity == WorldAffinity.ShadowOnly && effectiveTargetDark);
             if (!activeInTarget) return false;
 
             bool hasSolidCollider = false;
@@ -116,11 +122,13 @@ namespace ShadowFlip.Optics
             return false;
         }
 
-        private void HandleWorldFlipped(bool isDarkActive)
+        private void HandleWorldFlipped(bool globalDarkActive)
         {
+            bool effectiveDark = SplitRealmZone.GetEffectiveDarkState(transform.position, globalDarkActive);
+
             IsActiveInCurrentWorld = affinity == WorldAffinity.Both
-                || (affinity == WorldAffinity.LightOnly && !isDarkActive)
-                || (affinity == WorldAffinity.ShadowOnly && isDarkActive);
+                || (affinity == WorldAffinity.LightOnly && !effectiveDark)
+                || (affinity == WorldAffinity.ShadowOnly && effectiveDark);
 
             foreach (Collider2D col in colliders)
             {
@@ -130,10 +138,17 @@ namespace ShadowFlip.Optics
             bool swapsSprites = lightWorldSprite != null && shadowWorldSprite != null;
             if (swapsSprites && renderers.Length > 0 && renderers[0] != null)
             {
-                renderers[0].sprite = isDarkActive ? shadowWorldSprite : lightWorldSprite;
+                renderers[0].sprite = effectiveDark ? shadowWorldSprite : lightWorldSprite;
             }
 
-            Color worldTint = swapsSprites ? Color.white : (isDarkActive ? shadowWorldTint : lightWorldTint);
+            Color worldTint = swapsSprites ? Color.white : (effectiveDark ? shadowWorldTint : lightWorldTint);
+            if (isPhaseWall)
+            {
+                worldTint = affinity == WorldAffinity.LightOnly
+                    ? new Color(0.62f, 0.48f, 1.0f, 1f)
+                    : new Color(0.76f, 0.42f, 1.0f, 1f);
+            }
+
             for (int i = 0; i < renderers.Length; i++)
             {
                 SpriteRenderer sr = renderers[i];
@@ -147,10 +162,76 @@ namespace ShadowFlip.Optics
                 {
                     sr.enabled = true;
                     Color c = baseColors[i] * worldTint;
-                    c.a = IsActiveInCurrentWorld ? baseColors[i].a : baseColors[i].a * inactiveAlpha;
+                    float activeAlpha = isPhaseWall ? 0.78f : baseColors[i].a;
+                    c.a = IsActiveInCurrentWorld ? activeAlpha : baseColors[i].a * inactiveAlpha;
                     sr.color = c;
                 }
             }
+
+            if (phaseBorder != null)
+            {
+                Color bCol = affinity == WorldAffinity.LightOnly
+                    ? new Color(0.55f, 0.85f, 1f, IsActiveInCurrentWorld ? 0.92f : 0.35f)
+                    : new Color(0.82f, 0.42f, 1f, IsActiveInCurrentWorld ? 0.92f : 0.25f);
+                phaseBorder.startColor = bCol;
+                phaseBorder.endColor = bCol;
+            }
+        }
+
+        private void DetectAndStyleWall()
+        {
+            if (affinity == WorldAffinity.Both) return;
+
+            bool hasSolidWallCollider = false;
+            BoxCollider2D wallBox = null;
+            for (int i = 0; i < colliders.Length; i++)
+            {
+                if (colliders[i] != null && !colliders[i].isTrigger)
+                {
+                    hasSolidWallCollider = true;
+                    wallBox = colliders[i] as BoxCollider2D;
+                    break;
+                }
+            }
+
+            bool isProp = GetComponent<OpticalMirror>() != null || GetComponent<OpticalPrism>() != null
+                || GetComponent<LightSensor>() != null || GetComponent<PuzzleDoor>() != null
+                || GetComponent<PushableBlock>() != null || GetComponent<ColorFilter>() != null
+                || GetComponent<PortalMirror>() != null || GetComponent<ColorCombiner>() != null
+                || GetComponent<BeamRelayCrystal>() != null || GetComponent<OneWayPolarizer>() != null
+                || GetComponent<OpticalMemoryPrism>() != null || GetComponent<RealityAnchorLantern>() != null
+                || GetComponent<BeamMagneticRail>() != null || GetComponent<BlackHoleLens>() != null;
+
+            if (!hasSolidWallCollider || isProp || wallBox == null) return;
+
+            isPhaseWall = true;
+
+            int layerIdx = affinity == WorldAffinity.LightOnly
+                ? LayerMask.NameToLayer("LightWorld")
+                : LayerMask.NameToLayer("UmbraWorld");
+            if (layerIdx >= 0) gameObject.layer = layerIdx;
+
+            GameObject borderGo = new GameObject("PhaseWallOutline");
+            borderGo.transform.SetParent(transform, false);
+            phaseBorder = borderGo.AddComponent<LineRenderer>();
+            phaseBorder.useWorldSpace = false;
+            phaseBorder.loop = true;
+            phaseBorder.numCornerVertices = 0;
+            phaseBorder.numCapVertices = 0;
+            phaseBorder.startWidth = 0.08f;
+            phaseBorder.endWidth = 0.08f;
+            phaseBorder.sortingOrder = 5;
+
+            Shader shader = Shader.Find("Sprites/Default");
+            if (shader != null) phaseBorder.material = new Material(shader);
+
+            Vector2 half = wallBox.size * 0.5f;
+            Vector2 off = wallBox.offset;
+            phaseBorder.positionCount = 4;
+            phaseBorder.SetPosition(0, new Vector3(off.x - half.x, off.y - half.y, 0f));
+            phaseBorder.SetPosition(1, new Vector3(off.x + half.x, off.y - half.y, 0f));
+            phaseBorder.SetPosition(2, new Vector3(off.x + half.x, off.y + half.y, 0f));
+            phaseBorder.SetPosition(3, new Vector3(off.x - half.x, off.y + half.y, 0f));
         }
     }
 }

@@ -238,7 +238,8 @@ namespace ShadowFlip.Optics
             if (!gameObject.activeInHierarchy) return false;
             if (activeInWorld == WorldAffinity.Both) return true;
 
-            bool isDark = cachedLogic != null && cachedLogic.isDarkActive;
+            bool globalDark = cachedLogic != null && cachedLogic.isDarkActive;
+            bool isDark = SplitRealmZone.GetEffectiveDarkState(transform.position, globalDark);
             if (activeInWorld == WorldAffinity.LightOnly && isDark && RealityAnchorLantern.IsPositionAnchoredInLight(transform.position))
             {
                 return true;
