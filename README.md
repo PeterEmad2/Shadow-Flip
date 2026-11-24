@@ -36,4 +36,4 @@ Open the project in **Unity 6000.3** and use the top menu bar:
 - `Assets/Scripts/UI/` — `PuzzleHUD`, `PixelGuiUtility`, `TutorialManager`, and `PixelSandboxEditor`
 - `Assets/Scripts/Systems/` — Audio, VFX, camera, borders, and sprite repair systems
 - `Assets/Scripts/Legacy/` — Early prototype scripts archived out of the active folders
-- `Assets/Editor/` — Modular `OpticsPuzzleBuilder` partial scripts (`Levels0To6`, `Levels7To13`, `Factory`, `Assets`)
+- `Assets/Editor/` — Modular `OpticsPuzzleBuilder` partials (`Factory`, `Assets`, `PrefabLibrary`), `LevelBuilderContext`, `ShadowFlipLevelDesignerWindow`, and `Assets/Editor/Levels/` (1 file per level for Levels `0–13` + `Sandbox`)
