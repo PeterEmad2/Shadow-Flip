@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using ShadowFlip.Optics;
 using UnityEngine;
 using UnityEngine.Events;
@@ -48,14 +49,18 @@ namespace ShadowFlip.Puzzle
         public static bool IsAnyDialogueActive { get; private set; }
         public static float ActiveBannerBottomY { get; private set; }
 
+        private static readonly HashSet<LabNPCController> ActiveDialogueNpcs = new HashSet<LabNPCController>();
+
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
         private static void ResetStatics()
         {
             IsAnyDialogueActive = false;
             ActiveBannerBottomY = 0f;
+            ActiveDialogueNpcs.Clear();
         }
 
         private SpriteRenderer sr;
+        private logic cachedLogic;
         private int dialogueIndex = -1;
         private float dialogueTimer = 0f;
         private int patrolIndex = 0;
@@ -68,20 +73,23 @@ namespace ShadowFlip.Puzzle
         private GUIStyle textStyle;
         private GUIStyle hintStyle;
         private GUIStyle realmBadgeStyle;
+        private readonly GUIContent cachedNameContent = new GUIContent();
 
         void Awake()
         {
             sr = GetComponent<SpriteRenderer>();
+            cachedLogic = logic.Instance != null ? logic.Instance : FindFirstObjectByType<logic>();
             EnsureLabUniformFallbacks();
             UpdateVisualSprite();
         }
 
         void OnDisable()
         {
-            if (dialogueTimer > 0f)
+            if (dialogueTimer > 0f || ActiveDialogueNpcs.Contains(this))
             {
                 dialogueTimer = 0f;
-                RefreshAnyDialogueFlag();
+                ActiveDialogueNpcs.Remove(this);
+                UpdateDialogueBannerState();
             }
         }
 
@@ -93,6 +101,8 @@ namespace ShadowFlip.Puzzle
                 if (dialogueTimer <= 0f)
                 {
                     dialogueTimer = 0f;
+                    ActiveDialogueNpcs.Remove(this);
+                    UpdateDialogueBannerState();
                 }
             }
             else if (patrolPoints != null && patrolPoints.Length > 1)
@@ -100,7 +110,6 @@ namespace ShadowFlip.Puzzle
                 UpdatePatrol();
             }
 
-            RefreshAnyDialogueFlag();
             UpdateVisualSprite();
         }
 
@@ -117,18 +126,9 @@ namespace ShadowFlip.Puzzle
             if (shadowSpriteRight == null) shadowSpriteRight = Resources.Load<Sprite>("Sprites/Laboratory/LabNPC_Hazmat_Right");
         }
 
-        private static void RefreshAnyDialogueFlag()
+        private static void UpdateDialogueBannerState()
         {
-            LabNPCController[] npcs = FindObjectsByType<LabNPCController>(FindObjectsSortMode.None);
-            bool any = false;
-            for (int i = 0; i < npcs.Length; i++)
-            {
-                if (npcs[i] != null && npcs[i].dialogueTimer > 0f)
-                {
-                    any = true;
-                    break;
-                }
-            }
+            bool any = ActiveDialogueNpcs.Count > 0;
             IsAnyDialogueActive = any;
             ActiveBannerBottomY = any ? (14f + 148f + 10f) : 0f;
         }
@@ -147,6 +147,8 @@ namespace ShadowFlip.Puzzle
             {
                 dialogueIndex = (dialogueIndex + 1) % dialogueLines.Length;
                 dialogueTimer = dialogueDuration;
+                ActiveDialogueNpcs.Add(this);
+                UpdateDialogueBannerState();
             }
 
             PuzzleAudioManager.Instance?.PlayButtonClick();
@@ -194,10 +196,17 @@ namespace ShadowFlip.Puzzle
                 : $"[E] Talk to {npcName}";
         }
 
+        private logic ResolveLogic()
+        {
+            if (logic.Instance != null) return logic.Instance;
+            if (cachedLogic == null) cachedLogic = FindFirstObjectByType<logic>();
+            return cachedLogic;
+        }
+
         private bool CanInteractInCurrentWorld()
         {
             if (usableInWorld == WorldAffinity.Both) return true;
-            logic l = logic.Instance != null ? logic.Instance : FindFirstObjectByType<logic>();
+            logic l = ResolveLogic();
             bool isDark = l != null && l.isDarkActive;
             return (usableInWorld == WorldAffinity.ShadowOnly && isDark)
                 || (usableInWorld == WorldAffinity.LightOnly && !isDark);
@@ -232,7 +241,7 @@ namespace ShadowFlip.Puzzle
         private void UpdateVisualSprite()
         {
             if (sr == null) return;
-            logic l = logic.Instance != null ? logic.Instance : FindFirstObjectByType<logic>();
+            logic l = ResolveLogic();
             bool isDark = l != null && l.isDarkActive;
 
             Sprite down = isDark && shadowSpriteDown != null ? shadowSpriteDown : spriteDown;
@@ -265,7 +274,7 @@ namespace ShadowFlip.Puzzle
             float x = Mathf.Round((Screen.width - bannerW) * 0.5f);
             float y = 14f;
 
-            logic l = logic.Instance != null ? logic.Instance : FindFirstObjectByType<logic>();
+            logic l = ResolveLogic();
             bool isDark = l != null && l.isDarkActive;
             Color ink = new Color(0.03f, 0.02f, 0.06f, 0.94f);
             Color fill = isDark ? new Color(0.09f, 0.05f, 0.19f, 0.86f) : new Color(0.06f, 0.08f, 0.14f, 0.86f);
@@ -342,8 +351,8 @@ namespace ShadowFlip.Puzzle
 
             // Header row: Name + Realm Badge + Counter
             string upperName = npcName.ToUpperInvariant();
-            GUIContent nameContent = new GUIContent(upperName);
-            float nameW = Mathf.Min(contentW - 260f, nameStyle.CalcSize(nameContent).x + 10f);
+            cachedNameContent.text = upperName;
+            float nameW = Mathf.Min(contentW - 260f, nameStyle.CalcSize(cachedNameContent).x + 10f);
 
             PixelGuiUtility.DrawShadowedLabel(new Rect(contentX, box.y + 13f, nameW, 28f), upperName, nameStyle, accent, 2f);
 

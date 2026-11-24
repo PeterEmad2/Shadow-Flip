@@ -95,8 +95,10 @@ namespace ShadowFlip.Puzzle
             ringRenderer.startColor = ringColor;
             ringRenderer.endColor = ringColor;
 
-            Shader shader = Shader.Find("Sprites/Default");
-            if (shader != null) ringRenderer.material = new Material(shader);
+            if (SharedRenderResources.SpriteDefaultMaterial != null)
+            {
+                ringRenderer.sharedMaterial = SharedRenderResources.SpriteDefaultMaterial;
+            }
 
             SyncRingGeometry();
         }

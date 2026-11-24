@@ -35,6 +35,7 @@ public class PlayerMovement : MonoBehaviour
     private float moldSlowUntil = -1f;
     private readonly Sprite[,] lightWalk = new Sprite[4, 2];
     private readonly Sprite[,] darkWalk = new Sprite[4, 2];
+    private readonly Collider2D[] interactBuffer = new Collider2D[16];
 
     public void ApplyMoldSlow(float duration = 0.15f)
     {
@@ -160,15 +161,18 @@ public class PlayerMovement : MonoBehaviour
     private void UpdateInteraction()
     {
         Transform origin = GetActiveFormTransform();
-        Collider2D[] hits = Physics2D.OverlapCircleAll(origin.position, interactRadius);
+        int hitCount = Physics2D.OverlapCircle(origin.position, interactRadius, ContactFilter2D.noFilter, interactBuffer);
 
         IInteractable closest = null;
         float bestDistSq = float.MaxValue;
 
-        foreach (Collider2D hit in hits)
+        for (int i = 0; i < hitCount; i++)
         {
-            if (hit.isTrigger && hit.GetComponent<IInteractable>() == null) continue;
+            Collider2D hit = interactBuffer[i];
+            if (hit == null) continue;
+
             IInteractable interactable = hit.GetComponent<IInteractable>();
+            if (hit.isTrigger && interactable == null) continue;
             if (interactable == null) interactable = hit.GetComponentInParent<IInteractable>();
             if (interactable == null) continue;
 

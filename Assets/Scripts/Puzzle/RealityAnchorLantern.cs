@@ -121,8 +121,10 @@ namespace ShadowFlip.Puzzle
             ringRenderer.startColor = c;
             ringRenderer.endColor = c;
 
-            Shader shader = Shader.Find("Sprites/Default");
-            if (shader != null) ringRenderer.material = new Material(shader);
+            if (SharedRenderResources.SpriteDefaultMaterial != null)
+            {
+                ringRenderer.sharedMaterial = SharedRenderResources.SpriteDefaultMaterial;
+            }
 
             const int segments = 16;
             ringRenderer.positionCount = segments;

@@ -134,8 +134,8 @@ namespace ShadowFlip.Optics
 
             if (forceRefresh)
             {
-                WorldPhaseObject[] phases = FindObjectsByType<WorldPhaseObject>(FindObjectsSortMode.None);
-                for (int i = 0; i < phases.Length; i++)
+                var phases = WorldPhaseObject.ActiveObjects;
+                for (int i = 0; i < phases.Count; i++)
                 {
                     if (phases[i] != null) phases[i].RefreshState();
                 }

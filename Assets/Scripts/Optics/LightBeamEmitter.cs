@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 using ShadowFlip.Puzzle;
 
 namespace ShadowFlip.Optics
@@ -36,22 +37,38 @@ namespace ShadowFlip.Optics
             public LineRenderer InnerCore;
         }
 
+        private struct CachedColliderInfo
+        {
+            public Collider2D Collider;
+            public bool IgnoreAlways;
+            public IOpticalElement Optical;
+        }
+
         private readonly List<BeamLinePair> linePool = new List<BeamLinePair>();
         private readonly List<Vector3> curvedPathBuffer = new List<Vector3>(128);
         private int activeLineCount = 0;
-        private Material fallbackMaterial;
+        private logic cachedLogic;
+
+        // Shared, growable hit buffer & per-collider component cache to eliminate per-ray GC and GetComponent churn.
+        private static RaycastHit2D[] HitBuffer = new RaycastHit2D[32];
+        private static readonly Dictionary<int, CachedColliderInfo> ColliderCache = new Dictionary<int, CachedColliderInfo>(128);
+        private static bool sceneHookRegistered = false;
+
+        [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
+        private static void ResetStatics()
+        {
+            HitBuffer = new RaycastHit2D[32];
+            ColliderCache.Clear();
+            if (!sceneHookRegistered)
+            {
+                sceneHookRegistered = true;
+                SceneManager.sceneUnloaded += _ => ColliderCache.Clear();
+            }
+        }
 
         void Awake()
         {
             if (emitterRenderer == null) emitterRenderer = GetComponent<SpriteRenderer>();
-            if (beamMaterial == null)
-            {
-                Shader spriteShader = Shader.Find("Sprites/Default");
-                if (spriteShader != null)
-                {
-                    fallbackMaterial = new Material(spriteShader);
-                }
-            }
         }
 
         void OnDisable()
@@ -114,7 +131,8 @@ namespace ShadowFlip.Optics
         private bool IsEmitterActive()
         {
             if (activeInWorld == WorldAffinity.Both) return true;
-            logic l = logic.Instance != null ? logic.Instance : FindFirstObjectByType<logic>();
+            logic l = logic.Instance != null ? logic.Instance : cachedLogic;
+            if (l == null) l = cachedLogic = FindFirstObjectByType<logic>();
             bool globalDark = l != null && l.isDarkActive;
             bool isDark = SplitRealmZone.GetEffectiveDarkState(transform.position, globalDark);
             if (activeInWorld == WorldAffinity.LightOnly && isDark && RealityAnchorLantern.IsPositionAnchoredInLight(transform.position))
@@ -125,45 +143,100 @@ namespace ShadowFlip.Optics
                 || (activeInWorld == WorldAffinity.LightOnly && !isDark);
         }
 
-        private bool TryPickFirstHit(RaycastHit2D[] hits, Collider2D ignoreCollider, out RaycastHit2D chosenHit, out IOpticalElement chosenOptical)
+        private static CachedColliderInfo GetOrCacheColliderInfo(Collider2D col)
+        {
+            int id = col.GetInstanceID();
+            if (ColliderCache.TryGetValue(id, out CachedColliderInfo cached) && cached.Collider == col)
+            {
+                return cached;
+            }
+
+            bool ignoreAlways = col.GetComponent<Light>() != null
+                || col.GetComponent<Dark>() != null
+                || col.GetComponent<MirrorTwinBody>() != null
+                || col.GetComponent<BlackHoleLens>() != null
+                || col.GetComponentInParent<BlackHoleLens>() != null;
+
+            IOpticalElement optical = null;
+            if (!ignoreAlways)
+            {
+                optical = col.GetComponent<IOpticalElement>();
+                if (optical == null) optical = col.GetComponentInParent<IOpticalElement>();
+            }
+
+            CachedColliderInfo info = new CachedColliderInfo
+            {
+                Collider = col,
+                IgnoreAlways = ignoreAlways,
+                Optical = optical
+            };
+            ColliderCache[id] = info;
+            return info;
+        }
+
+        private bool TryPickFirstHit(RaycastHit2D[] hits, int hitCount, Collider2D ignoreCollider, out RaycastHit2D chosenHit, out IOpticalElement chosenOptical)
         {
             chosenHit = default;
             chosenOptical = null;
 
-            for (int i = 0; i < hits.Length; i++)
+            for (int i = 0; i < hitCount; i++)
             {
                 RaycastHit2D h = hits[i];
                 if (h.collider == null || h.collider == ignoreCollider || h.collider == selfIgnoreCollider) continue;
 
-                // Player, Mirror Twin, & Black Hole core colliders do not block optical beams directly.
-                if (h.collider.GetComponent<Light>() != null
-                    || h.collider.GetComponent<Dark>() != null
-                    || h.collider.GetComponent<MirrorTwinBody>() != null
-                    || h.collider.GetComponent<BlackHoleLens>() != null
-                    || h.collider.GetComponentInParent<BlackHoleLens>() != null) continue;
-
-                IOpticalElement optical = h.collider.GetComponent<IOpticalElement>();
-                if (optical == null) optical = h.collider.GetComponentInParent<IOpticalElement>();
+                CachedColliderInfo info = GetOrCacheColliderInfo(h.collider);
+                if (info.IgnoreAlways) continue;
 
                 // Non-optical trigger colliders (e.g., PressurePlate, LevelExit) do not block beams.
-                if (h.collider.isTrigger && optical == null) continue;
+                if (h.collider.isTrigger && info.Optical == null) continue;
 
                 chosenHit = h;
-                chosenOptical = optical;
+                chosenOptical = info.Optical;
                 return true;
             }
 
             return false;
         }
 
+        private int RaycastSorted(Vector2 origin, Vector2 dir, float dist)
+        {
+            ContactFilter2D filter = new ContactFilter2D
+            {
+                useLayerMask = true,
+                layerMask = hitMask,
+                useTriggers = Physics2D.queriesHitTriggers
+            };
+
+            int n;
+            while (true)
+            {
+                n = Physics2D.Raycast(origin, dir, filter, HitBuffer, dist);
+                if (n < HitBuffer.Length) break;
+                HitBuffer = new RaycastHit2D[HitBuffer.Length * 2];
+            }
+
+            // Insertion sort by hit distance (small n, zero allocations).
+            for (int i = 1; i < n; i++)
+            {
+                RaycastHit2D key = HitBuffer[i];
+                int j = i - 1;
+                while (j >= 0 && HitBuffer[j].distance > key.distance)
+                {
+                    HitBuffer[j + 1] = HitBuffer[j];
+                    j--;
+                }
+                HitBuffer[j + 1] = key;
+            }
+            return n;
+        }
+
         private void CastSegment(Vector2 origin, Vector2 direction, LightColor color, int remainingBounces, Collider2D ignoreCollider = null)
         {
             if (remainingBounces < 0) return;
 
-            RaycastHit2D[] hits = Physics2D.RaycastAll(origin, direction, maxDistance, hitMask);
-            Array.Sort(hits, (a, b) => a.distance.CompareTo(b.distance));
+            int hitCount = RaycastSorted(origin, direction, maxDistance);
 
-            if (!TryPickFirstHit(hits, ignoreCollider, out RaycastHit2D chosenHit, out IOpticalElement chosenOptical))
+            if (!TryPickFirstHit(HitBuffer, hitCount, ignoreCollider, out RaycastHit2D chosenHit, out IOpticalElement chosenOptical))
             {
                 DrawSegment(origin, origin + direction * maxDistance, color);
                 return;
@@ -234,10 +307,9 @@ namespace ShadowFlip.Optics
                 float step = Mathf.Min(ds, maxDistance - traveled);
                 if (traveled > 1.15f) activeIgnore = null;
 
-                RaycastHit2D[] hits = Physics2D.RaycastAll(pos, dir, step, hitMask);
-                Array.Sort(hits, (a, b) => a.distance.CompareTo(b.distance));
+                int hitCount = RaycastSorted(pos, dir, step);
 
-                if (TryPickFirstHit(hits, activeIgnore, out RaycastHit2D chosenHit, out IOpticalElement chosenOptical))
+                if (TryPickFirstHit(HitBuffer, hitCount, activeIgnore, out RaycastHit2D chosenHit, out IOpticalElement chosenOptical))
                 {
                     Vector2 endPoint = chosenOptical != null
                         ? (Vector2)chosenHit.collider.transform.position
@@ -327,7 +399,7 @@ namespace ShadowFlip.Optics
         {
             while (linePool.Count <= index)
             {
-                Material mat = beamMaterial != null ? beamMaterial : fallbackMaterial;
+                Material mat = beamMaterial != null ? beamMaterial : SharedRenderResources.SpriteDefaultMaterial;
 
                 GameObject outerGo = new GameObject($"BeamOuter_{linePool.Count}");
                 outerGo.transform.SetParent(transform, false);
@@ -336,7 +408,7 @@ namespace ShadowFlip.Optics
                 outer.numCapVertices = 0;
                 outer.numCornerVertices = 0;
                 outer.sortingOrder = sortingOrder;
-                outer.material = mat;
+                if (mat != null) outer.sharedMaterial = mat;
 
                 GameObject coreGo = new GameObject($"BeamCore_{linePool.Count}");
                 coreGo.transform.SetParent(transform, false);
@@ -345,7 +417,7 @@ namespace ShadowFlip.Optics
                 core.numCapVertices = 0;
                 core.numCornerVertices = 0;
                 core.sortingOrder = sortingOrder + 1;
-                core.material = mat;
+                if (mat != null) core.sharedMaterial = mat;
 
                 linePool.Add(new BeamLinePair { OuterGlow = outer, InnerCore = core });
             }

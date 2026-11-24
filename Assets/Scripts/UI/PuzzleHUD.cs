@@ -1,3 +1,5 @@
+using System.Collections.Generic;
+using System.IO;
 using ShadowFlip.Optics;
 using UnityEngine;
 using UnityEngine.SceneManagement;
@@ -22,7 +24,7 @@ namespace ShadowFlip.Puzzle
         [TextArea]
         public string lessonTitle = "";
 
-        private static readonly string[] LevelScenes =
+        private static readonly string[] BuiltInLevelScenes =
         {
             "OpticsPuzzle_Tutorial",
             "OpticsPuzzle",
@@ -40,7 +42,7 @@ namespace ShadowFlip.Puzzle
             "OpticsPuzzle_Level13"
         };
 
-        private static readonly string[] LevelDisplayNames =
+        private static readonly string[] BuiltInLevelDisplayNames =
         {
             "Lv 0 (Tutorial): Basics",
             "Lv 1: Chromatic Vault",
@@ -58,12 +60,47 @@ namespace ShadowFlip.Puzzle
             "Lv 13: Event Horizon [BLACK HOLE]"
         };
 
+        private static readonly List<string> ActiveLevelScenes = new List<string>(24);
+        private static readonly List<string> ActiveLevelDisplayNames = new List<string>(24);
+
+        private static void RefreshLevelCatalog()
+        {
+            ActiveLevelScenes.Clear();
+            ActiveLevelDisplayNames.Clear();
+
+            for (int i = 0; i < BuiltInLevelScenes.Length; i++)
+            {
+                ActiveLevelScenes.Add(BuiltInLevelScenes[i]);
+                ActiveLevelDisplayNames.Add(BuiltInLevelDisplayNames[i]);
+            }
+
+            int buildCount = SceneManager.sceneCountInBuildSettings;
+            for (int i = 0; i < buildCount; i++)
+            {
+                string scenePath = SceneUtility.GetScenePathByBuildIndex(i);
+                if (string.IsNullOrEmpty(scenePath)) continue;
+
+                string sceneName = Path.GetFileNameWithoutExtension(scenePath);
+                if (string.IsNullOrEmpty(sceneName)
+                    || sceneName == "MainMenu"
+                    || sceneName == "OpticsPuzzle_Sandbox"
+                    || ActiveLevelScenes.Contains(sceneName))
+                {
+                    continue;
+                }
+
+                ActiveLevelScenes.Add(sceneName);
+                ActiveLevelDisplayNames.Add($"Lv {ActiveLevelScenes.Count - 1}: {sceneName}");
+            }
+        }
+
         private static int GetCurrentLevelIndex()
         {
+            if (ActiveLevelScenes.Count == 0) RefreshLevelCatalog();
             string active = SceneManager.GetActiveScene().name;
-            for (int i = 0; i < LevelScenes.Length; i++)
+            for (int i = 0; i < ActiveLevelScenes.Count; i++)
             {
-                if (LevelScenes[i] == active) return i;
+                if (ActiveLevelScenes[i] == active) return i;
             }
             return -1;
         }
@@ -78,6 +115,16 @@ namespace ShadowFlip.Puzzle
         private int finalFlips = 0;
         private float levelElapsedSeconds = 0f;
         private string menuNotice = "";
+        private Vector2 menuScrollPos;
+
+        private int lastStatSensors = -1;
+        private int lastStatTotalSensors = -1;
+        private int lastStatDoors = -1;
+        private int lastStatTotalDoors = -1;
+        private int lastStatFlips = -1;
+        private int lastStatTenths = -1;
+        private string cachedStatsText = "";
+        private readonly GUIContent tempGuiContent = new GUIContent();
 
         private LightSensor[] cachedSensors;
         private PuzzleDoor[] cachedDoors;
@@ -103,6 +150,8 @@ namespace ShadowFlip.Puzzle
         private static void ResetStatics()
         {
             hasShownInitialMainMenu = false;
+            ActiveLevelScenes.Clear();
+            ActiveLevelDisplayNames.Clear();
         }
 
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
@@ -118,6 +167,7 @@ namespace ShadowFlip.Puzzle
 
         void Start()
         {
+            RefreshLevelCatalog();
             if (player == null) player = FindFirstObjectByType<PlayerMovement>();
             if (gameLogic == null) gameLogic = logic.Instance != null ? logic.Instance : FindFirstObjectByType<logic>();
 
@@ -297,13 +347,24 @@ namespace ShadowFlip.Puzzle
                 OpenMainMenu();
             }
 
-            // Clean Spaced Stats Row + Subtle Footer
-            string doorText = totalDoors == 0 ? "0/0" : $"{openDoors}/{totalDoors}";
+            // Clean Spaced Stats Row + Subtle Footer (rebuild text only on state or tenth-of-second change)
             int curFlips = ShadowStalkerController.Instance != null ? ShadowStalkerController.Instance.FlipCount : 0;
+            int tenths = Mathf.FloorToInt(Mathf.Max(0f, levelElapsedSeconds) * 10f);
+            if (activeSensors != lastStatSensors || totalSensors != lastStatTotalSensors
+                || openDoors != lastStatDoors || totalDoors != lastStatTotalDoors
+                || curFlips != lastStatFlips || tenths != lastStatTenths)
+            {
+                lastStatSensors = activeSensors;
+                lastStatTotalSensors = totalSensors;
+                lastStatDoors = openDoors;
+                lastStatTotalDoors = totalDoors;
+                lastStatFlips = curFlips;
+                lastStatTenths = tenths;
+                string doorText = totalDoors == 0 ? "0/0" : $"{openDoors}/{totalDoors}";
+                cachedStatsText = $"Crystals {activeSensors}/{totalSensors}   ·   Gates {doorText}   ·   {FormatTime(levelElapsedSeconds)}   ·   Flips {curFlips}/{parFlips}";
+            }
             GUI.color = new Color(0.95f, 0.96f, 0.99f, 1f);
-            GUI.Label(new Rect(28f, topY + 38f, 424f, 22f),
-                $"Crystals {activeSensors}/{totalSensors}   ·   Gates {doorText}   ·   {FormatTime(levelElapsedSeconds)}   ·   Flips {curFlips}/{parFlips}",
-                statusStyle);
+            GUI.Label(new Rect(28f, topY + 38f, 424f, 22f), cachedStatsText, statusStyle);
 
             GUI.color = new Color(0.76f, 0.80f, 0.88f, 0.88f);
             GUI.Label(new Rect(28f, topY + 60f, 424f, 20f),
@@ -384,17 +445,19 @@ namespace ShadowFlip.Puzzle
             Rect modal = new Rect((Screen.width - w) * 0.5f, (Screen.height - h) * 0.5f, w, h);
             DrawCelPanel(modal, panelColor, inkColor, accentColor, 5f);
 
+            if (ActiveLevelScenes.Count == 0) RefreshLevelCatalog();
+
             int totalStars = 0;
-            for (int i = 0; i < LevelScenes.Length; i++)
+            for (int i = 0; i < ActiveLevelScenes.Count; i++)
             {
-                totalStars += PlayerPrefs.GetInt(GetStarsKey(LevelScenes[i]), 0);
+                totalStars += PlayerPrefs.GetInt(GetStarsKey(ActiveLevelScenes[i]), 0);
             }
 
             GUI.color = accentColor;
             GUI.Label(new Rect(modal.x, modal.y + 12f, modal.width, 34f), "SHADOW FLIP", titleStyle);
             GUI.color = Color.white;
             GUI.Label(new Rect(modal.x, modal.y + 46f, modal.width, 22f),
-                $"PIXEL-ART LIGHT & UMBRA OPTICS PUZZLE   |   ★ {totalStars} / {LevelScenes.Length * 3}", bannerStyle);
+                $"PIXEL-ART LIGHT & UMBRA OPTICS PUZZLE   |   ★ {totalStars} / {ActiveLevelScenes.Count * 3}", bannerStyle);
 
             // Top Action Buttons
             string currentScene = SceneManager.GetActiveScene().name;
@@ -423,44 +486,59 @@ namespace ShadowFlip.Puzzle
                 }
             }
 
-            // 14-Level (0-13) + Sandbox 2-Column Select Grid (8 left, 7 right)
+            // Dynamic Scrollable 2-Column Level Select Grid (all built-in + custom scenes) + Sandbox
+            int maxIndex = Mathf.Max(0, ActiveLevelScenes.Count - 1);
             GUI.color = accentColor;
-            GUI.Label(new Rect(modal.x + 24f, modal.y + 118f, modal.width - 48f, 20f), "SELECT LEVEL (0 - 13) OR SANDBOX:", statusStyle);
+            GUI.Label(new Rect(modal.x + 24f, modal.y + 118f, modal.width - 48f, 20f), $"SELECT LEVEL (0 - {maxIndex}) OR SANDBOX:", statusStyle);
             GUI.color = Color.white;
 
             float gridTop = modal.y + 142f;
-            float rowStep = Mathf.Min(36f, (modal.height - 196f) / 8f);
+            float availH = modal.height - 196f;
+            int totalSlots = ActiveLevelScenes.Count + 1; // +1 for Sandbox
+            int rowsPerCol = Mathf.Max(1, Mathf.CeilToInt(totalSlots / 2f));
+            float rowStep = Mathf.Max(31f, Mathf.Min(36f, availH / rowsPerCol));
             float btnH = Mathf.Max(26f, rowStep - 5f);
+            float contentH = rowsPerCol * rowStep;
+            bool needsScroll = contentH > availH + 1f;
+            float colW = needsScroll ? (modal.width - 80f) * 0.5f : halfW;
 
-            for (int i = 0; i < LevelScenes.Length; i++)
+            Rect scrollOuter = new Rect(modal.x + 24f, gridTop, modal.width - 48f, availH);
+            Rect scrollView = new Rect(0f, 0f, modal.width - (needsScroll ? 64f : 48f), contentH);
+            menuScrollPos = GUI.BeginScrollView(scrollOuter, menuScrollPos, scrollView, false, needsScroll);
+
+            for (int i = 0; i < ActiveLevelScenes.Count; i++)
             {
-                string sceneName = LevelScenes[i];
+                string sceneName = ActiveLevelScenes[i];
                 int stars = PlayerPrefs.GetInt(GetStarsKey(sceneName), 0);
                 float bestTime = PlayerPrefs.GetFloat(GetBestTimeKey(sceneName), -1f);
                 string starStr = new string('★', stars) + new string('☆', 3 - stars);
                 string timeTag = bestTime > 0f ? $" {FormatTime(bestTime)}" : "";
                 string activeTag = sceneName == currentScene ? " *" : "";
 
-                int col = i < 8 ? 0 : 1;
-                int row = i < 8 ? i : i - 8;
-                float bx = col == 0 ? modal.x + 24f : modal.x + modal.width - 24f - halfW;
-                float by = gridTop + row * rowStep;
-                Rect btnRect = new Rect(bx, by, halfW, btnH);
-                if (GUI.Button(btnRect, $" {LevelDisplayNames[i]}{activeTag}  [{starStr}]{timeTag}", buttonStyle))
+                int col = i < rowsPerCol ? 0 : 1;
+                int row = i < rowsPerCol ? i : i - rowsPerCol;
+                float bx = col == 0 ? 0f : scrollView.width - colW;
+                float by = row * rowStep;
+                Rect btnRect = new Rect(bx, by, colW, btnH);
+                if (GUI.Button(btnRect, $" {ActiveLevelDisplayNames[i]}{activeTag}  [{starStr}]{timeTag}", buttonStyle))
                 {
                     PuzzleAudioManager.Instance?.PlayButtonClick();
                     TryLoadLevel(sceneName);
                 }
             }
 
-            // Right column slot 7 (row 6): Sandbox Level Editor
-            Rect sandboxRect = new Rect(modal.x + modal.width - 24f - halfW, gridTop + 6 * rowStep, halfW, btnH);
+            // Final slot: Sandbox Level Editor
+            int sCol = ActiveLevelScenes.Count < rowsPerCol ? 0 : 1;
+            int sRow = ActiveLevelScenes.Count < rowsPerCol ? ActiveLevelScenes.Count : ActiveLevelScenes.Count - rowsPerCol;
+            Rect sandboxRect = new Rect(sCol == 0 ? 0f : scrollView.width - colW, sRow * rowStep, colW, btnH);
             string sandboxTag = currentScene == "OpticsPuzzle_Sandbox" ? " [ACTIVE]" : "";
             if (GUI.Button(sandboxRect, $" ⚙ SANDBOX LEVEL EDITOR{sandboxTag}", buttonStyle))
             {
                 PuzzleAudioManager.Instance?.PlayButtonClick();
                 TryLoadLevel("OpticsPuzzle_Sandbox");
             }
+
+            GUI.EndScrollView();
 
             if (!string.IsNullOrEmpty(menuNotice))
             {
@@ -473,10 +551,10 @@ namespace ShadowFlip.Puzzle
             if (GUI.Button(new Rect(modal.x + 24f, modal.y + h - 42f, 212f, 30f), "Reset Saved Stars & Times", buttonStyle))
             {
                 PuzzleAudioManager.Instance?.PlayButtonClick();
-                for (int i = 0; i < LevelScenes.Length; i++)
+                for (int i = 0; i < ActiveLevelScenes.Count; i++)
                 {
-                    PlayerPrefs.DeleteKey(GetStarsKey(LevelScenes[i]));
-                    PlayerPrefs.DeleteKey(GetBestTimeKey(LevelScenes[i]));
+                    PlayerPrefs.DeleteKey(GetStarsKey(ActiveLevelScenes[i]));
+                    PlayerPrefs.DeleteKey(GetBestTimeKey(ActiveLevelScenes[i]));
                 }
                 PlayerPrefs.Save();
                 menuNotice = "All saved stars & best times cleared.";
@@ -577,7 +655,8 @@ namespace ShadowFlip.Puzzle
             string shown = showLocked ? lockMessage : rawPrompt;
             Color pillCol = showLocked ? new Color(1f, 0.72f, 0.35f, 1f) : accentColor;
 
-            float textWidth = helperTextStyle.CalcSize(new GUIContent(shown)).x;
+            tempGuiContent.text = shown;
+            float textWidth = helperTextStyle.CalcSize(tempGuiContent).x;
             float width = Mathf.Clamp(textWidth + 92f, 340f, 560f);
             float height = 48f;
 

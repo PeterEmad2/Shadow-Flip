@@ -29,6 +29,7 @@ namespace ShadowFlip.Optics
 
         private SpriteRenderer spriteRenderer;
         private float targetAngle;
+        private logic cachedLogic;
 
         private static readonly Vector2[] IsometricNormals =
         {
@@ -41,6 +42,7 @@ namespace ShadowFlip.Optics
         void Awake()
         {
             spriteRenderer = GetComponent<SpriteRenderer>();
+            cachedLogic = logic.Instance != null ? logic.Instance : FindFirstObjectByType<logic>();
             if (HasIsometricSprites())
             {
                 transform.rotation = Quaternion.identity;
@@ -163,7 +165,8 @@ namespace ShadowFlip.Optics
         private bool CanPlayerRotate()
         {
             if (!canRotate) return false;
-            logic l = logic.Instance != null ? logic.Instance : FindFirstObjectByType<logic>();
+            logic l = logic.Instance != null ? logic.Instance : cachedLogic;
+            if (l == null) l = cachedLogic = FindFirstObjectByType<logic>();
             bool isDark = l != null && l.isDarkActive;
             if (requireLightWorldToRotate && isDark) return false;
             if (requireShadowWorldToRotate && !isDark) return false;

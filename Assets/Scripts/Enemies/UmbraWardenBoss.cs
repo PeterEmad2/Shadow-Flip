@@ -155,8 +155,10 @@ namespace ShadowFlip.Puzzle
             shieldRing.endWidth = 0.11f;
             shieldRing.sortingOrder = 16;
 
-            Shader shader = Shader.Find("Sprites/Default");
-            if (shader != null) shieldRing.material = new Material(shader);
+            if (SharedRenderResources.SpriteDefaultMaterial != null)
+            {
+                shieldRing.sharedMaterial = SharedRenderResources.SpriteDefaultMaterial;
+            }
 
             const int segments = 16;
             shieldRing.positionCount = segments;

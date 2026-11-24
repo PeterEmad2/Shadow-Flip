@@ -42,10 +42,12 @@ namespace ShadowFlip.Optics
         private SpriteRenderer capGaugeFill;
         private float capGaugeWidth = 0.96f;
         private static Sprite sharedGaugeSprite;
+        private logic cachedLogic;
 
         void Awake()
         {
             if (indicatorRenderer == null) indicatorRenderer = GetComponent<SpriteRenderer>();
+            cachedLogic = logic.Instance != null ? logic.Instance : FindFirstObjectByType<logic>();
 
             if (isCapacitor)
             {
@@ -127,7 +129,8 @@ namespace ShadowFlip.Optics
 
         private bool IsWorldValid()
         {
-            logic l = logic.Instance != null ? logic.Instance : FindFirstObjectByType<logic>();
+            logic l = logic.Instance != null ? logic.Instance : cachedLogic;
+            if (l == null) l = cachedLogic = FindFirstObjectByType<logic>();
             bool globalDark = l != null && l.isDarkActive;
             bool isDark = SplitRealmZone.GetEffectiveDarkState(transform.position, globalDark);
 

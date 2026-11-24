@@ -11,7 +11,7 @@ namespace ShadowFlip.EditorTools
 {
     public static partial class OpticsPuzzleBuilder
     {
-        private static void ConfigureCelShadedSprites()
+        internal static void ConfigureCelShadedSprites()
         {
             ConfigureSpriteFolder(CelDir, pointFilter: true, forceSingleMode: true);
             ConfigureSpriteFolder(LabDir, pointFilter: true, forceSingleMode: true);
@@ -135,7 +135,18 @@ namespace ShadowFlip.EditorTools
             }
         }
 
-        private static CelAssets LoadCelAssets()
+        internal static CelAssets LoadThemedAssets(LevelTheme theme)
+        {
+            CelAssets src = LoadCelAssets();
+            switch (theme)
+            {
+                case LevelTheme.Laboratory: return WithLaboratoryTheme(src);
+                case LevelTheme.ScifiFacility: return WithScifiFacilityTheme(src);
+                default: return src;
+            }
+        }
+
+        internal static CelAssets LoadCelAssets()
         {
             ConfigureCelShadedSprites();
             return new CelAssets
@@ -358,7 +369,7 @@ namespace ShadowFlip.EditorTools
             };
         }
 
-        private static Sprite LoadSprite(string path)
+        internal static Sprite LoadSprite(string path)
         {
             Sprite s = AssetDatabase.LoadAssetAtPath<Sprite>(path);
             if (s != null) return s;
@@ -375,6 +386,6 @@ namespace ShadowFlip.EditorTools
             Debug.LogError($"OpticsPuzzleBuilder: Failed to load Sprite at '{path}'.");
             return null;
         }
-        private static AudioClip LoadAudio(string path) => AssetDatabase.LoadAssetAtPath<AudioClip>(path);
+        internal static AudioClip LoadAudio(string path) => AssetDatabase.LoadAssetAtPath<AudioClip>(path);
     }
 }

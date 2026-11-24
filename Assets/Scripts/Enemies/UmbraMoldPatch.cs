@@ -19,6 +19,7 @@ namespace ShadowFlip.Puzzle
         private int lastBurnFrame = -100;
         private float sparkCooldown = 0f;
         private logic cachedLogic;
+        private PlayerMovement cachedPlayer;
 
         void Awake()
         {
@@ -30,6 +31,7 @@ namespace ShadowFlip.Puzzle
         void Start()
         {
             cachedLogic = logic.Instance != null ? logic.Instance : FindFirstObjectByType<logic>();
+            cachedPlayer = FindFirstObjectByType<PlayerMovement>();
         }
 
         void Update()
@@ -72,7 +74,8 @@ namespace ShadowFlip.Puzzle
             PlayerMovement pm = other.GetComponentInParent<PlayerMovement>();
             if (pm == null && (other.GetComponent<Light>() != null || other.GetComponent<Dark>() != null))
             {
-                pm = FindFirstObjectByType<PlayerMovement>();
+                if (cachedPlayer == null) cachedPlayer = FindFirstObjectByType<PlayerMovement>();
+                pm = cachedPlayer;
             }
             if (pm != null)
             {

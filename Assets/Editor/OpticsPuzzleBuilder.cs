@@ -9,6 +9,13 @@ using UnityEngine.Rendering.Universal;
 
 namespace ShadowFlip.EditorTools
 {
+    public enum LevelTheme
+    {
+        Dungeon,
+        Laboratory,
+        ScifiFacility
+    }
+
     public static partial class OpticsPuzzleBuilder
     {
         private const string CelDir = "Assets/Images/CelShaded/";
@@ -35,9 +42,9 @@ namespace ShadowFlip.EditorTools
         private const string SandboxPath = "Assets/Scenes/OpticsPuzzle_Sandbox.unity";
         private const string Peter = "Assets/Scenes/Peter.unity";
 
-        private enum WallTileStyle { Long, Medium, Pillar, Ruined }
+        internal enum WallTileStyle { Long, Medium, Pillar, Ruined }
 
-        private struct CelAssets
+        internal struct CelAssets
         {
             public Sprite EmitterIdle, EmitterActive, EmitterBroken, PushableBlockSprite;
             public Sprite[] MirrorDirections;
@@ -182,7 +189,7 @@ namespace ShadowFlip.EditorTools
             Debug.Log("Created Main Menu scene at " + MainMenuPath);
         }
 
-        private static void SetupCoreScene(
+        internal static void SetupCoreScene(
             CelAssets assets,
             out logic gameLogic,
             out PlayerMovement playerMovement,
@@ -318,14 +325,15 @@ namespace ShadowFlip.EditorTools
             camCtrl.umbraOrthoSize = 7.0f;
         }
 
-        private static bool IsInPlayModeGuard()
+        internal static bool IsInPlayModeGuard()
         {
             if (!EditorApplication.isPlayingOrWillChangePlaymode) return false;
             EditorUtility.DisplayDialog("Stop Play Mode", "Please exit Play Mode before generating puzzle scenes.", "OK");
             return true;
         }
 
-        private static void RegisterScenesInBuildSettings()
+        [MenuItem("Shadow Flip/Level Designer/Sync All Scenes to Main Menu & Build Settings")]
+        public static void RegisterScenesInBuildSettings()
         {
             string[] managed =
             {
@@ -335,17 +343,28 @@ namespace ShadowFlip.EditorTools
             };
             var scenes = new List<EditorBuildSettingsScene>();
             foreach (string path in managed) AddSceneIfMissing(scenes, path);
+
+            // Auto-discover any custom scenes under Assets/Scenes/ (such as Peter.unity or newly created levels)
+            // so they appear in Build Settings and PuzzleHUD's Main Menu automatically.
+            if (Directory.Exists("Assets/Scenes"))
+            {
+                string[] allScenes = Directory.GetFiles("Assets/Scenes", "*.unity", SearchOption.TopDirectoryOnly);
+                System.Array.Sort(allScenes);
+                for (int i = 0; i < allScenes.Length; i++)
+                {
+                    AddSceneIfMissing(scenes, allScenes[i].Replace('\\', '/'));
+                }
+            }
+
             foreach (var existing in EditorBuildSettings.scenes)
             {
                 if (!File.Exists(existing.path)) continue;
-                bool isManaged = false;
-                foreach (string m in managed) if (existing.path == m) { isManaged = true; break; }
-                if (!isManaged) scenes.Add(existing);
+                AddSceneIfMissing(scenes, existing.path.Replace('\\', '/'));
             }
             EditorBuildSettings.scenes = scenes.ToArray();
         }
 
-        private static void AddSceneIfMissing(List<EditorBuildSettingsScene> scenes, string path)
+        internal static void AddSceneIfMissing(List<EditorBuildSettingsScene> scenes, string path)
         {
             if (!File.Exists(path)) return;
             foreach (var s in scenes)

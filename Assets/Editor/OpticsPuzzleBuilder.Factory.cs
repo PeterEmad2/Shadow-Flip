@@ -11,7 +11,7 @@ namespace ShadowFlip.EditorTools
 {
     public static partial class OpticsPuzzleBuilder
     {
-        private static void CreateArenaWalls(CelAssets assets)
+        internal static void CreateArenaWalls(CelAssets assets)
         {
             CreateWall("Wall_Top", new Vector3(0f, 5.95f, 0f), new Vector2(21.8f, 1.1f), assets, WorldAffinity.Both, WallTileStyle.Long);
             CreateWall("Wall_Bottom", new Vector3(0f, -5.95f, 0f), new Vector2(21.8f, 1.1f), assets, WorldAffinity.Both, WallTileStyle.Long);
@@ -19,7 +19,7 @@ namespace ShadowFlip.EditorTools
             CreateWall("Wall_Right", new Vector3(10.35f, 0f, 0f), new Vector2(1.1f, 13.0f), assets, WorldAffinity.Both, WallTileStyle.Long);
         }
 
-        private static GameObject CreatePlayerForm(string name, Transform parent, Vector3 pos, string spritePath, Color fallbackColor)
+        internal static GameObject CreatePlayerForm(string name, Transform parent, Vector3 pos, string spritePath, Color fallbackColor)
         {
             GameObject go = new GameObject(name);
             go.transform.SetParent(parent, false);
@@ -41,7 +41,7 @@ namespace ShadowFlip.EditorTools
             return go;
         }
 
-        private static GameObject CreateWall(string name, Vector3 pos, Vector2 size, CelAssets assets, WorldAffinity affinity, WallTileStyle style = WallTileStyle.Medium)
+        internal static GameObject CreateWall(string name, Vector3 pos, Vector2 size, CelAssets assets, WorldAffinity affinity, WallTileStyle style = WallTileStyle.Medium)
         {
             GameObject go = new GameObject(name);
             go.transform.position = pos;
@@ -82,7 +82,7 @@ namespace ShadowFlip.EditorTools
             return go;
         }
 
-        private static LightBeamEmitter CreateEmitter(string name, Vector3 pos, LightColor color, WorldAffinity world, Vector2 dir, CelAssets assets)
+        internal static LightBeamEmitter CreateEmitter(string name, Vector3 pos, LightColor color, WorldAffinity world, Vector2 dir, CelAssets assets)
         {
             GameObject go = new GameObject(name);
             go.transform.position = pos;
@@ -112,7 +112,7 @@ namespace ShadowFlip.EditorTools
             return emitter;
         }
 
-        private static GameObject CreateIsometricMirror(string name, Vector3 pos, float startAngle, float stepDegrees, WorldAffinity affinity, CelAssets assets, bool canRotate = true, bool requireShadowToRotate = false)
+        internal static GameObject CreateIsometricMirror(string name, Vector3 pos, float startAngle, float stepDegrees, WorldAffinity affinity, CelAssets assets, bool canRotate = true, bool requireShadowToRotate = false)
         {
             GameObject go = new GameObject(name);
             go.transform.position = pos;
@@ -140,7 +140,7 @@ namespace ShadowFlip.EditorTools
             return go;
         }
 
-        private static GameObject CreatePushableMirrorCart(string name, Vector3 pos, float startAngle, float stepDegrees, CelAssets assets, bool umbraOnly = false)
+        internal static GameObject CreatePushableMirrorCart(string name, Vector3 pos, float startAngle, float stepDegrees, CelAssets assets, bool umbraOnly = false)
         {
             GameObject go = new GameObject(name);
             go.transform.position = pos;
@@ -168,7 +168,7 @@ namespace ShadowFlip.EditorTools
             return go;
         }
 
-        private static PortalMirror CreatePortalMirror(string name, Vector3 pos, Sprite sprite, Vector2 exitDir, PortalMirror linked, bool canRotate = true)
+        internal static PortalMirror CreatePortalMirror(string name, Vector3 pos, Sprite sprite, Vector2 exitDir, PortalMirror linked, bool canRotate = true)
         {
             GameObject go = new GameObject(name);
             go.transform.position = pos;
@@ -188,7 +188,7 @@ namespace ShadowFlip.EditorTools
             return pm;
         }
 
-        private static GameObject CreateColorCombiner(string name, Vector3 pos, LightColor a, LightColor b, LightColor output, CelAssets assets)
+        internal static GameObject CreateColorCombiner(string name, Vector3 pos, LightColor a, LightColor b, LightColor output, CelAssets assets)
         {
             GameObject go = new GameObject(name);
             go.transform.position = pos;
@@ -210,7 +210,7 @@ namespace ShadowFlip.EditorTools
             return go;
         }
 
-        private static void CreateSanctuary(string name, Vector3 pos, float radius, CelAssets assets)
+        internal static GameObject CreateSanctuary(string name, Vector3 pos, float radius, CelAssets assets)
         {
             GameObject go = new GameObject(name);
             go.transform.position = pos;
@@ -231,9 +231,10 @@ namespace ShadowFlip.EditorTools
             LightSanctuary sanc = go.AddComponent<LightSanctuary>();
             sanc.isTeslaSafeZone = false;
             sanc.sanctuaryRadius = radius;
+            return go;
         }
 
-        private static void CreateEchoPedestal(string name, Vector3 pos, Sprite echoSprite, CelAssets assets)
+        internal static GameObject CreateEchoPedestal(string name, Vector3 pos, Sprite echoSprite, CelAssets assets)
         {
             GameObject go = new GameObject(name);
             go.transform.position = pos;
@@ -249,9 +250,10 @@ namespace ShadowFlip.EditorTools
 
             ShadowEchoPedestal echo = go.AddComponent<ShadowEchoPedestal>();
             echo.echoSprite = echoSprite;
+            return go;
         }
 
-        private static void CreateBeamRelay(string name, Vector3 pos, BeamRelayCrystal.RelayMode mode, Vector2 outDir, bool canRotate, CelAssets assets)
+        internal static GameObject CreateBeamRelay(string name, Vector3 pos, BeamRelayCrystal.RelayMode mode, Vector2 outDir, bool canRotate, CelAssets assets)
         {
             GameObject go = new GameObject(name);
             go.transform.position = pos;
@@ -276,9 +278,10 @@ namespace ShadowFlip.EditorTools
             relay.mode = mode;
             relay.localOutputDirection = outDir;
             relay.canRotate = canRotate;
+            return go;
         }
 
-        private static void CreateShadowBarrierGate(string name, Vector3 pos, Vector2 size, CelAssets assets, bool openWhenLit = true, bool stayOpenOnceLit = false)
+        internal static GameObject CreateShadowBarrierGate(string name, Vector3 pos, Vector2 size, CelAssets assets, bool openWhenLit = true, bool stayOpenOnceLit = false)
         {
             GameObject go = new GameObject(name);
             go.transform.position = pos;
@@ -296,9 +299,10 @@ namespace ShadowFlip.EditorTools
             gate.openWhenLit = openWhenLit;
             gate.stayOpenOnceLit = stayOpenOnceLit;
             gate.acceptAnyColor = true;
+            return go;
         }
 
-        private static PhaseShiftTile CreatePhaseShiftTile(string name, Vector3 pos, PhaseShiftTile linkedPad, bool flipOnStep, CelAssets assets, bool allowPushableBlocks = false)
+        internal static PhaseShiftTile CreatePhaseShiftTile(string name, Vector3 pos, PhaseShiftTile linkedPad, bool flipOnStep, CelAssets assets, bool allowPushableBlocks = false)
         {
             GameObject go = new GameObject(name);
             go.transform.position = pos;
@@ -319,7 +323,7 @@ namespace ShadowFlip.EditorTools
             return pad;
         }
 
-        private static GameObject CreatePrism(string name, Vector3 pos, float zAngle, OpticalPrism.PrismMode mode, float splitAngle, bool orientAlongTransform, bool canRotate, float stepDegrees, CelAssets assets)
+        internal static GameObject CreatePrism(string name, Vector3 pos, float zAngle, OpticalPrism.PrismMode mode, float splitAngle, bool orientAlongTransform, bool canRotate, float stepDegrees, CelAssets assets)
         {
             GameObject prismGo = new GameObject(name);
             prismGo.transform.position = pos;
@@ -342,7 +346,7 @@ namespace ShadowFlip.EditorTools
             return prismGo;
         }
 
-        private static GameObject CreateColorFilter(string name, Vector3 pos, Vector2 size, LightColor color, CelAssets assets)
+        internal static GameObject CreateColorFilter(string name, Vector3 pos, Vector2 size, LightColor color, CelAssets assets)
         {
             GameObject filterGo = new GameObject(name);
             filterGo.transform.position = pos;
@@ -384,7 +388,7 @@ namespace ShadowFlip.EditorTools
             return filterGo;
         }
 
-        private static LightSensor CreateSensor(string name, Vector3 pos, LightColor color, WorldAffinity requiredWorld, CelAssets assets, bool acceptAny = false, bool isCapacitor = false, float holdDuration = 0f)
+        internal static LightSensor CreateSensor(string name, Vector3 pos, LightColor color, WorldAffinity requiredWorld, CelAssets assets, bool acceptAny = false, bool isCapacitor = false, float holdDuration = 0f)
         {
             GameObject go = new GameObject(name);
             go.transform.position = pos;
@@ -416,7 +420,7 @@ namespace ShadowFlip.EditorTools
             return sensor;
         }
 
-        private static PuzzleLever CreateLever(string name, Vector3 pos, CelAssets assets, WorldAffinity usableWorld,
+        internal static PuzzleLever CreateLever(string name, Vector3 pos, CelAssets assets, WorldAffinity usableWorld,
             OpticalMirror[] controlledMirrors = null, GameObject[] toggledObjects = null)
         {
             GameObject go = new GameObject(name);
@@ -444,7 +448,7 @@ namespace ShadowFlip.EditorTools
             return lever;
         }
 
-        private static PuzzleDoor CreateDoor(string name, Vector3 pos, Vector2 size, CelAssets assets,
+        internal static PuzzleDoor CreateDoor(string name, Vector3 pos, Vector2 size, CelAssets assets,
             LightSensor[] sensors, PressurePlate[] plates, PuzzleLever[] levers, bool requireAll, bool stayOpen)
         {
             GameObject doorGo = new GameObject(name);
@@ -472,7 +476,7 @@ namespace ShadowFlip.EditorTools
             return door;
         }
 
-        private static GameObject CreatePushableBlock(string name, Vector3 pos, CelAssets assets, WorldAffinity pushableInWorld = WorldAffinity.LightOnly)
+        internal static GameObject CreatePushableBlock(string name, Vector3 pos, CelAssets assets, WorldAffinity pushableInWorld = WorldAffinity.LightOnly)
         {
             GameObject go = new GameObject(name);
             go.transform.position = pos;
@@ -491,7 +495,7 @@ namespace ShadowFlip.EditorTools
             return go;
         }
 
-        private static PressurePlate CreatePressurePlate(string name, Vector3 pos, CelAssets assets, WorldAffinity form, bool latch = false)
+        internal static PressurePlate CreatePressurePlate(string name, Vector3 pos, CelAssets assets, WorldAffinity form, bool latch = false)
         {
             GameObject plateGo = new GameObject(name);
             plateGo.transform.position = pos;
@@ -517,7 +521,7 @@ namespace ShadowFlip.EditorTools
             return plate;
         }
 
-        private static CelAssets WithLaboratoryTheme(CelAssets src)
+        internal static CelAssets WithLaboratoryTheme(CelAssets src)
         {
             CelAssets lab = src;
             lab.FloorLight = src.LabFloorLight != null ? src.LabFloorLight : src.FloorLight;
@@ -537,7 +541,7 @@ namespace ShadowFlip.EditorTools
             return lab;
         }
 
-        private static CelAssets WithScifiFacilityTheme(CelAssets src)
+        internal static CelAssets WithScifiFacilityTheme(CelAssets src)
         {
             CelAssets fac = src;
             fac.FloorLight = src.ScifiFloorLight != null ? src.ScifiFloorLight : src.FloorLight;
@@ -558,7 +562,7 @@ namespace ShadowFlip.EditorTools
             return fac;
         }
 
-        private static PuzzleDoor CreateScifiDoor(
+        internal static PuzzleDoor CreateScifiDoor(
             string name, Vector3 pos, Vector2 size, CelAssets assets,
             LightSensor[] sensors, PressurePlate[] plates, PuzzleLever[] levers,
             bool requireAll, bool stayOpen, bool isLabDoor)
@@ -602,7 +606,7 @@ namespace ShadowFlip.EditorTools
             return door;
         }
 
-        private static void CreateScifiAlarmBeacon(string name, Vector3 pos, CelAssets assets)
+        internal static GameObject CreateScifiAlarmBeacon(string name, Vector3 pos, CelAssets assets)
         {
             GameObject go = new GameObject(name);
             go.transform.position = pos;
@@ -630,11 +634,12 @@ namespace ShadowFlip.EditorTools
             beacon.glowRenderer = glowSr;
             beacon.offSprite = assets.ScifiAlarmOff;
             beacon.onSprite = assets.ScifiAlarmOn;
+            return go;
         }
 
-        private static void CreateShadowHorrorDecal(string name, Vector3 pos, Sprite sprite, float scale, int sortingOrder)
+        internal static GameObject CreateShadowHorrorDecal(string name, Vector3 pos, Sprite sprite, float scale, int sortingOrder)
         {
-            if (sprite == null) return;
+            if (sprite == null) return null;
             GameObject go = new GameObject(name);
             go.transform.position = pos;
             go.transform.localScale = new Vector3(scale, scale, 1f);
@@ -646,9 +651,10 @@ namespace ShadowFlip.EditorTools
             WorldPhaseObject phase = go.AddComponent<WorldPhaseObject>();
             phase.affinity = WorldAffinity.ShadowOnly;
             phase.disableRenderersInsteadOfFade = true;
+            return go;
         }
 
-        private static PuzzleDoor CreateLabBlastDoor(
+        internal static PuzzleDoor CreateLabBlastDoor(
             string name, Vector3 pos, Vector2 size, CelAssets assets,
             LightSensor[] sensors, PressurePlate[] plates, PuzzleLever[] levers,
             bool requireAll, bool stayOpen, bool vertical, bool redVariant)
@@ -691,7 +697,7 @@ namespace ShadowFlip.EditorTools
             return door;
         }
 
-        private static void CreateLabSanctuary(string name, Vector3 pos, float radius, CelAssets assets)
+        internal static GameObject CreateLabSanctuary(string name, Vector3 pos, float radius, CelAssets assets)
         {
             GameObject go = new GameObject(name);
             go.transform.position = pos;
@@ -718,9 +724,10 @@ namespace ShadowFlip.EditorTools
             LightSanctuary sanc = go.AddComponent<LightSanctuary>();
             sanc.isTeslaSafeZone = true;
             sanc.sanctuaryRadius = radius;
+            return go;
         }
 
-        private static LabNPCController CreateLabNPC(
+        internal static LabNPCController CreateLabNPC(
             string name, Vector3 pos, string displayName, string[] dialogueLines,
             Sprite[] lightDirs, Sprite[] shadowDirs, CelAssets assets,
             WorldAffinity usableWorld = WorldAffinity.Both)
@@ -758,7 +765,7 @@ namespace ShadowFlip.EditorTools
             return npc;
         }
 
-        private static GameObject CreateLabProp(string name, Vector3 pos, Sprite sprite, float scale, int sortingOrder, bool hasCollider = false)
+        internal static GameObject CreateLabProp(string name, Vector3 pos, Sprite sprite, float scale, int sortingOrder, bool hasCollider = false)
         {
             GameObject go = new GameObject(name);
             go.transform.position = pos;
@@ -776,7 +783,7 @@ namespace ShadowFlip.EditorTools
             return go;
         }
 
-        private static GameObject CreateAnimatedLabProp(string name, Vector3 pos, Sprite[] frames, float scale, int sortingOrder, float fps)
+        internal static GameObject CreateAnimatedLabProp(string name, Vector3 pos, Sprite[] frames, float scale, int sortingOrder, float fps)
         {
             GameObject go = new GameObject(name);
             go.transform.position = pos;
@@ -792,7 +799,7 @@ namespace ShadowFlip.EditorTools
             return go;
         }
 
-        private static GameObject CreateFloorAccent(string name, Vector3 pos, Vector2 size, Sprite sprite, int sortingOrder)
+        internal static GameObject CreateFloorAccent(string name, Vector3 pos, Vector2 size, Sprite sprite, int sortingOrder)
         {
             GameObject go = new GameObject(name);
             go.transform.position = pos;
@@ -805,7 +812,7 @@ namespace ShadowFlip.EditorTools
             return go;
         }
 
-        private static GameObject CreateOneWayPolarizer(string name, Vector3 pos, Vector2 allowedDir, bool invertColor, bool canRotate, CelAssets assets)
+        internal static GameObject CreateOneWayPolarizer(string name, Vector3 pos, Vector2 allowedDir, bool invertColor, bool canRotate, CelAssets assets)
         {
             GameObject go = new GameObject(name);
             go.transform.position = pos;
@@ -827,7 +834,7 @@ namespace ShadowFlip.EditorTools
             return go;
         }
 
-        private static GameObject CreateMemoryPrism(string name, Vector3 pos, float holdSeconds, Vector2 outDir, bool canRotate, CelAssets assets)
+        internal static GameObject CreateMemoryPrism(string name, Vector3 pos, float holdSeconds, Vector2 outDir, bool canRotate, CelAssets assets)
         {
             GameObject go = new GameObject(name);
             go.transform.position = pos;
@@ -850,7 +857,7 @@ namespace ShadowFlip.EditorTools
             return go;
         }
 
-        private static GameObject CreateRealityAnchor(string name, Vector3 pos, float radius, float holdDuration, CelAssets assets)
+        internal static GameObject CreateRealityAnchor(string name, Vector3 pos, float radius, float holdDuration, CelAssets assets)
         {
             GameObject go = new GameObject(name);
             go.transform.position = pos;
@@ -871,7 +878,7 @@ namespace ShadowFlip.EditorTools
             return go;
         }
 
-        private static GameObject CreateMagneticRail(string name, Vector3 terminalPos, Vector3 pointA, Vector3 pointB, LightColor reqColor, CelAssets assets)
+        internal static GameObject CreateMagneticRail(string name, Vector3 terminalPos, Vector3 pointA, Vector3 pointB, LightColor reqColor, CelAssets assets)
         {
             // Track visual spans pointA -> pointB
             GameObject trackGo = new GameObject(name + "_Track");
@@ -914,7 +921,7 @@ namespace ShadowFlip.EditorTools
             return cartGo;
         }
 
-        private static GameObject CreateMirrorTwinTotem(string name, Vector3 pos, float axisX, Sprite twinSprite, CelAssets assets)
+        internal static GameObject CreateMirrorTwinTotem(string name, Vector3 pos, float axisX, Sprite twinSprite, CelAssets assets)
         {
             GameObject go = new GameObject(name);
             go.transform.position = pos;
@@ -934,7 +941,7 @@ namespace ShadowFlip.EditorTools
             return go;
         }
 
-        private static GameObject CreateUmbraMimicMirror(string name, Vector3 pos, float startAngle, Vector3 fleeOffset, CelAssets assets)
+        internal static GameObject CreateUmbraMimicMirror(string name, Vector3 pos, float startAngle, Vector3 fleeOffset, CelAssets assets)
         {
             GameObject go = new GameObject(name);
             go.transform.position = pos;
@@ -961,7 +968,7 @@ namespace ShadowFlip.EditorTools
             return go;
         }
 
-        private static GameObject CreateBeamEaterMoth(string name, Vector3 pos, LightColor stunColor, CelAssets assets)
+        internal static GameObject CreateBeamEaterMoth(string name, Vector3 pos, LightColor stunColor, CelAssets assets)
         {
             GameObject go = new GameObject(name);
             go.transform.position = pos;
@@ -981,7 +988,7 @@ namespace ShadowFlip.EditorTools
             return go;
         }
 
-        private static GameObject CreateUmbraMold(string name, Vector3 pos, float startScale, CelAssets assets)
+        internal static GameObject CreateUmbraMold(string name, Vector3 pos, float startScale, CelAssets assets)
         {
             GameObject go = new GameObject(name);
             go.transform.position = pos;
@@ -999,7 +1006,7 @@ namespace ShadowFlip.EditorTools
             return go;
         }
 
-        private static UmbraWardenBoss CreateUmbraWardenBoss(string name, Vector3 pos, CelAssets assets)
+        internal static UmbraWardenBoss CreateUmbraWardenBoss(string name, Vector3 pos, CelAssets assets)
         {
             GameObject go = new GameObject(name);
             go.transform.position = pos;
@@ -1018,7 +1025,7 @@ namespace ShadowFlip.EditorTools
             return boss;
         }
 
-        private static BlackHoleLens CreateBlackHole(
+        internal static BlackHoleLens CreateBlackHole(
             string name, Vector3 pos, float gravityRadius, float eventHorizonRadius, float gravityStrength,
             WorldAffinity affinity, bool canAdjust, int startPreset, CelAssets assets)
         {
@@ -1045,7 +1052,7 @@ namespace ShadowFlip.EditorTools
             return bh;
         }
 
-        private static GameObject CreateExit(string name, Vector3 pos, CelAssets assets, PuzzleDoor[] requiredDoors, string nextScene)
+        internal static GameObject CreateExit(string name, Vector3 pos, CelAssets assets, PuzzleDoor[] requiredDoors, string nextScene)
         {
             GameObject exitGo = new GameObject(name);
             exitGo.transform.position = pos;

@@ -270,8 +270,10 @@ namespace ShadowFlip.Optics
             lr.endWidth = width;
             lr.sortingOrder = sortingOrder;
 
-            Shader shader = Shader.Find("Sprites/Default");
-            if (shader != null) lr.material = new Material(shader);
+            if (SharedRenderResources.SpriteDefaultMaterial != null)
+            {
+                lr.sharedMaterial = SharedRenderResources.SpriteDefaultMaterial;
+            }
             return lr;
         }
 

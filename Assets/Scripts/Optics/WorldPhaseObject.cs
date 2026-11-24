@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using ShadowFlip.Puzzle;
 using UnityEngine;
 
@@ -9,6 +10,14 @@ namespace ShadowFlip.Optics
     /// </summary>
     public class WorldPhaseObject : MonoBehaviour
     {
+        public static readonly List<WorldPhaseObject> ActiveObjects = new List<WorldPhaseObject>();
+
+        [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
+        private static void ResetStatics()
+        {
+            ActiveObjects.Clear();
+        }
+
         public WorldAffinity affinity = WorldAffinity.Both;
 
         [Header("Cel-Shaded Realm Sprites (Optional)")]
@@ -45,6 +54,7 @@ namespace ShadowFlip.Optics
 
         void OnEnable()
         {
+            if (!ActiveObjects.Contains(this)) ActiveObjects.Add(this);
             cachedLogic = logic.Instance != null ? logic.Instance : FindFirstObjectByType<logic>();
             if (cachedLogic != null)
             {
@@ -59,6 +69,7 @@ namespace ShadowFlip.Optics
 
         void OnDisable()
         {
+            ActiveObjects.Remove(this);
             if (cachedLogic != null)
             {
                 cachedLogic.OnWorldFlipped -= HandleWorldFlipped;
@@ -222,8 +233,10 @@ namespace ShadowFlip.Optics
             phaseBorder.endWidth = 0.08f;
             phaseBorder.sortingOrder = 5;
 
-            Shader shader = Shader.Find("Sprites/Default");
-            if (shader != null) phaseBorder.material = new Material(shader);
+            if (SharedRenderResources.SpriteDefaultMaterial != null)
+            {
+                phaseBorder.sharedMaterial = SharedRenderResources.SpriteDefaultMaterial;
+            }
 
             Vector2 half = wallBox.size * 0.5f;
             Vector2 off = wallBox.offset;

@@ -28,6 +28,7 @@ namespace ShadowFlip.Puzzle
         public bool IsPressed { get; private set; }
 
         private Collider2D plateCollider;
+        private logic cachedLogic;
         private readonly HashSet<Collider2D> occupants = new HashSet<Collider2D>();
         private readonly List<Collider2D> overlapResults = new List<Collider2D>(8);
         private ContactFilter2D overlapFilter;
@@ -38,18 +39,20 @@ namespace ShadowFlip.Puzzle
             latchOncePressed = false;
             plateCollider = GetComponent<Collider2D>();
             plateCollider.isTrigger = true;
+            cachedLogic = logic.Instance != null ? logic.Instance : FindFirstObjectByType<logic>();
             overlapFilter = ContactFilter2D.noFilter;
             overlapFilter.useTriggers = true;
             if (plateRenderer == null) plateRenderer = GetComponent<SpriteRenderer>();
             UpdateVisuals();
         }
 
-        void FixedUpdate()
+        void Start()
         {
+            if (cachedLogic == null) cachedLogic = logic.Instance != null ? logic.Instance : FindFirstObjectByType<logic>();
             RefreshOccupantsFromOverlap();
         }
 
-        void Update()
+        void FixedUpdate()
         {
             RefreshOccupantsFromOverlap();
         }
@@ -108,7 +111,8 @@ namespace ShadowFlip.Puzzle
                 return true;
             }
 
-            logic l = logic.Instance != null ? logic.Instance : FindFirstObjectByType<logic>();
+            logic l = logic.Instance != null ? logic.Instance : cachedLogic;
+            if (l == null) l = cachedLogic = FindFirstObjectByType<logic>();
             bool globalDark = l != null && l.isDarkActive;
             bool effectiveDark = SplitRealmZone.GetEffectiveDarkState(transform.position, globalDark);
 

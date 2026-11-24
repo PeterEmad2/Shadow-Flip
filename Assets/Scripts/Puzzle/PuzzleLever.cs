@@ -23,9 +23,12 @@ namespace ShadowFlip.Puzzle
 
         public UnityEvent onToggled;
 
+        private logic cachedLogic;
+
         void Awake()
         {
             if (leverRenderer == null) leverRenderer = GetComponent<SpriteRenderer>();
+            cachedLogic = logic.Instance != null ? logic.Instance : FindFirstObjectByType<logic>();
             UpdateVisuals();
         }
 
@@ -70,7 +73,8 @@ namespace ShadowFlip.Puzzle
         private bool CanUseInCurrentWorld()
         {
             if (usableInWorld == WorldAffinity.Both) return true;
-            logic l = logic.Instance != null ? logic.Instance : FindFirstObjectByType<logic>();
+            logic l = logic.Instance != null ? logic.Instance : cachedLogic;
+            if (l == null) l = cachedLogic = FindFirstObjectByType<logic>();
             bool isDark = l != null && l.isDarkActive;
             return (usableInWorld == WorldAffinity.ShadowOnly && isDark)
                 || (usableInWorld == WorldAffinity.LightOnly && !isDark);

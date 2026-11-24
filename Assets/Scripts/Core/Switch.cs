@@ -15,10 +15,14 @@ public class GameObjectToggle : MonoBehaviour
     public float safetyCheckRadius = 0.3f;
 
     private float lastFlipTime = -10f;
+    private Rigidbody2D lightRb;
+    private Rigidbody2D darkRb;
 
     void Start()
     {
         if (logic == null) logic = logic.Instance;
+        if (lightObject != null) lightRb = lightObject.GetComponent<Rigidbody2D>();
+        if (darkObject != null) darkRb = darkObject.GetComponent<Rigidbody2D>();
 
         bool darkActive = logic != null && logic.isDarkActive;
         if (darkObject != null) darkObject.SetActive(darkActive);
@@ -44,10 +48,11 @@ public class GameObjectToggle : MonoBehaviour
         bool nextDark = !logic.isDarkActive;
 
         // Prevent flipping if a solid phased object in the target world would overlap the player.
-        WorldPhaseObject[] phasedObjects = FindObjectsByType<WorldPhaseObject>(FindObjectsSortMode.None);
-        for (int i = 0; i < phasedObjects.Length; i++)
+        var phasedObjects = WorldPhaseObject.ActiveObjects;
+        for (int i = 0; i < phasedObjects.Count; i++)
         {
-            if (phasedObjects[i].WouldBlockPosition(currentObj.transform.position, safetyCheckRadius, nextDark))
+            WorldPhaseObject obj = phasedObjects[i];
+            if (obj != null && obj.WouldBlockPosition(currentObj.transform.position, safetyCheckRadius, nextDark))
             {
                 PuzzleAudioManager.Instance?.PlayFlipBlocked();
                 return false;
@@ -69,7 +74,7 @@ public class GameObjectToggle : MonoBehaviour
 
         targetObj.transform.position = currentObj.transform.position;
 
-        Rigidbody2D currentRb = currentObj.GetComponent<Rigidbody2D>();
+        Rigidbody2D currentRb = nextDark ? lightRb : darkRb;
         if (currentRb != null) currentRb.linearVelocity = Vector2.zero;
 
         darkObject.SetActive(nextDark);
